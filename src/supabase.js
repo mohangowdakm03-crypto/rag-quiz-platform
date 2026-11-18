@@ -40,7 +40,7 @@ export function getSupabaseAdminClient() {
   return adminClientInstance;
 }
 
-// 1. Participant presence
+// 1. Participant presence & live progress
 export async function joinQuizRoom(quizId, studentName, studentId = '') {
   const client = getSupabaseClient();
   try {
@@ -61,6 +61,19 @@ export async function joinQuizRoom(quizId, studentName, studentId = '') {
   }
 }
 
+export async function updateParticipantProgress(participantId, statusText) {
+  if (!participantId) return;
+  const client = getSupabaseClient();
+  try {
+    await client
+      .from('quiz_participants')
+      .update({ status: statusText })
+      .eq('id', participantId);
+  } catch {
+    // ignore
+  }
+}
+
 // 2. Fetch full quiz definition from Supabase (including answer key & settings)
 export async function getQuizDefinition(quizId) {
   const adminClient = getSupabaseAdminClient();
@@ -74,20 +87,25 @@ export async function getQuizDefinition(quizId) {
       .limit(1);
 
     if (error || !data || data.length === 0) {
-      // Fallback to local default RAG data if not found in DB
-      return {
-        id: RAG_QUIZ_DATA.id,
-        title: RAG_QUIZ_DATA.title,
-        description: RAG_QUIZ_DATA.description,
-        timeLimitMinutes: RAG_QUIZ_DATA.timeLimitMinutes || 30,
-        passingScore: RAG_QUIZ_DATA.passingScore || 70,
-        passcodeHash: MASTER_PASSCODE_HASH_1,
-        questions: RAG_QUIZ_DATA.questions.map(q => ({
-          ...q,
-          type: q.type || 'single',
-          points: q.points || 1000
-        }))
-      };
+      // If default quiz ID, return default RAG template
+      if (quizId === 'rag-mastery-2025' || quizId === 'default' || !quizId) {
+        return {
+          id: 'rag-mastery-2025',
+          title: RAG_QUIZ_DATA.title,
+          description: RAG_QUIZ_DATA.description,
+          timeLimitMinutes: RAG_QUIZ_DATA.timeLimitMinutes || 30,
+          passingScore: RAG_QUIZ_DATA.passingScore || 70,
+          passcodeHash: MASTER_PASSCODE_HASH_1,
+          gameMode: 'classic',
+          perQuestionSeconds: 30,
+          questions: RAG_QUIZ_DATA.questions.map(q => ({
+            ...q,
+            type: q.type || 'single',
+            points: q.points || 1000
+          }))
+        };
+      }
+      return null;
     }
 
     const row = data[0];
@@ -99,31 +117,44 @@ export async function getQuizDefinition(quizId) {
       timeLimitMinutes: answers.timeLimitMinutes || 30,
       passingScore: answers.passingScore || 70,
       passcodeHash: answers.passcodeHash || MASTER_PASSCODE_HASH_1,
+      gameMode: answers.gameMode || 'classic',
+      perQuestionSeconds: answers.perQuestionSeconds || 30,
+      sessionPin: answers.sessionPin || row.quiz_id,
       questions: row.breakdown || []
     };
   } catch (err) {
-    console.warn('Quiz definition load fallback:', err);
-    return {
-      id: quizId,
-      title: RAG_QUIZ_DATA.title,
-      description: RAG_QUIZ_DATA.description,
-      timeLimitMinutes: 30,
-      passingScore: 70,
-      passcodeHash: MASTER_PASSCODE_HASH_1,
-      questions: RAG_QUIZ_DATA.questions.map(q => ({ ...q, type: 'single', points: 1000 }))
-    };
+    console.warn('Quiz definition load error:', err);
+    if (quizId === 'rag-mastery-2025' || !quizId) {
+      return {
+        id: 'rag-mastery-2025',
+        title: RAG_QUIZ_DATA.title,
+        description: RAG_QUIZ_DATA.description,
+        timeLimitMinutes: 30,
+        passingScore: 70,
+        passcodeHash: MASTER_PASSCODE_HASH_1,
+        gameMode: 'classic',
+        perQuestionSeconds: 30,
+        questions: RAG_QUIZ_DATA.questions.map(q => ({ ...q, type: 'single', points: 1000 }))
+      };
+    }
+    return null;
   }
 }
 
 // 3. Fetch sanitized quiz definition for students (STRIPS answers & explanations)
 export async function getStudentQuizDefinition(quizId) {
   const fullQuiz = await getQuizDefinition(quizId);
+  if (!fullQuiz) return null;
+
   return {
     id: fullQuiz.id,
     title: fullQuiz.title,
     description: fullQuiz.description,
     timeLimitMinutes: fullQuiz.timeLimitMinutes,
     passingScore: fullQuiz.passingScore,
+    gameMode: fullQuiz.gameMode || 'classic',
+    perQuestionSeconds: fullQuiz.perQuestionSeconds || 30,
+    sessionPin: fullQuiz.sessionPin || fullQuiz.id,
     totalQuestions: fullQuiz.questions.length,
     questions: fullQuiz.questions.map(q => ({
       id: q.id,
@@ -137,7 +168,7 @@ export async function getStudentQuizDefinition(quizId) {
   };
 }
 
-// 4. Save or Update quiz definition (Custom Kahoot Studio)
+// 4. Save or Update existing quiz definition (Custom Kahoot Studio)
 export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
@@ -172,11 +203,15 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
         percentage: 100,
         passed: true,
         answers: {
+          sessionPin: quizId,
           title: quizData.title,
           description: quizData.description || '',
           timeLimitMinutes: quizData.timeLimitMinutes || 30,
           passingScore: quizData.passingScore || 70,
-          passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1
+          gameMode: quizData.gameMode || 'classic',
+          perQuestionSeconds: quizData.perQuestionSeconds || 30,
+          passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1,
+          updatedAt: new Date().toISOString()
         },
         breakdown: quizData.questions
       }
@@ -188,6 +223,135 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
   }
 
   return { success: true, id: data?.[0]?.id };
+}
+
+// 4B. Publish a Brand-New Quiz Session with unique 6-digit PIN and mode
+export async function publishQuizSession(quizData, instructorPasscode, options = {}) {
+  const adminClient = getSupabaseAdminClient();
+  const enteredHash = await sha256(instructorPasscode);
+  const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
+  
+  if (!isMaster) {
+    throw new Error('Unauthorized: Valid Instructor Passcode required to publish a session.');
+  }
+
+  // Generate unique 6-digit PIN (e.g. 582914) or use custom code
+  let sessionPin = options.customPin?.trim();
+  if (!sessionPin) {
+    sessionPin = Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  const gameMode = options.gameMode || quizData.gameMode || 'classic';
+  const perQuestionSeconds = Number(options.perQuestionSeconds || quizData.perQuestionSeconds || 30);
+  const timeLimitMinutes = Number(quizData.timeLimitMinutes || 30);
+  const passingScore = Number(quizData.passingScore || 70);
+
+  // Insert fresh session definition
+  const { data, error } = await adminClient
+    .from('quiz_submissions')
+    .insert([
+      {
+        quiz_id: sessionPin,
+        student_name: '__QUIZ_DEFINITION__',
+        student_id: 'SYSTEM',
+        score: (quizData.questions || []).reduce((acc, q) => acc + (q.points || 1000), 0),
+        total_questions: (quizData.questions || []).length,
+        percentage: 100,
+        passed: true,
+        answers: {
+          sessionPin,
+          title: quizData.title || 'Interactive Quiz Session',
+          description: quizData.description || '',
+          timeLimitMinutes,
+          passingScore,
+          gameMode,
+          perQuestionSeconds,
+          passcodeHash: enteredHash,
+          publishedAt: new Date().toISOString()
+        },
+        breakdown: quizData.questions || []
+      }
+    ])
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    success: true,
+    sessionPin,
+    gameMode,
+    perQuestionSeconds,
+    id: data?.[0]?.id
+  };
+}
+
+// 4C. Fetch all available teacher sessions
+export async function fetchTeacherSessions() {
+  const adminClient = getSupabaseAdminClient();
+  try {
+    const { data, error } = await adminClient
+      .from('quiz_submissions')
+      .select('quiz_id, created_at, answers, breakdown, total_questions')
+      .eq('student_name', '__QUIZ_DEFINITION__')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('fetchTeacherSessions error:', error);
+      return [];
+    }
+
+    const sessions = (data || []).map(row => {
+      const ans = row.answers || {};
+      return {
+        sessionPin: row.quiz_id,
+        title: ans.title || 'Quiz Session',
+        gameMode: ans.gameMode || 'classic',
+        perQuestionSeconds: ans.perQuestionSeconds || 30,
+        totalQuestions: row.breakdown?.length || row.total_questions || 20,
+        passingScore: ans.passingScore || 70,
+        timeLimitMinutes: ans.timeLimitMinutes || 30,
+        createdAt: row.created_at
+      };
+    });
+
+    // Ensure default rag-mastery-2025 is included if not in DB
+    if (!sessions.some(s => s.sessionPin === 'rag-mastery-2025')) {
+      sessions.push({
+        sessionPin: 'rag-mastery-2025',
+        title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
+        gameMode: 'classic',
+        perQuestionSeconds: 30,
+        totalQuestions: 20,
+        passingScore: 70,
+        timeLimitMinutes: 30,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    return sessions;
+  } catch (err) {
+    console.error('fetchTeacherSessions exception:', err);
+    return [];
+  }
+}
+
+// 4D. Delete a session and its submissions
+export async function deleteTeacherSession(sessionPin, rawPasscode) {
+  const auth = await verifyInstructorPasscode(sessionPin, rawPasscode);
+  if (!auth.valid) {
+    throw new Error('Unauthorized: Invalid Instructor Passcode');
+  }
+
+  const adminClient = getSupabaseAdminClient();
+  const { error } = await adminClient
+    .from('quiz_submissions')
+    .delete()
+    .eq('quiz_id', sessionPin);
+
+  if (error) throw new Error(error.message);
+  return { success: true };
 }
 
 // 5. Submit student quiz securely (Universal grading across any question type and points)

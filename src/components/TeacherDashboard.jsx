@@ -31,7 +31,11 @@ import {
   Triangle,
   Diamond,
   Circle,
-  Square
+  Square,
+  Zap,
+  Timer,
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
 import { 
   subscribeToTeacherData, 
@@ -39,13 +43,16 @@ import {
   verifyInstructorPasscode,
   getQuizDefinition,
   saveQuizDefinition,
+  publishQuizSession,
+  fetchTeacherSessions,
+  deleteTeacherSession,
   sha256
 } from '../supabase';
 import { RAG_QUIZ_DATA } from '../data/ragQuestions.js';
 import StudentDetailModal from './StudentDetailModal';
 
 export default function TeacherDashboard({ 
-  quizId, 
+  quizId: initialQuizId, 
   onSwitchToStudent,
   teacherPasscode,
   setTeacherPasscode,
@@ -56,43 +63,79 @@ export default function TeacherDashboard({
   const [passcodeError, setPasscodeError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Active session PIN state
+  const [activeSessionPin, setActiveSessionPin] = useState(initialQuizId || 'rag-mastery-2025');
+  const [availableSessions, setAvailableSessions] = useState([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
   const [submissions, setSubmissions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('score-desc');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedPin, setCopiedPin] = useState(false);
   const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard' | 'item-analysis' | 'studio'
 
   // Quiz Studio Customization State
   const [quizConfig, setQuizConfig] = useState({
-    id: quizId,
+    id: activeSessionPin,
     title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
     description: 'Comprehensive 20-question evaluation on RAG architecture and paradigms.',
     timeLimitMinutes: 30,
     passingScore: 70,
+    gameMode: 'classic', // 'classic' | 'assessment'
+    perQuestionSeconds: 30,
     questions: []
   });
+
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(0);
   const [isSavingQuiz, setIsSavingQuiz] = useState(false);
+  const [isPublishingSession, setIsPublishingSession] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
-  // Load quiz configuration from cloud database
+  // Published Session Success Modal state
+  const [publishedSessionModal, setPublishedSessionModal] = useState(null); // { sessionPin, studentLink, gameMode, perQuestionSeconds, title }
+
+  // Load available sessions list
+  const loadSessionsList = async () => {
+    setIsLoadingSessions(true);
+    try {
+      const list = await fetchTeacherSessions();
+      setAvailableSessions(list);
+    } catch (err) {
+      console.error('Error loading sessions:', err);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadSessionsList();
+    }
+  }, [isAuthenticated]);
+
+  // Load quiz configuration when activeSessionPin changes
   useEffect(() => {
     async function loadConfig() {
-      const def = await getQuizDefinition(quizId);
+      const def = await getQuizDefinition(activeSessionPin);
       if (def) {
         setQuizConfig({
-          id: def.id || quizId,
+          id: def.id || activeSessionPin,
           title: def.title || 'Custom Quiz',
           description: def.description || '',
           timeLimitMinutes: def.timeLimitMinutes || 30,
           passingScore: def.passingScore || 70,
+          gameMode: def.gameMode || 'classic',
+          perQuestionSeconds: def.perQuestionSeconds || 30,
           questions: def.questions || []
         });
       }
     }
-    loadConfig();
-  }, [quizId]);
+    if (isAuthenticated) {
+      loadConfig();
+    }
+  }, [activeSessionPin, isAuthenticated]);
 
   // Verify Passcode with SHA-256 Hashing
   const handleVerifyPasscode = async (e) => {
@@ -108,18 +151,19 @@ export default function TeacherDashboard({
     }
 
     try {
-      const auth = await verifyInstructorPasscode(quizId, code);
+      const auth = await verifyInstructorPasscode(activeSessionPin, code);
       if (auth.valid) {
         setTeacherPasscode(code);
         setIsAuthenticated(true);
         sessionStorage.setItem('rag_instructor_passcode', code);
         sessionStorage.setItem('rag_instructor_passcode_hash', auth.hash);
         
-        // Fetch submissions
-        const res = await fetchTeacherSubmissions(quizId, code);
+        // Fetch submissions for this session
+        const res = await fetchTeacherSubmissions(activeSessionPin, code);
         if (res.success) {
           setSubmissions(res.data);
         }
+        loadSessionsList();
       } else {
         setPasscodeError('Invalid instructor passcode. Verification failed.');
       }
@@ -138,12 +182,12 @@ export default function TeacherDashboard({
     setSubmissions([]);
   };
 
-  // Real-time synchronization when authenticated
+  // Real-time synchronization for activeSessionPin
   useEffect(() => {
-    if (!isAuthenticated || !teacherPasscode) return;
+    if (!isAuthenticated || !teacherPasscode || !activeSessionPin) return;
 
     const unsubscribe = subscribeToTeacherData(
-      quizId,
+      activeSessionPin,
       teacherPasscode,
       (newSubmissions) => setSubmissions(newSubmissions)
     );
@@ -151,22 +195,67 @@ export default function TeacherDashboard({
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [quizId, isAuthenticated, teacherPasscode]);
+  }, [activeSessionPin, isAuthenticated, teacherPasscode]);
+
+  // Switch Active Session
+  const handleSwitchSession = async (newSessionPin) => {
+    setActiveSessionPin(newSessionPin);
+    setSubmissions([]);
+    const res = await fetchTeacherSubmissions(newSessionPin, teacherPasscode);
+    if (res.success) {
+      setSubmissions(res.data);
+    }
+  };
+
+  // Delete an old session
+  const handleDeleteSession = async (sessionPinToDelete) => {
+    if (sessionPinToDelete === 'rag-mastery-2025') {
+      alert('The default RAG master template session cannot be deleted.');
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete session "${sessionPinToDelete}" and all its student submissions?`)) {
+      return;
+    }
+
+    try {
+      await deleteTeacherSession(sessionPinToDelete, teacherPasscode);
+      await loadSessionsList();
+      if (activeSessionPin === sessionPinToDelete) {
+        handleSwitchSession('rag-mastery-2025');
+      }
+      alert(`Session ${sessionPinToDelete} deleted successfully.`);
+    } catch (err) {
+      alert(`Delete error: ${err.message}`);
+    }
+  };
+
+  // Student link generator for active session
+  const getStudentInviteLink = (pin = activeSessionPin) => {
+    const origin = window.location.origin;
+    return `${origin}/?pin=${encodeURIComponent(pin)}`;
+  };
 
   // Copy student join link
-  const handleCopyLink = () => {
-    const origin = window.location.origin + window.location.pathname.replace('/teacher', '');
-    const shareUrl = `${origin}?quiz=${encodeURIComponent(quizConfig.id)}`;
+  const handleCopyLink = (pin = activeSessionPin) => {
+    const shareUrl = getStudentInviteLink(pin);
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     });
   };
 
-  // CSV Export
+  // Copy PIN only
+  const handleCopyPin = (pin = activeSessionPin) => {
+    navigator.clipboard.writeText(pin).then(() => {
+      setCopiedPin(true);
+      setTimeout(() => setCopiedPin(false), 2500);
+    });
+  };
+
+  // CSV Export for activeSessionPin
   const handleExportCSV = () => {
     if (submissions.length === 0) {
-      alert('No student submissions yet to export.');
+      alert('No student submissions yet for this session to export.');
       return;
     }
 
@@ -217,7 +306,7 @@ export default function TeacherDashboard({
     const urlBlob = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = urlBlob;
-    link.download = `quiz_${quizConfig.id}_grades_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `session_${activeSessionPin}_grades_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(urlBlob);
   };
@@ -279,30 +368,34 @@ export default function TeacherDashboard({
   };
 
   const handleResetToRAGTemplate = () => {
-    if (!window.confirm('Reset quiz to the standard 20 RAG technical questions template?')) return;
-    setQuizConfig({
-      id: 'rag-mastery-2025',
+    if (!window.confirm('Reset quiz questions to the standard 20 RAG technical questions template?')) return;
+    setQuizConfig(prev => ({
+      ...prev,
       title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
       description: 'Comprehensive 20-question technical evaluation covering RAG architecture, vector search, chunking, reranking, and paradigms.',
       timeLimitMinutes: 30,
       passingScore: 70,
+      gameMode: prev.gameMode || 'classic',
+      perQuestionSeconds: prev.perQuestionSeconds || 30,
       questions: RAG_QUIZ_DATA.questions.map(q => ({
         ...q,
         type: 'single',
         points: 1000
       }))
-    });
+    }));
     setEditingQuestionIndex(0);
-    setSaveSuccessMsg('Loaded 20 RAG Questions Template. Click "Save & Publish" to update cloud.');
+    setSaveSuccessMsg('Loaded 20 RAG Questions Template.');
     setTimeout(() => setSaveSuccessMsg(''), 4000);
   };
 
+  // Save changes to current session
   const handleSaveQuizToCloud = async () => {
     setIsSavingQuiz(true);
     setSaveSuccessMsg('');
     try {
-      await saveQuizDefinition(quizConfig.id.trim(), quizConfig, teacherPasscode);
-      setSaveSuccessMsg(`Quiz "${quizConfig.id}" saved and published to cloud successfully!`);
+      await saveQuizDefinition(activeSessionPin, quizConfig, teacherPasscode);
+      setSaveSuccessMsg(`Session "${activeSessionPin}" updated in cloud successfully!`);
+      await loadSessionsList();
       setTimeout(() => setSaveSuccessMsg(''), 5000);
     } catch (err) {
       alert(`Save error: ${err.message}`);
@@ -311,7 +404,44 @@ export default function TeacherDashboard({
     }
   };
 
-  // Metrics
+  // PUBLISH BRAND NEW ISOLATED SESSION
+  const handlePublishNewSession = async () => {
+    setIsPublishingSession(true);
+    setSaveSuccessMsg('');
+    try {
+      const res = await publishQuizSession(quizConfig, teacherPasscode, {
+        gameMode: quizConfig.gameMode || 'classic',
+        perQuestionSeconds: quizConfig.perQuestionSeconds || 30
+      });
+
+      const newPin = res.sessionPin;
+      const origin = window.location.origin;
+      const directLink = `${origin}/?pin=${newPin}`;
+
+      // Refresh sessions list
+      await loadSessionsList();
+
+      // Switch active view to new session
+      setActiveSessionPin(newPin);
+      setSubmissions([]);
+
+      // Open launch success modal
+      setPublishedSessionModal({
+        sessionPin: newPin,
+        studentLink: directLink,
+        gameMode: quizConfig.gameMode || 'classic',
+        perQuestionSeconds: quizConfig.perQuestionSeconds || 30,
+        title: quizConfig.title,
+        totalQuestions: quizConfig.questions.length
+      });
+    } catch (err) {
+      alert(`Publish session error: ${err.message}`);
+    } finally {
+      setIsPublishingSession(false);
+    }
+  };
+
+  // Metrics for active session
   const totalSubmissions = submissions.length;
   const averageScore = totalSubmissions > 0
     ? Math.round(submissions.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / totalSubmissions)
@@ -339,7 +469,6 @@ export default function TeacherDashboard({
       return 0;
     });
 
-  // Current editing question
   const currentEditingQ = quizConfig.questions[editingQuestionIndex] || {};
 
   // IF NOT AUTHENTICATED: RENDER HASHED PASSCODE GATE
@@ -354,7 +483,7 @@ export default function TeacherDashboard({
           <div className="text-center mb-6">
             <h2 className="text-2xl font-extrabold text-white">Instructor Security Portal</h2>
             <p className="text-xs text-slate-400 mt-2">
-              Protected live view. Enter your instructor passcode to access real-time submissions, analytics, and the Kahoot Quiz Studio for: <strong className="text-emerald-400 font-mono">{quizId}</strong>
+              Protected session monitor. Enter your instructor passcode to access live analytics and the Quiz Studio.
             </p>
           </div>
 
@@ -410,30 +539,80 @@ export default function TeacherDashboard({
     );
   }
 
-  // AUTHENTICATED INSTRUCTOR DASHBOARD & KAHOOT STUDIO
+  // AUTHENTICATED INSTRUCTOR DASHBOARD
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
-      {/* Top Banner */}
+      {/* Top Banner with Session Switcher */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-emerald-400">Live Supabase Sync Active</span>
-            <span>•</span>
-            <span>60+ Students Simultaneous</span>
+        <div className="space-y-2 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span>Live Cloud Sync</span>
+              <span>•</span>
+              <span>60+ Students</span>
+            </div>
+
+            {/* Mode Indicator Badge */}
+            {quizConfig.gameMode === 'assessment' ? (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
+                <Zap className="w-3 h-3" />
+                <span>Assessment Mode ({quizConfig.perQuestionSeconds || 30}s / Q)</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                <span>Classical Mode ({quizConfig.timeLimitMinutes || 30} mins)</span>
+              </span>
+            )}
           </div>
+
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
             {quizConfig.title}
           </h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Active Quiz ID: <strong className="text-emerald-300 font-mono text-base">{quizConfig.id}</strong> • Total Questions: <strong className="text-white font-mono">{quizConfig.questions.length}</strong>
-          </p>
+
+          {/* Session Switcher Selector */}
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Session PIN:</span>
+              <select
+                value={activeSessionPin}
+                onChange={(e) => handleSwitchSession(e.target.value)}
+                className="bg-transparent text-emerald-300 font-mono font-bold text-sm focus:outline-none cursor-pointer"
+              >
+                {availableSessions.map((s) => (
+                  <option key={s.sessionPin} value={s.sessionPin} className="bg-slate-900 text-white font-mono">
+                    {s.sessionPin} — {s.title.slice(0, 24)} ({s.gameMode || 'classic'})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('studio')}
+              className="inline-flex items-center space-x-1 text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl font-bold transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create New Session</span>
+            </button>
+
+            {activeSessionPin !== 'rag-mastery-2025' && (
+              <button
+                type="button"
+                onClick={() => handleDeleteSession(activeSessionPin)}
+                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                title="Delete this session"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={handleCopyLink}
+            onClick={() => handleCopyLink(activeSessionPin)}
             className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 transition active:scale-95"
           >
             {copiedLink ? <Check className="w-4 h-4 text-emerald-200" /> : <Share2 className="w-4 h-4" />}
@@ -453,7 +632,7 @@ export default function TeacherDashboard({
             className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition"
           >
             <Lock className="w-4 h-4" />
-            <span>Lock Console</span>
+            <span>Lock</span>
           </button>
         </div>
       </div>
@@ -493,7 +672,7 @@ export default function TeacherDashboard({
           }`}
         >
           <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>Kahoot Quiz Studio (Customize Everything)</span>
+          <span>Kahoot Quiz Studio & Launch Session</span>
         </button>
       </div>
 
@@ -510,6 +689,9 @@ export default function TeacherDashboard({
               <div className="text-2xl sm:text-3xl font-extrabold text-white">
                 {totalSubmissions} <span className="text-xs text-slate-500 font-normal">/ 60 Target</span>
               </div>
+              <div className="text-[11px] text-slate-400 mt-1">
+                Session: <span className="font-mono text-emerald-300 font-bold">{activeSessionPin}</span>
+              </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
@@ -520,6 +702,7 @@ export default function TeacherDashboard({
               <div className="text-2xl sm:text-3xl font-extrabold text-teal-300">
                 {averageScore}%
               </div>
+              <div className="text-[11px] text-slate-400 mt-1">Across all questions</div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
@@ -530,109 +713,121 @@ export default function TeacherDashboard({
               <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
                 {passRate}%
               </div>
+              <div className="text-[11px] text-slate-400 mt-1">{passedCount} passed</div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
               <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-                <span>Top Score</span>
+                <span>Highest Score</span>
                 <Award className="w-4 h-4 text-amber-400" />
               </div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-amber-400">
-                {highestScore.toLocaleString()} <span className="text-xs text-slate-500 font-normal">pts</span>
+              <div className="text-2xl sm:text-3xl font-extrabold text-amber-300">
+                {highestScore.toLocaleString()}
               </div>
+              <div className="text-[11px] text-slate-400 mt-1">Top candidate</div>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 sm:p-6 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
-                  placeholder="Search student or ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
-                <label className="text-xs text-slate-400">Sort by:</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none"
-                >
-                  <option value="score-desc">Score: High to Low</option>
-                  <option value="score-asc">Score: Low to High</option>
-                  <option value="name-asc">Student Name: A-Z</option>
-                </select>
-              </div>
+          {/* Search & Filter Controls */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+              <input
+                type="text"
+                placeholder="Search candidate name or ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
             </div>
 
+            <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+              <span className="text-xs text-slate-400 font-semibold">Sort By:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none font-medium cursor-pointer"
+              >
+                <option value="score-desc">Score: High to Low</option>
+                <option value="score-asc">Score: Low to High</option>
+                <option value="name-asc">Student Name: A to Z</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Submissions Table */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                <thead className="bg-slate-950/80 text-slate-400 uppercase font-bold tracking-wider border-b border-slate-800">
                   <tr>
-                    <th className="py-3.5 px-4">#</th>
-                    <th className="py-3.5 px-4">Student</th>
-                    <th className="py-3.5 px-4">ID / Roll No.</th>
-                    <th className="py-3.5 px-4 text-center">Points Earned</th>
-                    <th className="py-3.5 px-4 text-center">Percentage</th>
-                    <th className="py-3.5 px-4 text-center">Status</th>
-                    <th className="py-3.5 px-4 text-center">Time</th>
-                    <th className="py-3.5 px-4 text-right">Review</th>
+                    <th className="py-3.5 px-4">Rank</th>
+                    <th className="py-3.5 px-4">Student Name</th>
+                    <th className="py-3.5 px-4">Student ID</th>
+                    <th className="py-3.5 px-4">Score</th>
+                    <th className="py-3.5 px-4">Percentage</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4">Time Taken</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-y divide-slate-800/60 font-medium">
                   {filteredSubmissions.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-slate-500">
-                        {searchTerm ? 'No matching submissions.' : 'Waiting for students to join and submit the quiz...'}
+                        {totalSubmissions === 0
+                          ? `No student submissions yet for Session PIN ${activeSessionPin}. Share the student invite link to start.`
+                          : 'No submissions match your search query.'}
                       </td>
                     </tr>
                   ) : (
-                    filteredSubmissions.map((sub, index) => (
-                      <tr key={sub.id || index} className="hover:bg-slate-800/40 transition">
-                        <td className="py-3.5 px-4 font-mono text-slate-500 font-bold">{index + 1}</td>
-                        <td className="py-3.5 px-4 font-semibold text-white">{sub.studentName}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-400">{sub.studentId || 'N/A'}</td>
-                        <td className="py-3.5 px-4 text-center font-bold text-white">
-                          <span className="px-2.5 py-1 rounded-lg bg-slate-800 font-mono text-emerald-400">
-                            {Number(sub.score).toLocaleString()} pts
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-center font-bold font-mono">
-                          <span className={sub.passed ? 'text-emerald-400' : 'text-red-400'}>
+                    filteredSubmissions.map((sub, idx) => {
+                      const mins = Math.floor((sub.timeTakenSeconds || 0) / 60);
+                      const secs = (sub.timeTakenSeconds || 0) % 60;
+                      const timeStr = `${mins}m ${secs}s`;
+
+                      return (
+                        <tr key={sub.id} className="hover:bg-slate-800/40 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-400">
+                            #{idx + 1}
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-white">
+                            {sub.studentName}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-400">
+                            {sub.studentId || 'N/A'}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-emerald-400">
+                            {sub.score?.toLocaleString()}
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-white">
                             {sub.percentage}%
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-center">
-                          {sub.passed ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              PASSED
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                              sub.passed 
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                            }`}>
+                              {sub.passed ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                              <span>{sub.passed ? 'PASSED' : 'FAILED'}</span>
                             </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                              FAILED
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-slate-400 font-mono">
-                          {Math.floor((sub.timeTakenSeconds || 0) / 60)}m {((sub.timeTakenSeconds || 0) % 60)}s
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => setSelectedStudent(sub)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition text-[11px] font-medium"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Details</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-400">
+                            {timeStr}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              onClick={() => setSelectedStudent(sub)}
+                              className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition text-xs font-semibold"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>View Answers</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -641,61 +836,60 @@ export default function TeacherDashboard({
         </div>
       )}
 
-      {/* TAB 2: ITEM ANALYSIS */}
+      {/* TAB 2: ITEM ANALYSIS HEATMAP */}
       {activeTab === 'item-analysis' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {quizConfig.questions.map((q, idx) => {
-              let correctCount = 0;
-              submissions.forEach(sub => {
-                if (Array.isArray(sub.breakdown)) {
-                  const item = sub.breakdown.find(b => String(b.questionId) === String(q.id));
-                  if (item && item.isCorrect) correctCount++;
-                }
-              });
-              const pct = totalSubmissions > 0 ? Math.round((correctCount / totalSubmissions) * 100) : 0;
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-white mb-1">
+              Question Difficulty & Accuracy Heatmap
+            </h3>
+            <p className="text-xs text-slate-400 mb-6">
+              Item response accuracy across {totalSubmissions} student submissions for Session <strong className="text-emerald-300 font-mono">{activeSessionPin}</strong>.
+            </p>
 
-              return (
-                <div key={q.id || idx} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono font-bold text-teal-400">Question #{idx + 1}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">
-                          {q.type?.toUpperCase()}
-                        </span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-300">
-                          {q.points || 1000} pts
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {quizConfig.questions.map((q, idx) => {
+                const totalAttempts = submissions.length;
+                let correctCount = 0;
+                submissions.forEach((s) => {
+                  const b = Array.isArray(s.breakdown) ? s.breakdown.find(item => item.questionId === q.id) : null;
+                  if (b && b.isCorrect) correctCount++;
+                });
+
+                const pct = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+
+                return (
+                  <div key={q.id || idx} className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-mono font-bold text-emerald-400">Q{idx + 1}</span>
+                      <span className="text-slate-400">{q.category || 'General'}</span>
+                    </div>
+                    <div className="text-xs text-white font-medium line-clamp-2">
+                      {q.question}
+                    </div>
+                    <div className="space-y-1 pt-1">
+                      <div className="flex justify-between text-[11px] text-slate-400">
+                        <span>Accuracy:</span>
+                        <span className={`font-bold ${pct >= 70 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
+                          {pct}% ({correctCount}/{totalAttempts})
                         </span>
                       </div>
-                    </div>
-                    <p className="text-xs font-semibold text-white mb-4 line-clamp-3 leading-relaxed">
-                      {q.question}
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-mono mb-1">
-                      <span className="text-slate-400">Accuracy</span>
-                      <span className={`font-bold ${pct >= 70 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
-                        {pct}% ({correctCount}/{totalSubmissions})
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
-                      <div 
-                        className={`h-full ${pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
+                        <div 
+                          className={`h-full ${pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
-      {/* TAB 3: KAHOOT QUIZ STUDIO (CUSTOMIZE EVERYTHING) */}
+      {/* TAB 3: KAHOOT QUIZ STUDIO & LAUNCH NEW SESSION */}
       {activeTab === 'studio' && (
         <div className="space-y-6">
           {/* Header Controls */}
@@ -706,7 +900,7 @@ export default function TeacherDashboard({
                 <span>Kahoot Quiz Studio</span>
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Customize questions, marks, question types (Multiple Choice, True/False, Multi-Select, Short Answer), timers, and passcodes.
+                Customize questions, marks, answer modes (Classical vs Assessment), timers, and publish new game sessions.
               </p>
             </div>
 
@@ -724,10 +918,20 @@ export default function TeacherDashboard({
                 type="button"
                 onClick={handleSaveQuizToCloud}
                 disabled={isSavingQuiz}
-                className="flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/25 transition disabled:opacity-50"
+                className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
-                <span>{isSavingQuiz ? 'Saving to Cloud...' : 'Save & Publish Quiz'}</span>
+                <Save className="w-4 h-4 text-teal-400" />
+                <span>{isSavingQuiz ? 'Saving...' : 'Update Current Session'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePublishNewSession}
+                disabled={isPublishingSession}
+                className="flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white shadow-lg shadow-emerald-500/25 transition active:scale-95 disabled:opacity-50"
+              >
+                <Zap className="w-4 h-4" />
+                <span>{isPublishingSession ? 'Generating Session...' : '🚀 Publish & Launch New Session'}</span>
               </button>
             </div>
           </div>
@@ -739,24 +943,112 @@ export default function TeacherDashboard({
             </div>
           )}
 
+          {/* GAME MODE SELECTION CARDS */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h3 className="text-sm uppercase font-bold text-slate-400 tracking-wider mb-4 flex items-center space-x-2">
+              <Layers className="w-4 h-4 text-emerald-400" />
+              <span>Quiz Answering Mode</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Card 1: Classical Mode */}
+              <div 
+                onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'classic' })}
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
+                  (quizConfig.gameMode || 'classic') === 'classic'
+                    ? 'bg-emerald-500/10 border-emerald-500 text-white shadow-xl shadow-emerald-500/10'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                        🎮
+                      </span>
+                      <h4 className="font-extrabold text-base text-white">Classical Mode</h4>
+                    </div>
+                    {(quizConfig.gameMode || 'classic') === 'classic' && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-extrabold">Active</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                    Displays question with options in 4 distinct Kahoot color boxes (🔺 Red Triangle, 🔷 Blue Diamond, 🟡 Yellow Circle, 🟩 Green Square). Overall exam timer with free navigation & question review before final submission.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300">Overall Exam Timer:</label>
+                  <select
+                    value={quizConfig.timeLimitMinutes || 30}
+                    onChange={(e) => setQuizConfig({ ...quizConfig, timeLimitMinutes: Number(e.target.value) })}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono"
+                  >
+                    <option value={10}>10 Minutes</option>
+                    <option value={15}>15 Minutes</option>
+                    <option value={20}>20 Minutes</option>
+                    <option value={30}>30 Minutes</option>
+                    <option value={45}>45 Minutes</option>
+                    <option value={60}>60 Minutes</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Card 2: Assessment Mode */}
+              <div 
+                onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'assessment' })}
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
+                  quizConfig.gameMode === 'assessment'
+                    ? 'bg-amber-500/10 border-amber-500 text-white shadow-xl shadow-amber-500/10'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                        ⚡
+                      </span>
+                      <h4 className="font-extrabold text-base text-white">Assessment Mode</h4>
+                    </div>
+                    {quizConfig.gameMode === 'assessment' && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-extrabold">Active</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                    Fast-paced timed countdown per question! Students answer within the countdown (e.g. 20s/30s). Answers are locked and saved instantly, automatically advancing to the next question with no going backwards.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300">Seconds Per Question:</label>
+                  <select
+                    value={quizConfig.perQuestionSeconds || 30}
+                    onChange={(e) => setQuizConfig({ ...quizConfig, perQuestionSeconds: Number(e.target.value) })}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold"
+                  >
+                    <option value={10}>10 Seconds (Speed)</option>
+                    <option value={15}>15 Seconds</option>
+                    <option value={20}>20 Seconds (Fast)</option>
+                    <option value={30}>30 Seconds (Kahoot Standard)</option>
+                    <option value={45}>45 Seconds</option>
+                    <option value={60}>60 Seconds (1 Min)</option>
+                    <option value={90}>90 Seconds</option>
+                    <option value={120}>120 Seconds (2 Min)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Quiz Global Settings */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
             <h3 className="text-sm uppercase font-bold text-slate-400 tracking-wider mb-4 flex items-center space-x-2">
               <Settings className="w-4 h-4 text-emerald-400" />
-              <span>Quiz Settings</span>
+              <span>General Session Information</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">Quiz ID (Join Code)</label>
-                <input
-                  type="text"
-                  value={quizConfig.id}
-                  onChange={(e) => setQuizConfig({ ...quizConfig, id: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">Quiz Title</label>
                 <input
@@ -767,34 +1059,32 @@ export default function TeacherDashboard({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">Timer (Mins)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="180"
-                    value={quizConfig.timeLimitMinutes}
-                    onChange={(e) => setQuizConfig({ ...quizConfig, timeLimitMinutes: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">Pass %</label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="100"
-                    value={quizConfig.passingScore}
-                    onChange={(e) => setQuizConfig({ ...quizConfig, passingScore: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">Description</label>
+                <input
+                  type="text"
+                  value={quizConfig.description || ''}
+                  onChange={(e) => setQuizConfig({ ...quizConfig, description: e.target.value })}
+                  placeholder="Short description for candidates..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">Passing Score %</label>
+                <input
+                  type="number"
+                  min="10"
+                  max="100"
+                  value={quizConfig.passingScore}
+                  onChange={(e) => setQuizConfig({ ...quizConfig, passingScore: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono"
+                />
               </div>
             </div>
           </div>
 
-          {/* Question Studio Workspace */}
+          {/* Questions Grid & Editor */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column: Questions List */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-h-[700px] overflow-y-auto">
@@ -1044,6 +1334,90 @@ export default function TeacherDashboard({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* SESSION PUBLISHED SUCCESS MODAL */}
+      {publishedSessionModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-8 shadow-2xl relative">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-slate-950 mb-6 mx-auto shadow-lg shadow-emerald-500/30">
+              <Sparkles className="w-8 h-8" />
+            </div>
+
+            <h3 className="text-2xl font-extrabold text-white text-center mb-1">
+              Quiz Session Launched! 🎉
+            </h3>
+            <p className="text-xs text-slate-400 text-center mb-6">
+              Your session is live in Supabase. Share this Game PIN or direct link with students.
+            </p>
+
+            {/* BIG KAHOOT-STYLE PIN DISPLAY */}
+            <div className="bg-slate-950 border border-emerald-500/40 rounded-2xl p-6 text-center mb-6 shadow-inner relative overflow-hidden">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">
+                GAME / SESSION PIN
+              </span>
+              <div className="text-4xl sm:text-5xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-wider">
+                {publishedSessionModal.sessionPin}
+              </div>
+              <div className="mt-3 flex items-center justify-center space-x-2">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold">
+                  Mode: {publishedSessionModal.gameMode === 'assessment' ? `⚡ Assessment (${publishedSessionModal.perQuestionSeconds}s/Q)` : '🎮 Classical'}
+                </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold">
+                  {publishedSessionModal.totalQuestions} Questions
+                </span>
+              </div>
+            </div>
+
+            {/* Direct Student Link Box */}
+            <div className="space-y-2 mb-6">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Direct Student Link
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={publishedSessionModal.studentLink}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-emerald-300 text-xs font-mono select-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCopyLink(publishedSessionModal.sessionPin)}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center space-x-1"
+                >
+                  {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedLink ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(publishedSessionModal.studentLink, '_blank');
+                }}
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center justify-center space-x-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Test Student View</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPublishedSessionModal(null);
+                  setActiveTab('leaderboard');
+                }}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-2"
+              >
+                <span>Live Analytics →</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

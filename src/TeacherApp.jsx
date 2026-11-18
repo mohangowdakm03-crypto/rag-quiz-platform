@@ -58,7 +58,7 @@ export default function TeacherApp() {
           </div>
 
           <div className="text-xs text-slate-400 font-mono">
-            Quiz ID: <span className="text-teal-300 font-bold">{quizId}</span>
+            Teacher Admin Portal
           </div>
         </div>
       </header>

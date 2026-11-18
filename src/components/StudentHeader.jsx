@@ -6,7 +6,7 @@ export default function StudentHeader({ quizId }) {
 
   const handleCopyLink = () => {
     const origin = window.location.origin + window.location.pathname;
-    const shareUrl = `${origin}?quiz=${encodeURIComponent(quizId)}`;
+    const shareUrl = `${origin}?pin=${encodeURIComponent(quizId)}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);

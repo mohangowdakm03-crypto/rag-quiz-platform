@@ -145,16 +145,19 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                    Quiz ID <span className="text-emerald-400">*</span>
+                    Game PIN / Quiz ID <span className="text-emerald-400">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="rag-mastery-2025"
+                    placeholder="e.g. 849201 or rag-mastery-2025"
                     value={quizId}
                     onChange={(e) => setQuizId(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition text-sm font-mono"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition text-sm font-mono tracking-wide"
                   />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Enter the 6-digit Session PIN or Quiz ID provided by your instructor.
+                  </p>
                 </div>
               </div>
 

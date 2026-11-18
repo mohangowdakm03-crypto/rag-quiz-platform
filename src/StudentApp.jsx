@@ -14,13 +14,13 @@ export default function StudentApp() {
   const [quizData, setQuizData] = useState(STUDENT_QUIZ_DATA);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
 
-  // Parse URL query params on load (e.g. ?quiz=rag-mastery-2025)
+  // Parse URL query params on load (e.g. ?pin=849201 or ?quiz=rag-mastery-2025)
   useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const urlQuiz = urlParams.get('quiz');
-      if (urlQuiz) {
-        setQuizId(urlQuiz);
+      const urlPin = urlParams.get('pin') || urlParams.get('quiz');
+      if (urlPin) {
+        setQuizId(urlPin.trim());
       }
     } catch (e) {
       console.warn('URL parsing error:', e);
@@ -30,6 +30,7 @@ export default function StudentApp() {
   // Fetch dynamic customized quiz from cloud database
   useEffect(() => {
     async function loadQuizFromCloud() {
+      if (!quizId) return;
       setIsLoadingQuiz(true);
       try {
         const cloudQuiz = await getStudentQuizDefinition(quizId);
@@ -46,10 +47,29 @@ export default function StudentApp() {
     loadQuizFromCloud();
   }, [quizId]);
 
-  const handleStartQuiz = (data) => {
-    setSessionData(data);
-    setQuizId(data.quizId);
-    setQuizState('taking');
+  const handleStartQuiz = async (data) => {
+    setIsLoadingQuiz(true);
+    try {
+      const targetId = (data.quizId || quizId).trim();
+      const cloudQuiz = await getStudentQuizDefinition(targetId);
+      if (cloudQuiz && cloudQuiz.questions && cloudQuiz.questions.length > 0) {
+        setQuizData(cloudQuiz);
+        setSessionData({
+          ...data,
+          quizId: targetId,
+          gameMode: cloudQuiz.gameMode || 'classic',
+          perQuestionSeconds: cloudQuiz.perQuestionSeconds || 30
+        });
+        setQuizId(targetId);
+        setQuizState('taking');
+      } else {
+        alert(`Quiz Session with PIN "${targetId}" not found. Please verify the PIN with your instructor.`);
+      }
+    } catch (err) {
+      alert(`Could not load session "${data.quizId}": ${err.message}`);
+    } finally {
+      setIsLoadingQuiz(false);
+    }
   };
 
   const handleCompleteQuiz = (submissionResults) => {
