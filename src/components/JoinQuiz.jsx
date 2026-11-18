@@ -126,7 +126,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
                   type="text"
                   required
                   autoFocus
-                  placeholder="e.g. 849201"
+                  placeholder=""
                   value={quizId}
                   onChange={(e) => setQuizId(e.target.value)}
                   className="w-full text-center text-2xl sm:text-3xl font-mono font-black py-3 px-4 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500 transition tracking-widest uppercase shadow-md"
@@ -145,7 +145,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 1MS21CS042 or 2025-CS-101"
+                  placeholder=""
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition text-sm font-mono tracking-wide"
@@ -164,7 +164,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Alex Johnson"
+                  placeholder=""
                   value={studentName}
                   onChange={(e) => setStudentName(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition text-sm"

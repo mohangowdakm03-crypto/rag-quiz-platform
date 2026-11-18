@@ -283,7 +283,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
             <input
               type="text"
               required
-              placeholder="e.g. Retrieval-Augmented Generation (RAG) Mastery Exam"
+              placeholder=""
               value={quizConfig.title}
               onChange={(e) => setQuizConfig({ ...quizConfig, title: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -527,7 +527,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
               </label>
               <textarea
                 rows={3}
-                placeholder="Type your question prompt here..."
+                placeholder=""
                 value={currentQ.question || ''}
                 onChange={(e) => handleUpdateCurrentQ('question', e.target.value)}
                 className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed placeholder-slate-600"
@@ -574,7 +574,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
                         <input
                           type="text"
-                          placeholder={`Option ${optIdx + 1}...`}
+                          placeholder=""
                           value={opt || ''}
                           onChange={(e) => handleUpdateOption(optIdx, e.target.value)}
                           className="flex-1 bg-transparent text-white text-xs sm:text-sm focus:outline-none placeholder-slate-600 font-medium"
@@ -625,7 +625,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Retrieval Augmented Generation"
+                  placeholder=""
                   value={currentQ.correctAnswer || ''}
                   onChange={(e) => handleUpdateCurrentQ('correctAnswer', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono placeholder-slate-600"
@@ -640,7 +640,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
               </label>
               <textarea
                 rows={2}
-                placeholder="Optional explanation of the correct answer..."
+                placeholder=""
                 value={currentQ.explanation || ''}
                 onChange={(e) => handleUpdateCurrentQ('explanation', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed placeholder-slate-600"

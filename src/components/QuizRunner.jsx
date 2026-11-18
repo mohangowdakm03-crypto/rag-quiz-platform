@@ -628,7 +628,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                 <input
                   type="text"
                   disabled={isAnswerLocked}
-                  placeholder="Type your answer here..."
+                  placeholder=""
                   value={selectedAnswers[currentQ.id] || ''}
                   onChange={(e) => handleTextAnswer(currentQ.id, e.target.value)}
                   className="w-full px-5 py-4 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium"

@@ -1065,7 +1065,7 @@ export default function TeacherDashboard({
                   type="text"
                   value={quizConfig.description || ''}
                   onChange={(e) => setQuizConfig({ ...quizConfig, description: e.target.value })}
-                  placeholder="Short description for candidates..."
+                  placeholder=""
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
@@ -1215,7 +1215,7 @@ export default function TeacherDashboard({
                     rows={3}
                     value={currentEditingQ.question || ''}
                     onChange={(e) => handleUpdateCurrentQuestion('question', e.target.value)}
-                    placeholder="Enter question prompt..."
+                    placeholder=""
                     className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed"
                   />
                 </div>
@@ -1315,7 +1315,7 @@ export default function TeacherDashboard({
                       type="text"
                       value={currentEditingQ.correctAnswer || ''}
                       onChange={(e) => handleUpdateCurrentQuestion('correctAnswer', e.target.value)}
-                      placeholder="e.g. Retrieval Augmented Generation"
+                      placeholder=""
                       className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono"
                     />
                   </div>
@@ -1328,7 +1328,7 @@ export default function TeacherDashboard({
                     rows={2}
                     value={currentEditingQ.explanation || ''}
                     onChange={(e) => handleUpdateCurrentQuestion('explanation', e.target.value)}
-                    placeholder="Enter explanation shown to candidates after exam completion..."
+                    placeholder=""
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed"
                   />
                 </div>
