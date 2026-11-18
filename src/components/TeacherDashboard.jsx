@@ -14,22 +14,26 @@ import {
   BarChart3, 
   Eye, 
   Radio,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Database,
+  ExternalLink
 } from 'lucide-react';
-import { subscribeToSubmissions, subscribeToParticipants } from '../firebase';
+import { subscribeToSubmissions, subscribeToParticipants, getSupabaseConfig } from '../supabase';
 import { RAG_QUIZ_DATA } from '../data/ragQuestions';
 import StudentDetailModal from './StudentDetailModal';
 
-export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
+export default function TeacherDashboard({ quizId, onSwitchToStudent, onOpenDbModal }) {
   const [submissions, setSubmissions] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('score-desc'); // 'score-desc', 'score-asc', 'time-desc', 'name-asc'
+  const [sortBy, setSortBy] = useState('score-desc');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard', 'item-analysis'
+  const [activeTab, setActiveTab] = useState('leaderboard');
 
-  // Real-time Firestore subscription
+  const { isConfigured, url } = getSupabaseConfig();
+
+  // Real-time Supabase subscription
   useEffect(() => {
     const unsubSubmissions = subscribeToSubmissions(quizId, (data) => {
       setSubmissions(data);
@@ -74,14 +78,13 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
       'Submitted At'
     ];
 
-    // Add Q1 to Q20 headers
     for (let i = 1; i <= RAG_QUIZ_DATA.questions.length; i++) {
       headers.push(`Q${i}_Correct`);
     }
 
     const rows = submissions.map((sub, index) => {
-      const dateStr = sub.submittedAt?.toDate 
-        ? sub.submittedAt.toDate().toLocaleString() 
+      const dateStr = sub.submittedAt 
+        ? new Date(sub.submittedAt).toLocaleString() 
         : 'Recent';
 
       const row = [
@@ -96,7 +99,6 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
         `"${dateStr}"`
       ];
 
-      // Question breakdown
       if (Array.isArray(sub.breakdown)) {
         sub.breakdown.forEach((b) => {
           row.push(b.isCorrect ? '1' : '0');
@@ -108,12 +110,12 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const urlBlob = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `rag_quiz_${quizId}_results_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.href = urlBlob;
+    link.download = `rag_quiz_${quizId}_supabase_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(urlBlob);
   };
 
   // Computed metrics
@@ -173,27 +175,35 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
       {/* Top Banner: Quiz ID & Sharing */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-emerald-400">Live Cloud Session</span>
+            <span className="text-emerald-400">Live Supabase Sync</span>
             <span>•</span>
-            <span>Target: 60 Students Concurrent</span>
+            <span>60+ Students Simultaneous</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
             Instructor Control & Live Analytics
           </h1>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Quiz ID: <strong className="text-blue-300 font-mono text-base">{quizId}</strong>
+            Active Quiz ID: <strong className="text-emerald-300 font-mono text-base">{quizId}</strong>
           </p>
         </div>
 
         {/* Buttons */}
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={handleCopyLink}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition active:scale-95"
+            onClick={onOpenDbModal}
+            className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
           >
-            {copiedLink ? <Check className="w-4 h-4 text-emerald-300" /> : <Share2 className="w-4 h-4" />}
+            <Database className="w-4 h-4 text-emerald-400" />
+            <span>{isConfigured ? 'Supabase Settings' : 'Connect Supabase'}</span>
+          </button>
+
+          <button
+            onClick={handleCopyLink}
+            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 transition active:scale-95"
+          >
+            {copiedLink ? <Check className="w-4 h-4 text-emerald-200" /> : <Share2 className="w-4 h-4" />}
             <span>{copiedLink ? 'Link Copied to Clipboard!' : 'Copy Student Invite Link'}</span>
           </button>
 
@@ -214,31 +224,50 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
         </div>
       </div>
 
+      {/* Database Warning if not yet configured */}
+      {!isConfigured && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 text-xs">
+          <div className="flex items-center space-x-3 text-amber-300">
+            <Database className="w-5 h-5 shrink-0 text-amber-400" />
+            <div>
+              <strong className="text-white block font-semibold">Supabase is not yet connected to your project URL.</strong>
+              <span>Submissions are currently being stored in browser session storage. Click to connect your Supabase project in 30 seconds.</span>
+            </div>
+          </div>
+          <button
+            onClick={onOpenDbModal}
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition shrink-0"
+          >
+            Connect Supabase Now
+          </button>
+        </div>
+      )}
+
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
           <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
             <span>Submissions</span>
-            <Users className="w-4 h-4 text-blue-400" />
+            <Users className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold text-white">
-            {totalSubmissions} <span className="text-xs text-slate-500 font-normal">/ 60 Goal</span>
+            {totalSubmissions} <span className="text-xs text-slate-500 font-normal">/ 60 Target</span>
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {participants.length} students currently in room
+            {participants.length} students joined session
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
           <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
             <span>Class Average</span>
-            <TrendingUp className="w-4 h-4 text-indigo-400" />
+            <TrendingUp className="w-4 h-4 text-teal-400" />
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-indigo-300">
+          <div className="text-2xl sm:text-3xl font-extrabold text-teal-300">
             {averageScore}%
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            Across all 20 questions
+            Across 20 technical questions
           </div>
         </div>
 
@@ -264,21 +293,21 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
             {highestScore} <span className="text-xs text-slate-500 font-normal">/ 20</span>
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {highestScore > 0 ? `${Math.round((highestScore / 20) * 100)}% Max Score` : 'No data'}
+            {highestScore > 0 ? `${Math.round((highestScore / 20) * 100)}% Top Score` : 'No submissions'}
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-            <span>Database Status</span>
-            <Radio className="w-4 h-4 text-emerald-400" />
+            <span>Backend Engine</span>
+            <Database className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-sm font-bold text-emerald-400 flex items-center space-x-1.5 mt-1">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Firestore Live</span>
+            <span>Supabase PG</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-mono">
-            Concurrent writes enabled
+          <div className="text-[11px] text-slate-400 mt-1 font-mono truncate">
+            {isConfigured ? 'Realtime WebSocket' : 'Local Storage Mode'}
           </div>
         </div>
       </div>
@@ -289,7 +318,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
             activeTab === 'leaderboard'
-              ? 'bg-blue-600 text-white shadow-md'
+              ? 'bg-emerald-600 text-white shadow-md'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -301,7 +330,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
           onClick={() => setActiveTab('item-analysis')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
             activeTab === 'item-analysis'
-              ? 'bg-indigo-600 text-white shadow-md'
+              ? 'bg-teal-600 text-white shadow-md'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -322,7 +351,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
                 placeholder="Search candidate name or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
@@ -399,7 +428,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
                           <button
                             type="button"
                             onClick={() => setSelectedStudent(sub)}
-                            className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white transition text-[11px] font-semibold"
+                            className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white transition text-[11px] font-semibold"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>View Answers</span>
@@ -416,7 +445,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
                           <Users className="w-8 h-8 text-slate-600 animate-pulse" />
                           <p className="text-sm font-semibold text-slate-400">Waiting for students to join and submit...</p>
                           <p className="text-xs text-slate-500 max-w-sm">
-                            Share the Quiz ID <span className="font-mono text-blue-400">{quizId}</span> or copy the invite link above.
+                            Share the Quiz ID <span className="font-mono text-emerald-400">{quizId}</span> or copy the invite link above.
                           </p>
                         </div>
                       ) : (
@@ -437,7 +466,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
           <div className="mb-6">
             <h2 className="text-lg font-bold text-white">Classroom Question Performance Heatmap</h2>
             <p className="text-xs text-slate-400">
-              Identify which RAG topics had the highest error rate to focus post-quiz lecture review.
+              Identify which RAG topics had the highest error rate across all students to guide post-quiz review.
             </p>
           </div>
 
@@ -454,7 +483,7 @@ export default function TeacherDashboard({ quizId, onSwitchToStudent }) {
                 >
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-mono font-bold text-blue-400 text-xs">
+                      <span className="font-mono font-bold text-emerald-400 text-xs">
                         Q{item.id}
                       </span>
                       <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-300">

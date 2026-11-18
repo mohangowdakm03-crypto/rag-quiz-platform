@@ -11,7 +11,7 @@ import {
   Bookmark,
   Check
 } from 'lucide-react';
-import { submitStudentQuiz } from '../firebase';
+import { submitStudentQuiz } from '../supabase';
 
 export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
   const { studentName, studentId, quizId } = sessionData;
@@ -114,7 +114,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
     };
 
     try {
-      // Write to Firestore database
+      // Write to Supabase database
       await submitStudentQuiz(quizId, submissionPayload);
       
       // Clean draft
@@ -127,11 +127,8 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
       onCompleteQuiz(submissionPayload);
     } catch (err) {
       console.error('Submission failed:', err);
-      setSubmitError('Failed to save to database. Retrying... (Your answers are preserved locally).');
-      // Still show results so student does not get locked out
-      setTimeout(() => {
-        onCompleteQuiz(submissionPayload);
-      }, 1500);
+      // Even if network fails, allow candidate to see results and save draft
+      onCompleteQuiz(submissionPayload);
     } finally {
       setIsSubmitting(false);
     }
@@ -233,11 +230,11 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
         <div className="flex-1 max-w-xs hidden md:block">
           <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
             <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-            <span className="text-blue-400">{answeredCount}/{questions.length} Answered</span>
+            <span className="text-emerald-400">{answeredCount}/{questions.length} Answered</span>
           </div>
           <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-300 rounded-full"
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full transition-all duration-300 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -249,7 +246,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             ? 'bg-red-500/10 text-red-400 border border-red-500/30 animate-pulse' 
             : timeLeft <= 600
             ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-            : 'bg-slate-800 text-blue-400 border border-slate-700'
+            : 'bg-slate-800 text-emerald-400 border border-slate-700'
         }`}>
           <Clock className="w-4 h-4" />
           <span>{formatTimer(timeLeft)}</span>
@@ -264,12 +261,12 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             {/* Header: Category, Difficulty & Flag */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
               <div className="flex items-center space-x-2">
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   {currentQ.category}
                 </span>
                 <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
                   currentQ.difficulty === 'Fundamental'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                     : currentQ.difficulty === 'Intermediate'
                     ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                     : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
@@ -295,7 +292,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
 
             {/* Question Text */}
             <div className="mb-8">
-              <div className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">
+              <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">
                 Question {currentQuestionIndex + 1} of {questions.length}
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-white leading-relaxed">
@@ -316,13 +313,13 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                     onClick={() => selectOption(currentQ.id, idx)}
                     className={`w-full text-left p-4 rounded-xl border transition-all flex items-start space-x-3.5 group ${
                       isSelected
-                        ? 'bg-blue-600/15 border-blue-500 text-white shadow-lg shadow-blue-500/10'
+                        ? 'bg-emerald-600/15 border-emerald-500 text-white shadow-lg shadow-emerald-500/10'
                         : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:bg-slate-800/60 hover:border-slate-700'
                     }`}
                   >
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-colors ${
                       isSelected
-                        ? 'bg-blue-500 text-white shadow-md'
+                        ? 'bg-emerald-500 text-white shadow-md'
                         : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700 group-hover:text-white'
                     }`}>
                       {optionLetter}
@@ -353,7 +350,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                 <button
                   type="button"
                   onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                  className="flex items-center space-x-1 px-5 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition"
+                  className="flex items-center space-x-1 px-5 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 transition"
                 >
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
@@ -377,7 +374,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl sticky top-24">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
               <span>Question Palette</span>
-              <span className="text-[10px] font-mono text-blue-400">{answeredCount}/{questions.length}</span>
+              <span className="text-[10px] font-mono text-emerald-400">{answeredCount}/{questions.length}</span>
             </h4>
 
             {/* Grid of 20 questions */}
@@ -394,7 +391,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                     onClick={() => setCurrentQuestionIndex(idx)}
                     className={`h-9 rounded-lg font-mono text-xs font-bold relative transition-all ${
                       isCurrent
-                        ? 'ring-2 ring-blue-400 bg-blue-600 text-white'
+                        ? 'ring-2 ring-emerald-400 bg-emerald-600 text-white'
                         : isAnswered
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
                         : 'bg-slate-950 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-white'
@@ -444,7 +441,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl fade-in">
             <h3 className="text-xl font-bold text-white mb-2">Ready to Submit?</h3>
             <p className="text-slate-400 text-xs sm:text-sm mb-6">
-              Review your attempt status below. Once submitted, your answers will be permanently saved to the instructor's database.
+              Review your attempt status below. Once submitted, your answers will be securely recorded in the Supabase database.
             </p>
 
             <div className="bg-slate-950 rounded-xl p-4 border border-slate-800/80 space-y-2.5 mb-6 text-xs">
@@ -479,7 +476,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
               )}
               <div className="flex justify-between items-center pt-2 border-t border-slate-800">
                 <span className="text-slate-400">Time Remaining:</span>
-                <span className="font-mono font-bold text-blue-400">{formatTimer(timeLeft)}</span>
+                <span className="font-mono font-bold text-emerald-400">{formatTimer(timeLeft)}</span>
               </div>
             </div>
 

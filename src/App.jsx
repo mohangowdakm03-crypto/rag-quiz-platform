@@ -4,6 +4,7 @@ import JoinQuiz from './components/JoinQuiz';
 import QuizRunner from './components/QuizRunner';
 import QuizResults from './components/QuizResults';
 import TeacherDashboard from './components/TeacherDashboard';
+import SupabaseConfigModal from './components/SupabaseConfigModal';
 import { RAG_QUIZ_DATA } from './data/ragQuestions';
 
 export default function App() {
@@ -12,6 +13,8 @@ export default function App() {
   const [quizState, setQuizState] = useState('join'); // 'join' | 'taking' | 'completed'
   const [sessionData, setSessionData] = useState(null);
   const [results, setResults] = useState(null);
+  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
+  const [, setDbVersion] = useState(0); // Force re-render on DB config change
 
   // Parse URL query params on load (e.g. ?quiz=rag-mastery-2025&mode=teacher)
   useEffect(() => {
@@ -47,13 +50,18 @@ export default function App() {
     setResults(null);
   };
 
+  const handleDbSaved = () => {
+    setDbVersion((v) => v + 1);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-600 selection:text-white">
       {/* Top Navigation */}
       <Header 
         currentMode={mode} 
         setMode={setMode} 
         quizId={quizId} 
+        onOpenDbModal={() => setIsDbModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -62,6 +70,7 @@ export default function App() {
           <TeacherDashboard 
             quizId={quizId}
             onSwitchToStudent={() => setMode('student')}
+            onOpenDbModal={() => setIsDbModalOpen(true)}
           />
         ) : (
           <>
@@ -70,6 +79,7 @@ export default function App() {
                 defaultQuizId={quizId}
                 onStartQuiz={handleStartQuiz}
                 onSwitchToTeacher={() => setMode('teacher')}
+                onOpenDbModal={() => setIsDbModalOpen(true)}
               />
             )}
 
@@ -92,14 +102,22 @@ export default function App() {
         )}
       </main>
 
+      {/* Supabase Connection Modal */}
+      <SupabaseConfigModal
+        isOpen={isDbModalOpen}
+        onClose={() => setIsDbModalOpen(false)}
+        onConfigSaved={handleDbSaved}
+      />
+
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
             RAG Master Assessment Platform • Real-time Cloud Sync for 60+ Concurrent Students
           </div>
-          <div className="font-mono text-slate-600 text-[11px]">
-            Powered by Google Cloud Firestore & React
+          <div className="font-mono text-slate-500 text-[11px] flex items-center space-x-1">
+            <span>Backed by</span>
+            <span className="text-emerald-400 font-semibold">Supabase PostgreSQL</span>
           </div>
         </div>
       </footer>
