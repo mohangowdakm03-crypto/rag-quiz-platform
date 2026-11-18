@@ -169,7 +169,7 @@ export default function TeacherApp() {
 
   const handleDeleteSession = async (pin) => {
     if (pin === 'rag-mastery-2025') {
-      alert('The default RAG master template session cannot be deleted.');
+      alert('The default template session cannot be deleted.');
       return;
     }
     if (!window.confirm(`Are you sure you want to delete session "${pin}" and all its student submissions?`)) {
@@ -270,7 +270,7 @@ export default function TeacherApp() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-teal-300 bg-clip-text text-transparent">
-                  RAG Master
+                  Oxvane
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/30 flex items-center space-x-1">
                   <ShieldCheck className="w-3 h-3 inline" />
@@ -347,7 +347,7 @@ export default function TeacherApp() {
       </main>
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        RAG Master Platform • Multi-Session Architecture • Supabase Cloud PG
+        Oxvane Platform • Multi-Session Architecture • Supabase Cloud PG
       </footer>
     </div>
   );

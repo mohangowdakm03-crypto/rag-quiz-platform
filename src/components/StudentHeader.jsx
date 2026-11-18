@@ -26,13 +26,13 @@ export default function StudentHeader({ quizId }) {
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-300 bg-clip-text text-transparent">
-                RAG Master
+                Oxvane
               </span>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                 Exam Portal
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">Retrieval-Augmented Generation Evaluation</p>
+            <p className="text-xs text-slate-400 hidden sm:block">Academic Assessment & Examination Platform</p>
           </div>
         </div>
 

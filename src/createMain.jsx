@@ -130,7 +130,7 @@ function CreatePage() {
             </div>
             <div>
               <span className="font-extrabold text-lg tracking-tight text-white">
-                RAG Master • Quiz Creator
+                Oxvane • Quiz Creator
               </span>
               <p className="text-xs text-slate-400 hidden sm:block">Build and launch isolated sessions</p>
             </div>
@@ -158,7 +158,7 @@ function CreatePage() {
       </main>
 
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        RAG Master Platform • Quiz Creator
+        Oxvane Platform • Quiz Creator
       </footer>
     </div>
   );

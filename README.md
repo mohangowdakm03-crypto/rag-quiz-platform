@@ -1,6 +1,6 @@
-# 🚀 RAG Master Quiz Platform
+# 🏛️ Oxvane — Universal Assessment & Live Examination Platform
 
-An interactive, real-time assessment platform for **Retrieval-Augmented Generation (RAG)** built with **React**, **Vite**, **Tailwind CSS**, and **Google Cloud Firestore**.
+An aesthetic, high-performance, real-time assessment platform built with **React**, **Vite**, **Tailwind CSS**, and **Supabase Realtime PostgreSQL**.
 
 Designed for university classes, AI bootcamps, and study groups to host live synchronized exams with 60+ concurrent students.
 

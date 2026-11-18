@@ -210,7 +210,7 @@ export default function TeacherDashboard({
   // Delete an old session
   const handleDeleteSession = async (sessionPinToDelete) => {
     if (sessionPinToDelete === 'rag-mastery-2025') {
-      alert('The default RAG master template session cannot be deleted.');
+      alert('The default template session cannot be deleted.');
       return;
     }
     if (!window.confirm(`Are you sure you want to delete session "${sessionPinToDelete}" and all its student submissions?`)) {
