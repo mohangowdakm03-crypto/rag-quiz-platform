@@ -36,6 +36,14 @@
     ],
     "rewrites": [
       {
+        "source": "/teacher/**",
+        "destination": "/teacher.html"
+      },
+      {
+        "source": "/teacher",
+        "destination": "/teacher.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
