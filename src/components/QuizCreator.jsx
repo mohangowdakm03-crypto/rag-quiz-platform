@@ -16,30 +16,74 @@ import {
   ExternalLink,
   ShieldCheck
 } from 'lucide-react';
-import { publishQuizSession } from '../supabase';
+import { publishQuizSession, saveQuizDefinition } from '../supabase';
 import { RAG_QUIZ_DATA } from '../data/ragQuestions';
 
-export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPasscode }) {
-  const [quizConfig, setQuizConfig] = useState({
-    title: '',
-    description: '',
-    timeLimitMinutes: 30,
-    passingScore: 70,
-    gameMode: 'classic', // 'classic' | 'assessment'
-    perQuestionSeconds: 30,
-    questions: [
-      {
-        id: 1,
-        type: 'single',
-        category: 'General',
-        difficulty: 'Intermediate',
-        points: 1000,
-        question: '',
-        options: ['', '', '', ''],
-        correctAnswer: 0,
-        explanation: ''
-      }
-    ]
+export default function QuizCreator({ 
+  onBackToHub, 
+  onSessionCreated, 
+  onSessionUpdated, 
+  teacherPasscode,
+  creatorMode = 'create', // 'create' | 'edit' | 'duplicate'
+  editingSessionPin = null,
+  initialQuizConfig = null
+}) {
+  const [quizConfig, setQuizConfig] = useState(() => {
+    if (initialQuizConfig) {
+      return {
+        title: initialQuizConfig.title || '',
+        description: initialQuizConfig.description || '',
+        timeLimitMinutes: initialQuizConfig.timeLimitMinutes || 30,
+        passingScore: initialQuizConfig.passingScore || 70,
+        gameMode: initialQuizConfig.gameMode || 'classic',
+        perQuestionSeconds: initialQuizConfig.perQuestionSeconds || 30,
+        questions: (initialQuizConfig.questions && initialQuizConfig.questions.length > 0)
+          ? initialQuizConfig.questions.map((q, idx) => ({
+              ...q,
+              id: idx + 1,
+              type: q.type || 'single',
+              points: q.points || 1000,
+              question: q.question || '',
+              options: q.options || ['', '', '', ''],
+              correctAnswer: q.correctAnswer ?? 0,
+              explanation: q.explanation || ''
+            }))
+          : [
+              {
+                id: 1,
+                type: 'single',
+                category: 'General',
+                difficulty: 'Intermediate',
+                points: 1000,
+                question: '',
+                options: ['', '', '', ''],
+                correctAnswer: 0,
+                explanation: ''
+              }
+            ]
+      };
+    }
+    return {
+      title: '',
+      description: '',
+      timeLimitMinutes: 30,
+      passingScore: 70,
+      gameMode: 'classic',
+      perQuestionSeconds: 30,
+      questions: [
+        {
+          id: 1,
+          type: 'single',
+          category: 'General',
+          difficulty: 'Intermediate',
+          points: 1000,
+          question: '',
+          options: ['', '', '', ''],
+          correctAnswer: 0,
+          explanation: ''
+        }
+      ]
+    };
   });
 
   const [editingIndex, setEditingIndex] = useState(0);
@@ -179,25 +223,37 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
     setIsPublishing(true);
 
     try {
-      const res = await publishQuizSession(quizConfig, teacherPasscode, {
-        gameMode: quizConfig.gameMode || 'classic',
-        perQuestionSeconds: quizConfig.perQuestionSeconds || 30
-      });
+      if (creatorMode === 'edit' && editingSessionPin) {
+        // Save updates to existing session without generating a new PIN
+        await saveQuizDefinition(editingSessionPin, quizConfig, teacherPasscode);
+        alert(`Session ${editingSessionPin} updated successfully!`);
+        if (onSessionUpdated) {
+          onSessionUpdated(editingSessionPin);
+        } else {
+          onBackToHub();
+        }
+      } else {
+        // Create brand-new session or duplicate
+        const res = await publishQuizSession(quizConfig, teacherPasscode, {
+          gameMode: quizConfig.gameMode || 'classic',
+          perQuestionSeconds: quizConfig.perQuestionSeconds || 30
+        });
 
-      const pin = res.sessionPin;
-      const origin = window.location.origin;
-      const studentLink = `${origin}/?pin=${pin}`;
+        const pin = res.sessionPin;
+        const origin = window.location.origin;
+        const studentLink = `${origin}/?pin=${pin}`;
 
-      setLaunchModal({
-        sessionPin: pin,
-        studentLink,
-        title: quizConfig.title,
-        gameMode: quizConfig.gameMode,
-        perQuestionSeconds: quizConfig.perQuestionSeconds,
-        totalQuestions: quizConfig.questions.length
-      });
+        setLaunchModal({
+          sessionPin: pin,
+          studentLink,
+          title: quizConfig.title,
+          gameMode: quizConfig.gameMode,
+          perQuestionSeconds: quizConfig.perQuestionSeconds,
+          totalQuestions: quizConfig.questions.length
+        });
+      }
     } catch (err) {
-      setErrorMsg(`Publishing failed: ${err.message}`);
+      setErrorMsg(`${creatorMode === 'edit' ? 'Saving' : 'Publishing'} failed: ${err.message}`);
     } finally {
       setIsPublishing(false);
     }
@@ -214,6 +270,29 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
+      {/* Top Banner for Edit / Duplicate Mode */}
+      {creatorMode === 'edit' && (
+        <div className="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-200 text-[#0071e3] text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <span className="font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 text-[#0071e3] text-[10px]">
+              Edit Mode
+            </span>
+            <span>Editing live session <strong>PIN: {editingSessionPin}</strong>. Changes will be saved directly to this session.</span>
+          </div>
+        </div>
+      )}
+
+      {creatorMode === 'duplicate' && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <span className="font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px]">
+              Duplicate Mode
+            </span>
+            <span>Cloned from existing session. Publishing will generate a brand-new 6-digit Game PIN.</span>
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <button
@@ -226,32 +305,40 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
         </button>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleLoadRAGTemplate}
-            className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-[#2997ff]" />
-            <span>Load 20 RAG Template</span>
-          </button>
+          {creatorMode !== 'edit' && (
+            <>
+              <button
+                type="button"
+                onClick={handleLoadRAGTemplate}
+                className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-[#2997ff]" />
+                <span>Load 20 RAG Template</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handleStartBlank}
-            className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
-          >
-            <FileText className="w-3.5 h-3.5 text-[#86868b]" />
-            <span>Start Blank Canvas</span>
-          </button>
+              <button
+                type="button"
+                onClick={handleStartBlank}
+                className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5 text-[#86868b]" />
+                <span>Start Blank Canvas</span>
+              </button>
+            </>
+          )}
 
           <button
             type="button"
             onClick={handlePublish}
             disabled={isPublishing}
-            className="apple-btn-primary flex items-center space-x-2 px-5 py-2 text-xs font-medium cursor-pointer disabled:opacity-50"
+            className="apple-btn-primary flex items-center space-x-2 px-5 py-2 text-xs font-medium cursor-pointer disabled:opacity-50 shadow-[0_2px_14px_rgba(0,113,227,0.4)]"
           >
             <Sparkles className="w-4 h-4" />
-            <span>{isPublishing ? 'Publishing Session...' : 'Publish & Launch Session'}</span>
+            <span>
+              {isPublishing 
+                ? (creatorMode === 'edit' ? 'Saving Changes...' : 'Publishing Session...') 
+                : (creatorMode === 'edit' ? 'Save Changes' : (creatorMode === 'duplicate' ? 'Publish Cloned Session' : 'Publish & Launch Session'))}
+            </span>
           </button>
         </div>
       </div>

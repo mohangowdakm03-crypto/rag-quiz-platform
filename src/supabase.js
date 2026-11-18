@@ -319,46 +319,29 @@ export async function fetchTeacherSessions() {
       if (s.passed) statsMap[s.quiz_id].passedCount++;
     });
 
-    const sessions = (data || []).map(row => {
-      const ans = row.answers || {};
-      const stat = statsMap[row.quiz_id] || { count: 0, totalPct: 0, passedCount: 0 };
-      const avg = stat.count > 0 ? Math.round(stat.totalPct / stat.count) : 0;
-      const passPct = stat.count > 0 ? Math.round((stat.passedCount / stat.count) * 100) : 0;
+    const sessions = (data || [])
+      .filter(row => row.quiz_id !== 'rag-mastery-2025' && row.quiz_id !== '202500')
+      .map(row => {
+        const ans = row.answers || {};
+        const stat = statsMap[row.quiz_id] || { count: 0, totalPct: 0, passedCount: 0 };
+        const avg = stat.count > 0 ? Math.round(stat.totalPct / stat.count) : 0;
+        const passPct = stat.count > 0 ? Math.round((stat.passedCount / stat.count) * 100) : 0;
 
-      return {
-        sessionPin: row.quiz_id,
-        title: ans.title || 'Quiz Session',
-        description: ans.description || '',
-        gameMode: ans.gameMode || 'classic',
-        perQuestionSeconds: ans.perQuestionSeconds || 30,
-        totalQuestions: row.breakdown?.length || row.total_questions || 20,
-        passingScore: ans.passingScore || 70,
-        timeLimitMinutes: ans.timeLimitMinutes || 30,
-        createdAt: row.created_at,
-        submissionCount: stat.count,
-        classAverage: avg,
-        passRate: passPct
-      };
-    });
-
-    // Ensure default 6-digit template 202500 is included if not in DB
-    if (!sessions.some(s => s.sessionPin === '202500' || s.sessionPin === 'rag-mastery-2025')) {
-      const defaultStat = statsMap['202500'] || statsMap['rag-mastery-2025'] || { count: 0, totalPct: 0, passedCount: 0 };
-      sessions.unshift({
-        sessionPin: '202500',
-        title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
-        description: 'Comprehensive 20-question technical evaluation covering RAG architecture and paradigms.',
-        gameMode: 'classic',
-        perQuestionSeconds: 30,
-        totalQuestions: 20,
-        passingScore: 70,
-        timeLimitMinutes: 30,
-        createdAt: new Date().toISOString(),
-        submissionCount: defaultStat.count,
-        classAverage: defaultStat.count > 0 ? Math.round(defaultStat.totalPct / defaultStat.count) : 0,
-        passRate: defaultStat.count > 0 ? Math.round((defaultStat.passedCount / defaultStat.count) * 100) : 0
+        return {
+          sessionPin: row.quiz_id,
+          title: ans.title || 'Quiz Session',
+          description: ans.description || '',
+          gameMode: ans.gameMode || 'classic',
+          perQuestionSeconds: ans.perQuestionSeconds || 30,
+          totalQuestions: row.breakdown?.length || row.total_questions || 20,
+          passingScore: ans.passingScore || 70,
+          timeLimitMinutes: ans.timeLimitMinutes || 30,
+          createdAt: row.created_at,
+          submissionCount: stat.count,
+          classAverage: avg,
+          passRate: passPct
+        };
       });
-    }
 
     return sessions;
   } catch (err) {
@@ -369,16 +352,24 @@ export async function fetchTeacherSessions() {
 
 // 4D. Delete a session and its submissions
 export async function deleteTeacherSession(sessionPin, rawPasscode) {
-  if (sessionPin === '202500' || sessionPin === 'rag-mastery-2025') {
-    throw new Error('The default template session cannot be deleted.');
-  }
-
   const auth = await verifyInstructorPasscode(sessionPin, rawPasscode);
   if (!auth.valid) {
     throw new Error('Unauthorized: Invalid Instructor Passcode');
   }
 
   const adminClient = getSupabaseAdminClient();
+  
+  // Clean up participants table if present
+  try {
+    await adminClient
+      .from('quiz_participants')
+      .delete()
+      .eq('quiz_id', sessionPin);
+  } catch (pErr) {
+    console.warn('Participant cleanup note:', pErr);
+  }
+
+  // Delete all quiz submissions (including definition and student entries)
   const { error } = await adminClient
     .from('quiz_submissions')
     .delete()
@@ -386,6 +377,25 @@ export async function deleteTeacherSession(sessionPin, rawPasscode) {
 
   if (error) throw new Error(error.message);
   return { success: true };
+}
+
+// 4E. Re-host a Quiz Session with a brand-new 6-digit PIN
+export async function rehostQuizSession(sourcePin, rawPasscode) {
+  const def = await getQuizDefinition(sourcePin);
+  if (!def) {
+    throw new Error(`Unable to load quiz configuration for session ${sourcePin}.`);
+  }
+
+  // Publish a brand new session with exact same questions and rules
+  return publishQuizSession({
+    title: def.title,
+    description: def.description,
+    timeLimitMinutes: def.timeLimitMinutes,
+    passingScore: def.passingScore,
+    gameMode: def.gameMode,
+    perQuestionSeconds: def.perQuestionSeconds,
+    questions: def.questions
+  }, rawPasscode);
 }
 
 // 5. Submit student quiz securely (Universal grading across any question type and points)

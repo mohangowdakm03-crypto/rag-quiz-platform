@@ -5,7 +5,9 @@ import QuizCreator from './components/QuizCreator';
 import { 
   verifyInstructorPasscode, 
   fetchTeacherSessions, 
-  deleteTeacherSession 
+  deleteTeacherSession,
+  rehostQuizSession,
+  getQuizDefinition
 } from './supabase';
 import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle } from 'lucide-react';
 
@@ -35,6 +37,14 @@ export default function TeacherApp() {
   const [selectedSessionPin, setSelectedSessionPin] = useState('');
   const [sessions, setSessions] = useState([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [rehostingPin, setRehostingPin] = useState(null);
+
+  // Quiz Creator configuration state
+  const [creatorState, setCreatorState] = useState({
+    mode: 'create', // 'create' | 'edit' | 'duplicate'
+    pin: null,
+    data: null
+  });
 
   // Load all sessions
   const loadSessions = useCallback(async () => {
@@ -121,12 +131,82 @@ export default function TeacherApp() {
   };
 
   const navigateToCreate = () => {
+    setCreatorState({
+      mode: 'create',
+      pin: null,
+      data: null
+    });
     setView('create');
     const url = new URL(window.location);
     url.searchParams.set('action', 'create');
     url.searchParams.delete('session');
     url.searchParams.delete('quiz');
     window.history.pushState({}, '', url);
+  };
+
+  const handleEditSession = async (pin) => {
+    try {
+      const def = await getQuizDefinition(pin);
+      if (!def) {
+        alert(`Unable to load quiz details for session ${pin}.`);
+        return;
+      }
+      setCreatorState({
+        mode: 'edit',
+        pin: pin,
+        data: def
+      });
+      setView('create');
+      const url = new URL(window.location);
+      url.searchParams.set('action', 'edit');
+      url.searchParams.set('session', pin);
+      window.history.pushState({}, '', url);
+    } catch (err) {
+      alert(`Error opening quiz for edit: ${err.message}`);
+    }
+  };
+
+  const handleDuplicateSession = async (pin) => {
+    try {
+      const def = await getQuizDefinition(pin);
+      if (!def) {
+        alert(`Unable to load quiz details for session ${pin}.`);
+        return;
+      }
+      setCreatorState({
+        mode: 'duplicate',
+        pin: null,
+        data: {
+          ...def,
+          title: def.title?.startsWith('Copy of ') ? def.title : `Copy of ${def.title || 'Quiz'}`
+        }
+      });
+      setView('create');
+      const url = new URL(window.location);
+      url.searchParams.set('action', 'duplicate');
+      window.history.pushState({}, '', url);
+    } catch (err) {
+      alert(`Error duplicating quiz: ${err.message}`);
+    }
+  };
+
+  const handleRehostSession = async (pin) => {
+    if (rehostingPin) return;
+    setRehostingPin(pin);
+    try {
+      const res = await rehostQuizSession(pin, teacherPasscode);
+      await loadSessions();
+      navigateToSession(res.sessionPin);
+    } catch (err) {
+      alert(`Error re-hosting session: ${err.message}`);
+    } finally {
+      setRehostingPin(null);
+    }
+  };
+
+  const handleSessionUpdated = async (pin) => {
+    await loadSessions();
+    navigateToSession(pin);
   };
 
   // Passcode authentication
@@ -143,7 +223,7 @@ export default function TeacherApp() {
     }
 
     try {
-      const auth = await verifyInstructorPasscode('rag-mastery-2025', code);
+      const auth = await verifyInstructorPasscode('master', code);
       if (auth.valid) {
         setTeacherPasscode(code);
         setIsAuthenticated(true);
@@ -168,17 +248,17 @@ export default function TeacherApp() {
   };
 
   const handleDeleteSession = async (pin) => {
-    if (pin === 'rag-mastery-2025' || pin === '202500') {
-      alert('The default template session cannot be deleted.');
-      return;
-    }
-    if (!window.confirm(`Are you sure you want to delete session "${pin}" and all its student submissions?`)) {
+    const target = sessions.find(s => s.sessionPin === pin);
+    const title = target?.title ? `"${target.title}"` : pin;
+    if (!window.confirm(`Are you sure you want to permanently delete session ${pin} (${title}) and all its student submissions? This action cannot be undone.`)) {
       return;
     }
     try {
       await deleteTeacherSession(pin, teacherPasscode);
       await loadSessions();
-      alert(`Session ${pin} deleted.`);
+      if (selectedSessionPin === pin) {
+        navigateToHub();
+      }
     } catch (err) {
       alert(`Error deleting session: ${err.message}`);
     }
@@ -320,8 +400,12 @@ export default function TeacherApp() {
             isLoading={isLoadingSessions}
             onOpenSession={navigateToSession}
             onCreateNewQuiz={navigateToCreate}
+            onEditSession={handleEditSession}
+            onDuplicateSession={handleDuplicateSession}
+            onRehostSession={handleRehostSession}
             onDeleteSession={handleDeleteSession}
             onLock={handleLock}
+            rehostingPin={rehostingPin}
           />
         )}
 
@@ -331,6 +415,10 @@ export default function TeacherApp() {
             sessionPin={selectedSessionPin}
             onBackToHub={navigateToHub}
             teacherPasscode={teacherPasscode}
+            onEditSession={handleEditSession}
+            onDuplicateSession={handleDuplicateSession}
+            onRehostSession={handleRehostSession}
+            onDeleteSession={handleDeleteSession}
             onLock={handleLock}
           />
         )}
@@ -340,7 +428,11 @@ export default function TeacherApp() {
           <QuizCreator
             onBackToHub={navigateToHub}
             onSessionCreated={navigateToSession}
+            onSessionUpdated={handleSessionUpdated}
             teacherPasscode={teacherPasscode}
+            creatorMode={creatorState.mode}
+            editingSessionPin={creatorState.pin}
+            initialQuizConfig={creatorState.data}
           />
         )}
       </main>

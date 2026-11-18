@@ -24,7 +24,10 @@ import {
   Crown,
   Medal,
   Sparkles,
-  Link2
+  Link2,
+  RotateCcw,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import { 
   subscribeToTeacherData, 
@@ -37,6 +40,10 @@ export default function ConductedSessionView({
   sessionPin, 
   onBackToHub, 
   teacherPasscode,
+  onEditSession,
+  onDuplicateSession,
+  onRehostSession,
+  onDeleteSession,
   onLock
 }) {
   const [sessionDef, setSessionDef] = useState(null);
@@ -273,8 +280,8 @@ export default function ConductedSessionView({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
-      {/* Top Navigation */}
-      <div className="mb-6">
+      {/* Top Navigation & Session Actions */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <button
           type="button"
           onClick={onBackToHub}
@@ -283,6 +290,57 @@ export default function ConductedSessionView({
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to All Conducted Sessions</span>
         </button>
+
+        {/* Quick Session Actions: Re-host, Edit, Duplicate, Delete */}
+        <div className="flex flex-wrap items-center gap-2">
+          {onRehostSession && (
+            <button
+              type="button"
+              onClick={() => onRehostSession(sessionPin)}
+              className="apple-btn-secondary px-3.5 py-2 text-xs font-medium flex items-center space-x-1.5 cursor-pointer hover:border-[#0071e3] hover:text-[#0071e3]"
+              title="Re-host: Launch a fresh live session with this quiz and get a new 6-digit PIN"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#0071e3]" />
+              <span>Re-host Quiz</span>
+            </button>
+          )}
+
+          {onEditSession && (
+            <button
+              type="button"
+              onClick={() => onEditSession(sessionPin)}
+              className="apple-btn-secondary px-3.5 py-2 text-xs font-medium flex items-center space-x-1.5 cursor-pointer"
+              title="Edit: Modify quiz questions, answers, and time settings"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Quiz</span>
+            </button>
+          )}
+
+          {onDuplicateSession && (
+            <button
+              type="button"
+              onClick={() => onDuplicateSession(sessionPin)}
+              className="apple-btn-secondary px-3.5 py-2 text-xs font-medium flex items-center space-x-1.5 cursor-pointer"
+              title="Duplicate: Clone quiz as a new copy"
+            >
+              <Copy className="w-3.5 h-3.5 text-[#86868b]" />
+              <span>Duplicate</span>
+            </button>
+          )}
+
+          {onDeleteSession && (
+            <button
+              type="button"
+              onClick={() => onDeleteSession(sessionPin)}
+              className="apple-btn-secondary px-3.5 py-2 text-xs font-medium flex items-center space-x-1.5 text-red-600 hover:bg-rose-50 hover:border-red-200 cursor-pointer"
+              title="Delete this session and all its student submissions"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <span>Delete Session</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Session Header Card (Apple Glass) */}

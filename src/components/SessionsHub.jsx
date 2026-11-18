@@ -16,16 +16,22 @@ import {
   Copy,
   Layers,
   Lock,
-  Search
+  Search,
+  RotateCcw,
+  Edit3
 } from 'lucide-react';
 
 export default function SessionsHub({ 
   sessions = [], 
   onOpenSession, 
   onCreateNewQuiz, 
+  onEditSession,
+  onDuplicateSession,
+  onRehostSession,
   onDeleteSession,
   onLock,
-  isLoading
+  isLoading,
+  rehostingPin
 }) {
   const [copiedPin, setCopiedPin] = useState(null);
   const [copiedLink, setCopiedLink] = useState(null);
@@ -210,20 +216,18 @@ export default function SessionsHub({
                       <span>{isAssessment ? `Assessment (${session.perQuestionSeconds || 30}s/Q)` : `Standard (${session.timeLimitMinutes || 30}m)`}</span>
                     </span>
 
-                    {/* Delete button (except default) */}
-                    {session.sessionPin !== 'rag-mastery-2025' && session.sessionPin !== '202500' && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteSession(session.sessionPin);
-                        }}
-                        className="p-1 rounded-lg text-[#86868b] hover:text-[#ff3b30] hover:bg-rose-50 transition"
-                        title="Delete Session"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteSession(session.sessionPin);
+                      }}
+                      className="p-1.5 rounded-xl text-[#86868b] hover:text-[#ff3b30] hover:bg-rose-50 transition border border-transparent hover:border-red-200"
+                      title="Delete Session"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {/* Session Title */}
@@ -283,6 +287,52 @@ export default function SessionsHub({
                       <span className="text-[10px] text-[#86868b] uppercase block font-semibold tracking-wider">Pass Rate</span>
                       <span className="text-sm font-semibold text-[#34c759] font-mono">{session.passRate || 0}%</span>
                     </div>
+                  </div>
+
+                  {/* Action Buttons: Re-host, Edit, Duplicate */}
+                  <div className="pt-2 pb-1 grid grid-cols-3 gap-2 border-t border-[#e5e5ea] mb-3">
+                    {/* Re-host (Kahoot-style: fresh 6-digit PIN for new class) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRehostSession(session.sessionPin);
+                      }}
+                      disabled={rehostingPin === session.sessionPin}
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1.5 rounded-xl cursor-pointer hover:border-[#0071e3] hover:text-[#0071e3] transition-all disabled:opacity-50"
+                      title="Re-host: Launch a new live session with this quiz and get a fresh 6-digit PIN"
+                    >
+                      <RotateCcw className={`w-3 h-3 text-[#0071e3] ${rehostingPin === session.sessionPin ? 'animate-spin' : ''}`} />
+                      <span>{rehostingPin === session.sessionPin ? 'Hosting...' : 'Re-host'}</span>
+                    </button>
+
+                    {/* Edit */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditSession(session.sessionPin);
+                      }}
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1.5 rounded-xl cursor-pointer hover:border-[#1d1d1f] hover:text-[#1d1d1f] transition-all"
+                      title="Edit: Modify quiz questions, answers, and time settings"
+                    >
+                      <Edit3 className="w-3 h-3 text-[#1d1d1f]" />
+                      <span>Edit</span>
+                    </button>
+
+                    {/* Duplicate */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicateSession(session.sessionPin);
+                      }}
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1.5 rounded-xl cursor-pointer hover:border-[#1d1d1f] hover:text-[#1d1d1f] transition-all"
+                      title="Duplicate: Clone quiz as a new copy to create variations"
+                    >
+                      <Copy className="w-3 h-3 text-[#86868b]" />
+                      <span>Duplicate</span>
+                    </button>
                   </div>
                 </div>
 
