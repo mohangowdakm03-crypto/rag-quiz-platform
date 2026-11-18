@@ -47,24 +47,30 @@ export default function StudentHeader({ quizId }) {
             <span>Cloud Connected</span>
           </div>
 
-          {/* Share Quiz ID button */}
-          <button
-            onClick={handleCopyLink}
-            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 transition-all shadow-sm active:scale-95"
-            title="Copy shareable link for quiz"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Link Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Quiz ID: <strong className="text-emerald-300 ml-1 font-mono">{quizId}</strong></span>
-              </>
-            )}
-          </button>
+          {/* Share Quiz ID button (only if quizId is active) */}
+          {quizId ? (
+            <button
+              onClick={handleCopyLink}
+              className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 transition-all shadow-sm active:scale-95"
+              title="Copy shareable link for quiz"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Link Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Game PIN: <strong className="text-emerald-300 ml-1 font-mono">{quizId}</strong></span>
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="text-xs text-slate-400 font-medium hidden sm:block">
+              Candidate Testing Portal
+            </div>
+          )}
         </div>
       </div>
     </header>

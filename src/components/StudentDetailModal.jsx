@@ -31,8 +31,8 @@ export default function StudentDetailModal({ student, onClose }) {
             <div className="flex items-center space-x-2">
               <h2 className="text-xl font-bold text-white">{studentName}</h2>
               {studentId && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                  {studentId}
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-teal-300 border border-teal-500/30">
+                  USN: {studentId}
                 </span>
               )}
               <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${

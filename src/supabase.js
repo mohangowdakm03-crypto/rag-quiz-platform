@@ -287,46 +287,76 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   };
 }
 
-// 4C. Fetch all available teacher sessions
+// 4C. Fetch all available teacher sessions with real-time stats
 export async function fetchTeacherSessions() {
   const adminClient = getSupabaseAdminClient();
   try {
-    const { data, error } = await adminClient
-      .from('quiz_submissions')
-      .select('quiz_id, created_at, answers, breakdown, total_questions')
-      .eq('student_name', '__QUIZ_DEFINITION__')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, { data: subsData }] = await Promise.all([
+      adminClient
+        .from('quiz_submissions')
+        .select('quiz_id, created_at, answers, breakdown, total_questions')
+        .eq('student_name', '__QUIZ_DEFINITION__')
+        .order('created_at', { ascending: false }),
+      adminClient
+        .from('quiz_submissions')
+        .select('quiz_id, score, percentage, passed')
+        .neq('student_name', '__QUIZ_DEFINITION__')
+    ]);
 
     if (error) {
       console.error('fetchTeacherSessions error:', error);
       return [];
     }
 
+    // Build stats map per session PIN
+    const statsMap = {};
+    (subsData || []).forEach(s => {
+      if (!statsMap[s.quiz_id]) {
+        statsMap[s.quiz_id] = { count: 0, totalPct: 0, passedCount: 0 };
+      }
+      statsMap[s.quiz_id].count++;
+      statsMap[s.quiz_id].totalPct += (s.percentage || 0);
+      if (s.passed) statsMap[s.quiz_id].passedCount++;
+    });
+
     const sessions = (data || []).map(row => {
       const ans = row.answers || {};
+      const stat = statsMap[row.quiz_id] || { count: 0, totalPct: 0, passedCount: 0 };
+      const avg = stat.count > 0 ? Math.round(stat.totalPct / stat.count) : 0;
+      const passPct = stat.count > 0 ? Math.round((stat.passedCount / stat.count) * 100) : 0;
+
       return {
         sessionPin: row.quiz_id,
         title: ans.title || 'Quiz Session',
+        description: ans.description || '',
         gameMode: ans.gameMode || 'classic',
         perQuestionSeconds: ans.perQuestionSeconds || 30,
         totalQuestions: row.breakdown?.length || row.total_questions || 20,
         passingScore: ans.passingScore || 70,
         timeLimitMinutes: ans.timeLimitMinutes || 30,
-        createdAt: row.created_at
+        createdAt: row.created_at,
+        submissionCount: stat.count,
+        classAverage: avg,
+        passRate: passPct
       };
     });
 
     // Ensure default rag-mastery-2025 is included if not in DB
     if (!sessions.some(s => s.sessionPin === 'rag-mastery-2025')) {
+      const defaultStat = statsMap['rag-mastery-2025'] || { count: 0, totalPct: 0, passedCount: 0 };
       sessions.push({
         sessionPin: 'rag-mastery-2025',
         title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
+        description: 'Comprehensive 20-question technical evaluation covering RAG architecture and paradigms.',
         gameMode: 'classic',
         perQuestionSeconds: 30,
         totalQuestions: 20,
         passingScore: 70,
         timeLimitMinutes: 30,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        submissionCount: defaultStat.count,
+        classAverage: defaultStat.count > 0 ? Math.round(defaultStat.totalPct / defaultStat.count) : 0,
+        passRate: defaultStat.count > 0 ? Math.round((defaultStat.passedCount / defaultStat.count) * 100) : 0
       });
     }
 

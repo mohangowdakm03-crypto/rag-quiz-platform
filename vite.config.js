@@ -9,7 +9,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        teacher: resolve(__dirname, 'teacher.html')
+        teacher: resolve(__dirname, 'teacher.html'),
+        create: resolve(__dirname, 'create.html')
       }
     }
   },

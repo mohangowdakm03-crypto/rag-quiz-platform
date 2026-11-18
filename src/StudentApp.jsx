@@ -7,7 +7,7 @@ import { getStudentQuizDefinition } from './supabase';
 import { STUDENT_QUIZ_DATA } from './data/ragQuestions';
 
 export default function StudentApp() {
-  const [quizId, setQuizId] = useState('rag-mastery-2025');
+  const [quizId, setQuizId] = useState('');
   const [quizState, setQuizState] = useState('join'); // 'join' | 'taking' | 'completed'
   const [sessionData, setSessionData] = useState(null);
   const [results, setResults] = useState(null);
