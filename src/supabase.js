@@ -1,14 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Retrieve credentials from environment variables or localStorage
+// Default pre-configured credentials from user's Supabase project (rag-quiz-platform)
+const DEFAULT_SUPABASE_URL = "https://zcdauivbacingwrxjsgf.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZGF1aXZiYWNpbmd3cnhqc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTQxOTcsImV4cCI6MjExMDU5MDE5N30.qmjWYwvd8jtIfPltpDmVcq1tnDtZ1uFwqYycI4kT-9o";
+
+// Retrieve credentials from environment variables, localStorage, or pre-configured defaults
 export function getSupabaseConfig() {
   const envUrl = import.meta.env.VITE_SUPABASE_URL;
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   const localUrl = localStorage.getItem('rag_supabase_url');
   const localKey = localStorage.getItem('rag_supabase_anon_key');
 
-  const url = (envUrl && envUrl.trim()) || (localUrl && localUrl.trim()) || '';
-  const anonKey = (envKey && envKey.trim()) || (localKey && localKey.trim()) || '';
+  const url = (localUrl && localUrl.trim()) || (envUrl && envUrl.trim()) || DEFAULT_SUPABASE_URL;
+  const anonKey = (localKey && localKey.trim()) || (envKey && envKey.trim()) || DEFAULT_SUPABASE_ANON_KEY;
 
   return {
     url,
@@ -44,11 +48,7 @@ export function getSupabaseClient() {
 // 1. Record participant joining the session
 export async function joinQuizRoom(quizId, studentName, studentId = '') {
   const client = getSupabaseClient();
-  if (!client) {
-    // If not configured, record in local storage session
-    console.warn('Supabase not yet configured; storing locally.');
-    return null;
-  }
+  if (!client) return null;
 
   try {
     const { data, error } = await client
@@ -78,26 +78,8 @@ export async function joinQuizRoom(quizId, studentName, studentId = '') {
 export async function submitStudentQuiz(quizId, submissionData) {
   const client = getSupabaseClient();
   if (!client) {
-    // Store in localStorage as fallback so no work is lost
-    const key = `local_submissions_${quizId}`;
-    const existing = JSON.parse(localStorage.getItem(key) || '[]');
-    const record = {
-      id: 'local-' + Date.now(),
-      quiz_id: quizId,
-      student_name: submissionData.studentName,
-      student_id: submissionData.studentId || 'N/A',
-      score: submissionData.score,
-      total_questions: submissionData.totalQuestions,
-      percentage: submissionData.percentage,
-      passed: submissionData.passed,
-      time_taken_seconds: submissionData.timeTakenSeconds,
-      answers: submissionData.answers,
-      breakdown: submissionData.breakdown,
-      created_at: new Date().toISOString()
-    };
-    existing.unshift(record);
-    localStorage.setItem(key, JSON.stringify(existing));
-    return { success: true, id: record.id, local: true };
+    console.error('Supabase client not initialized');
+    return { success: false };
   }
 
   const payload = {
@@ -129,10 +111,7 @@ export async function submitStudentQuiz(quizId, submissionData) {
 // 3. Fetch all submissions for a quiz
 export async function fetchSubmissions(quizId) {
   const client = getSupabaseClient();
-  if (!client) {
-    const key = `local_submissions_${quizId}`;
-    return JSON.parse(localStorage.getItem(key) || '[]');
-  }
+  if (!client) return [];
 
   const { data, error } = await client
     .from('quiz_submissions')
@@ -177,14 +156,7 @@ export async function fetchParticipants(quizId) {
 // 5. Real-time subscription to submissions using Supabase Channels
 export function subscribeToSubmissions(quizId, onUpdate) {
   const client = getSupabaseClient();
-  if (!client) {
-    // Poll local fallback
-    fetchSubmissions(quizId).then(onUpdate);
-    const interval = setInterval(() => {
-      fetchSubmissions(quizId).then(onUpdate);
-    }, 2000);
-    return () => clearInterval(interval);
-  }
+  if (!client) return () => {};
 
   // Initial fetch
   fetchSubmissions(quizId).then(onUpdate);
@@ -201,7 +173,6 @@ export function subscribeToSubmissions(quizId, onUpdate) {
         filter: `quiz_id=eq.${quizId}`
       },
       () => {
-        // Refresh submissions on any change
         fetchSubmissions(quizId).then(onUpdate);
       }
     )
