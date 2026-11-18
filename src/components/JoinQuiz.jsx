@@ -43,12 +43,12 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
     }
 
     if (!trimmedUsn) {
-      setError('University Seat Number (USN) / Roll Number is COMPULSORY. Please enter your USN.');
+      setError('Please enter your University Seat Number (USN) / Roll Number.');
       return;
     }
 
     if (!trimmedName) {
-      setError('Please enter your full name to proceed.');
+      setError('Please enter your full name.');
       return;
     }
 
@@ -120,7 +120,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               <div className="bg-slate-950 border border-emerald-500/40 rounded-2xl p-4 sm:p-5 shadow-inner">
                 <label className="block text-xs font-bold text-emerald-400 uppercase tracking-widest text-center mb-2 flex items-center justify-center space-x-1.5">
                   <KeyRound className="w-4 h-4 text-emerald-400" />
-                  <span>6-Digit Game PIN *</span>
+                  <span>6-Digit Game PIN <span className="text-red-400 font-bold">*</span></span>
                 </label>
                 <input
                   type="text"
@@ -136,11 +136,11 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
                 </p>
               </div>
 
-              {/* 2. USN / ROLL NUMBER (COMPULSORY) */}
+              {/* 2. USN / ROLL NUMBER */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center space-x-1.5">
                   <IdCard className="w-3.5 h-3.5 text-teal-400" />
-                  <span>University Seat Number (USN) / Roll No. <strong className="text-red-400 font-bold">* COMPULSORY</strong></span>
+                  <span>University Seat Number (USN) / Roll No. <span className="text-red-400 font-bold text-sm">*</span></span>
                 </label>
                 <input
                   type="text"
@@ -159,7 +159,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center space-x-1.5">
                   <User className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Full Name <strong className="text-red-400 font-bold">* COMPULSORY</strong></span>
+                  <span>Full Name <span className="text-red-400 font-bold text-sm">*</span></span>
                 </label>
                 <input
                   type="text"
