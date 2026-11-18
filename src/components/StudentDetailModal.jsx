@@ -23,31 +23,31 @@ export default function StudentDetailModal({ student, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl fade-in overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="apple-glass rounded-[28px] max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl fade-in overflow-hidden border border-white/[0.1]">
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
           <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-bold text-white">{studentName}</h2>
+            <div className="flex items-center space-x-2.5">
+              <h2 className="text-xl font-semibold text-white tracking-tight">{studentName}</h2>
               {studentId && (
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-teal-300 border border-teal-500/30">
+                <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[#2997ff] border border-white/[0.1]">
                   USN: {studentId}
                 </span>
               )}
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
                 passed 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' 
-                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                  ? 'bg-emerald-500/10 text-[#30d158] border border-emerald-500/20' 
+                  : 'bg-rose-500/10 text-[#ff453a] border border-rose-500/20'
               }`}>
                 {passed ? 'PASSED' : 'FAILED'}
               </span>
             </div>
-            <div className="text-xs text-slate-400 mt-1 flex items-center space-x-3">
-              <span>Score: <strong className="text-white">{score}/{totalQuestions}</strong> ({percentage}%)</span>
+            <div className="text-xs text-[#86868b] mt-1.5 flex items-center space-x-3 tracking-tight">
+              <span>Score: <strong className="text-white font-medium">{score}/{totalQuestions}</strong> ({percentage}%)</span>
               <span>•</span>
               <span className="flex items-center space-x-1">
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="w-3.5 h-3.5 text-[#2997ff]" />
                 <span>Time: {formatTime(timeTakenSeconds)}</span>
               </span>
             </div>
@@ -55,14 +55,14 @@ export default function StudentDetailModal({ student, onClose }) {
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+            className="apple-btn-secondary w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 text-[#86868b]" />
           </button>
         </div>
 
         {/* Content list */}
-        <div className="p-6 overflow-y-auto space-y-4">
+        <div className="p-6 overflow-y-auto space-y-3.5">
           {breakdown.map((item, idx) => {
             const isCorrect = item.isCorrect;
             const letter = item.studentChoice !== null && item.studentChoice !== undefined 
@@ -73,28 +73,28 @@ export default function StudentDetailModal({ student, onClose }) {
             return (
               <div 
                 key={idx}
-                className={`p-4 rounded-xl border text-xs ${
+                className={`p-4 rounded-2xl border text-xs transition ${
                   isCorrect 
-                    ? 'bg-slate-950/60 border-slate-800' 
-                    : 'bg-rose-950/10 border-rose-900/40'
+                    ? 'apple-glass-card border-white/[0.06]' 
+                    : 'bg-rose-500/[0.04] border-rose-500/30'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     {isCorrect ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-[#30d158]" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-rose-400" />
+                      <XCircle className="w-4 h-4 text-[#ff453a]" />
                     )}
-                    <span className="font-bold text-white">Q{item.questionId || idx + 1}. {item.question}</span>
+                    <span className="font-semibold text-white tracking-tight">Q{item.questionId || idx + 1}. {item.question}</span>
                   </div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 px-2 py-0.5 rounded bg-slate-800">
+                  <span className="text-[10px] font-medium text-[#86868b] px-2 py-0.5 rounded-full bg-white/[0.06]">
                     {item.category}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800/60">
-                  <div className={isCorrect ? 'text-emerald-400' : 'text-rose-400'}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/[0.06]">
+                  <div className={isCorrect ? 'text-[#30d158]' : 'text-[#ff453a]'}>
                     Selected: <strong>{letter}</strong> ({item.options ? item.options[item.studentChoice] : 'N/A'})
                   </div>
                   {!isCorrect && (

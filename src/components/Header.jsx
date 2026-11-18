@@ -16,25 +16,23 @@ export default function Header({ currentMode, onLockTeacher, quizId }) {
   };
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+    <header className="apple-glass-nav sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-400 p-[1px] shadow-lg shadow-emerald-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
-            </div>
+        <div className="flex items-center space-x-3.5">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-b from-white/20 to-white/5 border border-white/20 flex items-center justify-center shadow-[0_2px_12px_rgba(255,255,255,0.08)]">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-300 bg-clip-text text-transparent">
+            <div className="flex items-center space-x-2.5">
+              <span className="font-semibold text-lg tracking-tight apple-title-gradient">
                 Oxvane
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[#a1a1a6] border border-white/[0.1]">
                 Assessment
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">Academic Assessment & Evaluation Platform</p>
+            <p className="text-[11px] text-[#86868b] tracking-tight hidden sm:block">Academic Assessment & Evaluation Platform</p>
           </div>
         </div>
 
@@ -42,28 +40,28 @@ export default function Header({ currentMode, onLockTeacher, quizId }) {
         <div className="flex items-center space-x-3">
           {/* Supabase status indicator */}
           <div
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+            className="flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-[#30d158]"
             title="Real-time cloud database connected"
           >
-            <Database className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Cloud Connected</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#30d158] animate-pulse"></span>
+            <span className="hidden sm:inline text-[11px] font-medium">Cloud Active</span>
           </div>
 
           {/* Share Quiz ID button */}
           <button
             onClick={handleCopyLink}
-            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 transition-all shadow-sm active:scale-95"
-            title="Copy shareable link for 60 students"
+            className="apple-btn-secondary flex items-center space-x-2 px-3.5 py-1.5 text-xs font-medium cursor-pointer"
+            title="Copy shareable link"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Link Copied!</span>
+                <Check className="w-3.5 h-3.5 text-[#30d158]" />
+                <span className="text-[#30d158]">Link Copied!</span>
               </>
             ) : (
               <>
-                <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Quiz ID: <strong className="text-emerald-300 ml-1 font-mono">{quizId}</strong></span>
+                <Share2 className="w-3.5 h-3.5 text-[#86868b]" />
+                <span>Quiz PIN: <strong className="text-white ml-1 font-mono">{quizId}</strong></span>
               </>
             )}
           </button>
@@ -72,11 +70,10 @@ export default function Header({ currentMode, onLockTeacher, quizId }) {
           {currentMode === 'teacher' && (
             <button
               onClick={onLockTeacher}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-all"
+              className="apple-btn-secondary p-2 text-xs text-[#86868b] hover:text-[#ff453a] cursor-pointer"
               title="Lock Instructor Dashboard"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Lock Instructor Mode</span>
             </button>
           )}
         </div>

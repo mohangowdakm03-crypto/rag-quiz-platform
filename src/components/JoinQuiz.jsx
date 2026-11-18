@@ -80,122 +80,120 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="max-w-xl w-full">
-        {/* Glow decoration */}
-        <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-500 rounded-3xl blur-xl opacity-30"></div>
+    <div className="min-h-[calc(100vh-4rem)] apple-bg-ambient flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="max-w-xl w-full fade-in">
+        {/* Apple Glass Container */}
+        <div className="apple-glass rounded-[32px] p-8 sm:p-12 relative overflow-hidden">
+          {/* Subtle top specular sheen */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
 
-          <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
-            {/* Header Badge */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                <Cpu className="w-3.5 h-3.5" />
-                <span>Student Examination Portal</span>
-              </div>
+          {/* Header Eyebrow */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#86868b]">
+              Candidate Portal
+            </span>
+            <div className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Sync Active</span>
+            </div>
+          </div>
 
-              <div className="inline-flex items-center space-x-1.5 text-xs text-emerald-400 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Cloud Sync Active</span>
+          {/* Headline */}
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] apple-title-gradient mb-2.5">
+            Join Examination
+          </h1>
+          <p className="text-sm text-[#86868b] leading-relaxed mb-8 tracking-tight">
+            Enter your instructor's 6-digit Game PIN, verified University Seat Number (USN), and name to enter the live session.
+          </p>
+
+          {/* Join Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium leading-relaxed flex items-center space-x-2">
+                <span>⚠️ {error}</span>
               </div>
+            )}
+
+            {/* 1. 6-DIGIT GAME PIN (APPLE STYLE) */}
+            <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] relative group hover:border-white/[0.14] transition-all">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a1a1a6] text-center mb-2.5">
+                6-Digit Game PIN <span className="text-red-400 font-bold">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                autoFocus
+                placeholder=""
+                value={quizId}
+                onChange={(e) => setQuizId(e.target.value)}
+                className="w-full text-center text-3xl sm:text-4xl font-mono font-semibold py-2.5 px-4 rounded-xl bg-black/40 border border-white/[0.1] text-white focus:outline-none focus:border-[#2997ff] focus:ring-4 focus:ring-[#2997ff]/20 transition-all tracking-[0.25em] uppercase"
+              />
+              <p className="text-[11px] text-[#86868b] text-center mt-2.5 tracking-tight">
+                Displayed on the instructor's console or in your invite link.
+              </p>
             </div>
 
-            {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
-              Join Quiz Session
-            </h1>
-            <p className="text-slate-400 text-xs sm:text-sm mb-6 leading-relaxed">
-              Enter the 6-digit Game PIN displayed on the teacher's screen along with your official USN and Name to begin.
-            </p>
+            {/* 2. USN / ROLL NUMBER */}
+            <div>
+              <label className="block text-xs font-medium text-[#f5f5f7] mb-2 flex items-center justify-between">
+                <span className="flex items-center space-x-1.5">
+                  <IdCard className="w-3.5 h-3.5 text-[#86868b]" />
+                  <span>University Seat Number (USN)</span>
+                  <span className="text-red-400 font-bold">*</span>
+                </span>
+                <span className="text-[11px] text-[#86868b]">Required for score certification</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder=""
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                className="apple-input w-full px-4 py-3 text-sm font-mono tracking-wide"
+              />
+            </div>
 
-            {/* Join Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs font-semibold leading-relaxed">
-                  ⚠️ {error}
-                </div>
+            {/* 3. CANDIDATE FULL NAME */}
+            <div>
+              <label className="block text-xs font-medium text-[#f5f5f7] mb-2 flex items-center space-x-1.5">
+                <User className="w-3.5 h-3.5 text-[#86868b]" />
+                <span>Full Name</span>
+                <span className="text-red-400 font-bold">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder=""
+                value={studentName}
+                onChange={(e) => setStudentName(e.target.value)}
+                className="apple-input w-full px-4 py-3 text-sm"
+              />
+            </div>
+
+            {/* SUBMIT BUTTON (APPLE PILL) */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="apple-btn-primary w-full py-3.5 px-6 font-medium text-[15px] tracking-tight flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 mt-2"
+            >
+              {isLoading ? (
+                <span>Connecting to Session...</span>
+              ) : (
+                <>
+                  <span>Begin Examination</span>
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </>
               )}
+            </button>
+          </form>
 
-              {/* 1. BIG 6-DIGIT GAME PIN INPUT (CENTERPIECE) */}
-              <div className="bg-slate-950 border border-emerald-500/40 rounded-2xl p-4 sm:p-5 shadow-inner">
-                <label className="block text-xs font-bold text-emerald-400 uppercase tracking-widest text-center mb-2 flex items-center justify-center space-x-1.5">
-                  <KeyRound className="w-4 h-4 text-emerald-400" />
-                  <span>6-Digit Game PIN <span className="text-red-400 font-bold">*</span></span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  placeholder=""
-                  value={quizId}
-                  onChange={(e) => setQuizId(e.target.value)}
-                  className="w-full text-center text-2xl sm:text-3xl font-mono font-black py-3 px-4 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500 transition tracking-widest uppercase shadow-md"
-                />
-                <p className="text-[11px] text-slate-400 text-center mt-2">
-                  Ask your teacher for the 6-digit session PIN or click the invite link they shared.
-                </p>
-              </div>
-
-              {/* 2. USN / ROLL NUMBER */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center space-x-1.5">
-                  <IdCard className="w-3.5 h-3.5 text-teal-400" />
-                  <span>University Seat Number (USN) / Roll No. <span className="text-red-400 font-bold text-sm">*</span></span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder=""
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition text-sm font-mono tracking-wide"
-                />
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Required for official grading and score certification.
-                </p>
-              </div>
-
-              {/* 3. CANDIDATE FULL NAME */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center space-x-1.5">
-                  <User className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Full Name <span className="text-red-400 font-bold text-sm">*</span></span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder=""
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition text-sm"
-                />
-              </div>
-
-              {/* SUBMIT BUTTON */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full mt-4 flex items-center justify-center space-x-2 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-500/25 transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer"
-              >
-                {isLoading ? (
-                  <span>Verifying PIN & Loading Session...</span>
-                ) : (
-                  <>
-                    <span>Enter Quiz & Begin</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Footer security tag */}
-            <div className="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
-              <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500/70" />
-                <span>Anti-Cheat Monitored • Universal Server Graded</span>
-              </div>
-              <span className="font-mono text-[11px] text-slate-500">60+ Concurrent Capacity</span>
+          {/* Footer security tag */}
+          <div className="mt-8 pt-6 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#86868b]">
+            <div className="flex items-center space-x-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#86868b]" />
+              <span>Anti-Cheat Monitored</span>
             </div>
+            <span className="text-[11px] text-[#6e6e73]">Server Verified • 60+ Concurrent Capacity</span>
           </div>
         </div>
       </div>

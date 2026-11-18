@@ -48,10 +48,10 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
   };
 
   const getTier = (pct) => {
-    if (pct >= 90) return { title: 'RAG Lead Architect', color: 'from-amber-400 to-yellow-600', text: 'text-amber-400' };
-    if (pct >= 75) return { title: 'RAG Senior Specialist', color: 'from-emerald-400 to-teal-600', text: 'text-emerald-400' };
-    if (pct >= 60) return { title: 'RAG Practitioner', color: 'from-blue-400 to-indigo-600', text: 'text-blue-400' };
-    return { title: 'RAG Student / Learner', color: 'from-slate-400 to-slate-600', text: 'text-slate-400' };
+    if (pct >= 90) return { title: 'First Class with Distinction', color: 'from-amber-400 to-yellow-600', text: 'text-amber-400' };
+    if (pct >= 75) return { title: 'High Commendation', color: 'from-emerald-400 to-teal-600', text: 'text-emerald-400' };
+    if (pct >= 60) return { title: 'Qualified Merit', color: 'from-blue-400 to-indigo-600', text: 'text-blue-400' };
+    return { title: 'Candidate (Needs Review)', color: 'from-slate-400 to-slate-600', text: 'text-slate-400' };
   };
 
   const tier = getTier(percentage);
@@ -67,52 +67,47 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 fade-in">
-      {/* Header Results Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden mb-8">
-        {/* Glow backdrop */}
-        <div className={`absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none ${
-          passed ? 'bg-emerald-500' : 'bg-rose-500'
-        }`} />
-
+      {/* Header Results Card - Apple Glass */}
+      <div className="apple-glass rounded-[32px] p-8 sm:p-12 shadow-2xl relative overflow-hidden mb-8">
         <div className="relative z-10 text-center">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 bg-slate-800/80 border border-slate-700">
-            <Award className={`w-4 h-4 ${tier.text}`} />
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 bg-white/[0.08] border border-white/[0.12]">
+            <Award className={`w-3.5 h-3.5 ${tier.text}`} />
             <span className={tier.text}>{tier.title}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2">
-            Assessment Completed!
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] apple-title-gradient mb-2">
+            Assessment Completed
           </h1>
-          <p className="text-slate-400 text-sm max-w-lg mx-auto mb-6">
-            Great job, <strong className="text-white">{studentName}</strong>! Your submission has been securely recorded in the instructor's live database.
+          <p className="text-[#86868b] text-sm max-w-lg mx-auto mb-6 tracking-tight">
+            Submission confirmed for <strong className="text-white font-medium">{studentName}</strong> ({studentId}). Recorded in the central evaluation registry.
           </p>
 
           {/* Big Score Display */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 my-6 py-6 border-y border-slate-800/80">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 my-6 py-6 border-y border-white/[0.08]">
             <div>
-              <div className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-1">Final Score</div>
-              <div className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white">
-                {score} <span className="text-2xl text-slate-500 font-normal">/ {totalQuestions}</span>
+              <div className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-1">Final Score</div>
+              <div className="text-5xl sm:text-6xl font-semibold tracking-tight text-white">
+                {score} <span className="text-2xl text-[#86868b] font-normal">/ {totalQuestions}</span>
               </div>
             </div>
 
-            <div className="h-12 w-[1px] bg-slate-800 hidden sm:block" />
+            <div className="h-12 w-[1px] bg-white/[0.08] hidden sm:block" />
 
             <div>
-              <div className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-1">Percentage</div>
-              <div className={`text-5xl sm:text-6xl font-extrabold tracking-tight ${
-                passed ? 'text-emerald-400' : 'text-rose-400'
+              <div className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-1">Percentage</div>
+              <div className={`text-5xl sm:text-6xl font-semibold tracking-tight ${
+                passed ? 'text-[#30d158]' : 'text-[#ff453a]'
               }`}>
                 {percentage}%
               </div>
             </div>
 
-            <div className="h-12 w-[1px] bg-slate-800 hidden sm:block" />
+            <div className="h-12 w-[1px] bg-white/[0.08] hidden sm:block" />
 
             <div>
-              <div className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-1">Time Expended</div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-blue-400 flex items-center justify-center space-x-2">
-                <Clock className="w-5 h-5 text-blue-400" />
+              <div className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-1">Time Elapsed</div>
+              <div className="text-2xl sm:text-3xl font-semibold text-[#2997ff] flex items-center justify-center space-x-2">
+                <Clock className="w-5 h-5 text-[#2997ff]" />
                 <span>{formatTime(timeTakenSeconds)}</span>
               </div>
             </div>
@@ -121,14 +116,14 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
           {/* Status Message */}
           <div className="flex items-center justify-center space-x-3 mt-4">
             {passed ? (
-              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm">
+              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#30d158] font-medium text-xs">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Passed with Proficiency</span>
+                <span>Passed with Official Proficiency</span>
               </span>
             ) : (
-              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold text-sm">
+              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[#ff453a] font-medium text-xs">
                 <XCircle className="w-4 h-4" />
-                <span>Passing threshold is 70% (Needs Review)</span>
+                <span>Passing threshold is 70% (Review Recommended)</span>
               </span>
             )}
           </div>
@@ -137,10 +132,10 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
           <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
             <button
               onClick={onRetake}
-              className="flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition"
+              className="apple-btn-secondary flex items-center space-x-2 px-6 py-2.5 text-xs font-medium cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Retake Quiz</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Retake Examination</span>
             </button>
           </div>
         </div>
@@ -149,41 +144,35 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
       {/* Review Section */}
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white">Itemized Question Analysis</h2>
-          <p className="text-xs text-slate-400">Review detailed technical explanations for every question.</p>
+          <h2 className="text-xl font-semibold text-white tracking-tight">Question Item Analysis</h2>
+          <p className="text-xs text-[#86868b] tracking-tight">Review technical explanations and correct option breakdown.</p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs">
+        {/* Filter Segmented Control */}
+        <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08]">
           <button
             onClick={() => setFilterMode('all')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition ${
-              filterMode === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+              filterMode === 'all' ? 'bg-[#2997ff] text-white shadow-sm' : 'text-[#86868b] hover:text-white'
             }`}
           >
             All ({totalQuestions})
           </button>
           <button
-            onClick={() => setFilterMode('incorrect')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition ${
-              filterMode === 'incorrect'
-                ? 'bg-rose-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Incorrect ({incorrectCount})
-          </button>
-          <button
             onClick={() => setFilterMode('correct')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition ${
-              filterMode === 'correct'
-                ? 'bg-emerald-600 text-white'
-                : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+              filterMode === 'correct' ? 'bg-[#30d158] text-black shadow-sm font-semibold' : 'text-[#86868b] hover:text-white'
             }`}
           >
             Correct ({correctCount})
+          </button>
+          <button
+            onClick={() => setFilterMode('incorrect')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+              filterMode === 'incorrect' ? 'bg-[#ff453a] text-white shadow-sm' : 'text-[#86868b] hover:text-white'
+            }`}
+          >
+            Missed ({incorrectCount})
           </button>
         </div>
       </div>
@@ -197,30 +186,30 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
           return (
             <div
               key={item.questionId}
-              className={`bg-slate-900 border rounded-2xl p-5 sm:p-6 transition-all ${
-                isCorrect ? 'border-slate-800 hover:border-slate-700' : 'border-rose-900/40 bg-rose-950/5'
+              className={`apple-glass-card rounded-2xl p-5 sm:p-6 transition-all ${
+                isCorrect ? 'border-white/[0.08]' : 'border-rose-500/30 bg-rose-500/[0.04]'
               }`}
             >
               {/* Question Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+                    isCorrect ? 'bg-emerald-500/20 text-[#30d158]' : 'bg-rose-500/20 text-[#ff453a]'
                   }`}>
-                    {isCorrect ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                    {isCorrect ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                   </span>
-                  <span className="text-xs font-bold text-slate-400">Question {qNumber}</span>
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-blue-300 font-medium">
+                  <span className="text-xs font-medium text-[#86868b]">Question {qNumber}</span>
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/[0.06] text-[#2997ff] font-medium border border-white/[0.06]">
                     {item.category}
                   </span>
                 </div>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-medium text-[#86868b] uppercase tracking-wider">
                   {item.difficulty}
                 </span>
               </div>
 
               {/* Question Text */}
-              <h3 className="text-base font-bold text-white mb-4">
+              <h3 className="text-base font-semibold text-white mb-4 tracking-tight">
                 {item.question}
               </h3>
 
@@ -231,21 +220,21 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
                   const isStudentPick = item.studentChoice === optIdx;
                   const isTheCorrectAnswer = item.correctAnswer === optIdx;
 
-                  let optionStyle = 'bg-slate-950/60 border-slate-800 text-slate-400';
+                  let optionStyle = 'bg-white/[0.02] border-white/[0.06] text-[#86868b]';
                   let badge = null;
 
                   if (isTheCorrectAnswer) {
-                    optionStyle = 'bg-emerald-500/10 border-emerald-500/50 text-white';
+                    optionStyle = 'bg-emerald-500/[0.08] border-emerald-500/40 text-white';
                     badge = (
-                      <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1 shrink-0">
+                      <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[#30d158] flex items-center space-x-1 shrink-0">
                         <Check className="w-3 h-3" />
                         <span>Correct Answer</span>
                       </span>
                     );
                   } else if (isStudentPick && !isCorrect) {
-                    optionStyle = 'bg-rose-500/10 border-rose-500/50 text-rose-200';
+                    optionStyle = 'bg-rose-500/[0.08] border-rose-500/40 text-rose-200';
                     badge = (
-                      <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-rose-400 flex items-center space-x-1 shrink-0">
+                      <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[#ff453a] flex items-center space-x-1 shrink-0">
                         <XCircle className="w-3 h-3" />
                         <span>Your Answer</span>
                       </span>
@@ -255,26 +244,26 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
                   return (
                     <div
                       key={optIdx}
-                      className={`p-3 rounded-xl border text-xs sm:text-sm flex items-start space-x-3 ${optionStyle}`}
+                      className={`p-3.5 rounded-xl border flex items-center space-x-3 text-xs sm:text-sm transition ${optionStyle}`}
                     >
-                      <span className="font-mono font-bold shrink-0">{letter}.</span>
-                      <span className="flex-1">{opt}</span>
+                      <span className="font-mono font-medium text-xs opacity-60 w-5">{letter}.</span>
+                      <span className="flex-1 font-medium">{opt}</span>
                       {badge}
                     </div>
                   );
                 })}
               </div>
 
-              {/* Technical Explanation */}
-              <div className="bg-slate-950/90 rounded-xl p-4 border border-blue-900/30 text-xs">
-                <div className="font-bold text-blue-400 uppercase tracking-wider mb-1 flex items-center space-x-1">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Technical Explanation</span>
-                </div>
-                <p className="text-slate-300 leading-relaxed">
+              {/* Explanation Card */}
+              {item.explanation && (
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-[#a1a1a6] leading-relaxed">
+                  <div className="flex items-center space-x-1.5 font-semibold text-white mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-[#2997ff]" />
+                    <span>Technical Rationalization</span>
+                  </div>
                   {item.explanation}
-                </p>
-              </div>
+                </div>
+              )}
             </div>
           );
         })}

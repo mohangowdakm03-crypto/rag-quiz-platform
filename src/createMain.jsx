@@ -57,58 +57,57 @@ function CreatePage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
-          <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 mb-6 mx-auto">
+      <div className="min-h-screen apple-bg-ambient flex items-center justify-center p-4">
+        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-2xl relative border border-white/[0.1]">
+          <div className="w-14 h-14 rounded-full bg-white/[0.08] border border-white/[0.14] flex items-center justify-center text-[#2997ff] mb-6 mx-auto shadow-inner">
             <Lock className="w-6 h-6" />
           </div>
 
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-extrabold text-white">Instructor Authorization</h2>
-            <p className="text-xs text-slate-400 mt-2">
+            <h2 className="text-2xl font-semibold tracking-[-0.02em] apple-title-gradient">Instructor Authorization</h2>
+            <p className="text-xs text-[#86868b] mt-2 leading-relaxed tracking-tight">
               Enter your instructor passcode to create and launch new quiz sessions.
             </p>
           </div>
 
-          <form onSubmit={handleVerify} className="space-y-4">
+          <form onSubmit={handleVerify} className="space-y-5">
             {passcodeError && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium flex items-center space-x-2">
+              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{passcodeError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-[11px] font-semibold text-[#a1a1a6] uppercase tracking-[0.14em] mb-2 text-center">
                 Instructor Passcode (SHA-256 Verified)
               </label>
               <div className="relative">
                 <input
                   type="password"
                   required
-                  placeholder="Enter instructor passcode..."
+                  placeholder="••••••••••••"
                   value={enteredPasscode}
                   onChange={(e) => setEnteredPasscode(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 font-mono"
+                  className="apple-input w-full px-4 py-3 text-center text-white placeholder-[#6e6e73] text-sm tracking-[0.2em] font-mono"
                 />
-                <Key className="w-4 h-4 text-slate-500 absolute right-3.5 top-3.5" />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isVerifying}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-sm shadow-lg shadow-teal-500/20 transition disabled:opacity-50 flex items-center justify-center space-x-2"
+              className="apple-btn-primary w-full py-3.5 px-6 font-medium text-sm flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>{isVerifying ? 'Verifying...' : 'Unlock Quiz Creator'}</span>
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800 text-center">
+          <div className="mt-8 pt-6 border-t border-white/[0.08] text-center">
             <a
               href="/teacher"
-              className="text-xs text-slate-400 hover:text-white transition"
+              className="text-xs text-[#86868b] hover:text-[#f5f5f7] transition-colors"
             >
               ← Go to Sessions Hub
             </a>
@@ -119,26 +118,29 @@ function CreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-teal-600 selection:text-white">
-      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
+    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">
+      <header className="apple-glass-nav sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-500 p-[1px] shadow-lg shadow-teal-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-teal-400" />
-              </div>
+          <div className="flex items-center space-x-3.5">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-b from-white/20 to-white/5 border border-white/20 flex items-center justify-center shadow-[0_2px_12px_rgba(255,255,255,0.08)]">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <span className="font-extrabold text-lg tracking-tight text-white">
-                Oxvane • Quiz Creator
-              </span>
-              <p className="text-xs text-slate-400 hidden sm:block">Build and launch isolated sessions</p>
+              <div className="flex items-center space-x-2">
+                <span className="font-semibold text-lg tracking-tight apple-title-gradient">
+                  Oxvane
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[#a1a1a6] border border-white/[0.1]">
+                  Quiz Creator
+                </span>
+              </div>
+              <p className="text-[11px] text-[#86868b] tracking-tight hidden sm:block">Build and launch isolated sessions</p>
             </div>
           </div>
 
           <a
             href="/teacher"
-            className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition font-medium"
+            className="apple-btn-secondary px-4 py-1.5 text-xs font-medium cursor-pointer"
           >
             ← View All Sessions
           </a>
@@ -157,7 +159,7 @@ function CreatePage() {
         />
       </main>
 
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-white/[0.06] bg-black/60 py-5 text-center text-xs text-[#86868b]">
         Oxvane Platform • Quiz Creator
       </footer>
     </div>

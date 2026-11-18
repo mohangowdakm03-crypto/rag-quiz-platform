@@ -83,7 +83,7 @@ export default function StudentApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-600 selection:text-white">
+    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">
       {/* Student Top Navigation */}
       <StudentHeader quizId={quizId} />
 
@@ -112,15 +112,15 @@ export default function StudentApp() {
         )}
       </main>
 
-      {/* Student Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>
-            Oxvane Assessment Platform • Real-time Cloud Sync for 60+ Concurrent Students
+      {/* Student Apple-Style Footer */}
+      <footer className="border-t border-white/[0.06] bg-black/60 py-6 text-center text-xs text-[#86868b]">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="tracking-tight">
+            Oxvane Assessment Platform • High-Concurrency Real-Time Sync
           </div>
-          <div className="font-mono text-slate-500 text-[11px] flex items-center space-x-1">
-            <span>Powered by</span>
-            <span className="text-emerald-400 font-semibold">Supabase PostgreSQL</span>
+          <div className="font-mono text-[#6e6e73] text-[11px] flex items-center space-x-1.5">
+            <span>Engine</span>
+            <span className="text-[#a1a1a6] font-medium">Supabase Realtime PostgreSQL</span>
           </div>
         </div>
       </footer>
