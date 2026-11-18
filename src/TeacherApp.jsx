@@ -188,9 +188,9 @@ export default function TeacherApp() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen apple-bg-ambient flex items-center justify-center p-4">
-        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-2xl relative">
-          <div className="w-14 h-14 rounded-full bg-white/[0.08] border border-white/[0.14] flex items-center justify-center text-white mb-6 mx-auto shadow-inner">
-            <Lock className="w-6 h-6 text-[#2997ff]" />
+        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-xl relative border border-[#d2d2d7]/70">
+          <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3] mb-6 mx-auto shadow-sm">
+            <Lock className="w-6 h-6" />
           </div>
 
           <div className="text-center mb-6">
@@ -202,14 +202,14 @@ export default function TeacherApp() {
 
           <form onSubmit={handleVerifyPasscode} className="space-y-5">
             {passcodeError && (
-              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center space-x-2">
+              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{passcodeError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-[11px] font-semibold text-[#a1a1a6] uppercase tracking-[0.14em] mb-2 text-center">
+              <label className="block text-[11px] font-semibold text-[#6e6e73] uppercase tracking-[0.14em] mb-2 text-center">
                 Instructor Passcode (SHA-256 Verified)
               </label>
               <div className="relative">
@@ -219,11 +219,11 @@ export default function TeacherApp() {
                   placeholder="••••••••••••"
                   value={enteredPasscode}
                   onChange={(e) => setEnteredPasscode(e.target.value)}
-                  className="apple-input w-full px-4 py-3 text-center text-white placeholder-[#6e6e73] text-sm tracking-[0.2em] font-mono"
+                  className="apple-input w-full px-4 py-3 text-center text-[#1d1d1f] placeholder-[#86868b] text-sm tracking-[0.2em] font-mono"
                 />
               </div>
               <p className="text-[11px] text-[#86868b] mt-2 flex items-center justify-center space-x-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#2997ff]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0071e3]" />
                 <span>Client-side SHA-256 hashed verification</span>
               </p>
             </div>
@@ -238,10 +238,10 @@ export default function TeacherApp() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/[0.08] text-center">
+          <div className="mt-8 pt-6 border-t border-[#e5e5ea] text-center">
             <a
               href="/"
-              className="text-xs text-[#86868b] hover:text-[#f5f5f7] transition-colors duration-200"
+              className="text-xs text-[#0071e3] hover:underline transition-colors duration-200"
             >
               ← Return to Student Quiz View
             </a>
@@ -253,7 +253,7 @@ export default function TeacherApp() {
 
   // AUTHENTICATED: MULTI-PAGE NAVIGATION (APPLE STYLE)
   return (
-    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">
       {/* Top Header */}
       <header className="apple-glass-nav sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -261,16 +261,16 @@ export default function TeacherApp() {
             onClick={navigateToHub}
             className="flex items-center space-x-3.5 cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-b from-white/20 to-white/5 border border-white/20 flex items-center justify-center shadow-[0_2px_12px_rgba(255,255,255,0.08)] group-hover:scale-105 transition">
+            <div className="w-9 h-9 rounded-2xl bg-[#0071e3] flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2.5">
-                <span className="font-semibold text-lg tracking-tight apple-title-gradient">
+                <span className="font-semibold text-lg tracking-tight text-[#1d1d1f]">
                   Oxvane
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[#a1a1a6] border border-white/[0.1] flex items-center space-x-1">
-                  <ShieldCheck className="w-3 h-3 text-[#2997ff]" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0071e3] border border-blue-200 flex items-center space-x-1">
+                  <ShieldCheck className="w-3 h-3 text-[#0071e3]" />
                   <span>Instructor Console</span>
                 </span>
               </div>
@@ -280,11 +280,11 @@ export default function TeacherApp() {
 
           {/* Navigation Controls */}
           <div className="flex items-center space-x-3">
-            <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08]">
+            <div className="flex items-center p-1 rounded-full bg-[#e5e5ea] border border-[#d2d2d7]/60">
               <button
                 onClick={navigateToHub}
                 className={`text-xs font-medium px-4 py-1.5 rounded-full transition cursor-pointer ${
-                  view === 'hub' ? 'bg-[#2997ff] text-white shadow-sm' : 'text-[#86868b] hover:text-white'
+                  view === 'hub' ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
                 All Sessions
@@ -293,7 +293,7 @@ export default function TeacherApp() {
               <button
                 onClick={navigateToCreate}
                 className={`text-xs font-medium px-4 py-1.5 rounded-full transition cursor-pointer ${
-                  view === 'create' ? 'bg-[#2997ff] text-white shadow-sm' : 'text-[#86868b] hover:text-white'
+                  view === 'create' ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
                 + New Quiz
@@ -302,7 +302,7 @@ export default function TeacherApp() {
 
             <button
               onClick={handleLock}
-              className="apple-btn-secondary p-2 rounded-full text-[#86868b] hover:text-rose-400 cursor-pointer"
+              className="apple-btn-secondary p-2 rounded-full text-[#6e6e73] hover:text-[#ff3b30] cursor-pointer"
               title="Lock Console"
             >
               <Lock className="w-4 h-4" />
@@ -345,7 +345,7 @@ export default function TeacherApp() {
         )}
       </main>
 
-      <footer className="border-t border-white/[0.06] bg-black/60 py-5 text-center text-xs text-[#86868b]">
+      <footer className="border-t border-[#d2d2d7]/60 bg-white/80 py-5 text-center text-xs text-[#86868b]">
         Oxvane Platform • Multi-Session Architecture • Supabase Cloud PG
       </footer>
     </div>

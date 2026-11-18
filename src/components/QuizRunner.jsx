@@ -20,39 +20,39 @@ import {
 } from 'lucide-react';
 import { submitStudentQuizUniversal } from '../supabase';
 
-// Apple-refined Shape & Color Palette for Options
+// Apple-refined Shape & Color Palette for Options (White Theme)
 const KAHOOT_STYLES = [
   {
     name: 'Red Triangle',
     icon: Triangle,
-    cardBg: 'bg-rose-500/[0.08] border-rose-500/20 hover:bg-rose-500/[0.14] hover:border-rose-500/40',
-    activeBg: 'bg-[#ff3b30] border-[#ff453a] text-white shadow-[0_4px_24px_rgba(255,59,48,0.35)] ring-2 ring-[#ff453a]/60',
+    cardBg: 'bg-rose-50/80 border-rose-200/90 hover:bg-rose-100/80 hover:border-rose-300',
+    activeBg: 'bg-[#ff3b30] border-[#ff3b30] text-white shadow-[0_4px_20px_rgba(255,59,48,0.3)] ring-2 ring-[#ff3b30]/50',
     badgeBg: 'bg-[#ff3b30] text-white',
-    symbolColor: 'text-rose-400'
+    symbolColor: 'text-[#ff3b30]'
   },
   {
     name: 'Blue Diamond',
     icon: Diamond,
-    cardBg: 'bg-sky-500/[0.08] border-sky-500/20 hover:bg-sky-500/[0.14] hover:border-sky-500/40',
-    activeBg: 'bg-[#0071e3] border-[#2997ff] text-white shadow-[0_4px_24px_rgba(0,113,227,0.35)] ring-2 ring-[#2997ff]/60',
+    cardBg: 'bg-sky-50/80 border-sky-200/90 hover:bg-sky-100/80 hover:border-sky-300',
+    activeBg: 'bg-[#0071e3] border-[#0071e3] text-white shadow-[0_4px_20px_rgba(0,113,227,0.3)] ring-2 ring-[#0071e3]/50',
     badgeBg: 'bg-[#0071e3] text-white',
-    symbolColor: 'text-sky-400'
+    symbolColor: 'text-[#0071e3]'
   },
   {
     name: 'Yellow Circle',
     icon: Circle,
-    cardBg: 'bg-amber-500/[0.08] border-amber-500/20 hover:bg-amber-500/[0.14] hover:border-amber-500/40',
-    activeBg: 'bg-[#ffd60a] border-[#ffe600] text-black shadow-[0_4px_24px_rgba(255,214,10,0.35)] ring-2 ring-[#ffe600]/60',
-    badgeBg: 'bg-[#ffd60a] text-black',
-    symbolColor: 'text-amber-400'
+    cardBg: 'bg-amber-50/80 border-amber-200/90 hover:bg-amber-100/80 hover:border-amber-300',
+    activeBg: 'bg-[#ff9500] border-[#ff9500] text-white shadow-[0_4px_20px_rgba(255,149,0,0.3)] ring-2 ring-[#ff9500]/50',
+    badgeBg: 'bg-[#ff9500] text-white',
+    symbolColor: 'text-[#ff9500]'
   },
   {
     name: 'Green Square',
     icon: Square,
-    cardBg: 'bg-emerald-500/[0.08] border-emerald-500/20 hover:bg-emerald-500/[0.14] hover:border-emerald-500/40',
-    activeBg: 'bg-[#30d158] border-[#34c759] text-black shadow-[0_4px_24px_rgba(48,209,88,0.35)] ring-2 ring-[#34c759]/60',
-    badgeBg: 'bg-[#30d158] text-black',
-    symbolColor: 'text-emerald-400'
+    cardBg: 'bg-emerald-50/80 border-emerald-200/90 hover:bg-emerald-100/80 hover:border-emerald-300',
+    activeBg: 'bg-[#34c759] border-[#34c759] text-white shadow-[0_4px_20px_rgba(52,199,89,0.3)] ring-2 ring-[#34c759]/50',
+    badgeBg: 'bg-[#34c759] text-white',
+    symbolColor: 'text-[#34c759]'
   }
 ];
 
@@ -338,26 +338,26 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
       )}
 
       {/* Apple-styled Top Bar */}
-      <div className="apple-glass rounded-2xl p-4 sm:p-5 mb-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+      <div className="apple-glass rounded-2xl p-4 sm:p-5 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
             <span className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em]">Candidate</span>
             {isAssessmentMode && (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold">
-                <Zap className="w-3 h-3" />
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold">
+                <Zap className="w-3 h-3 text-amber-500" />
                 <span>Assessment ({perQuestionSeconds}s/Q)</span>
               </span>
             )}
             {!isAssessmentMode && (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-white/[0.08] border border-white/[0.1] text-[#f5f5f7] text-[10px] font-semibold">
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f] text-[10px] font-semibold">
                 <span>Standard Exam</span>
               </span>
             )}
           </div>
           <div className="flex items-center space-x-2.5 mt-1">
-            <h2 className="text-base font-semibold text-white tracking-tight">{studentName}</h2>
+            <h2 className="text-base font-semibold text-[#1d1d1f] tracking-tight">{studentName}</h2>
             {studentId && (
-              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-white/[0.06] text-[#a1a1a6] border border-white/[0.08]">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[#f5f5f7] text-[#6e6e73] border border-[#d2d2d7]/70 font-medium">
                 {studentId}
               </span>
             )}
@@ -368,11 +368,11 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
         <div className="flex-1 max-w-xs hidden md:block">
           <div className="flex justify-between text-xs font-medium text-[#86868b] mb-1.5 tracking-tight">
             <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-            <span className="text-white font-medium">{answeredCount}/{questions.length} Answered</span>
+            <span className="text-[#1d1d1f] font-medium">{answeredCount}/{questions.length} Answered</span>
           </div>
-          <div className="w-full bg-white/[0.08] h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-[#e5e5ea] h-1.5 rounded-full overflow-hidden">
             <div 
-              className="bg-[#2997ff] h-full transition-all duration-300 rounded-full shadow-[0_0_8px_rgba(41,151,255,0.5)]"
+              className="bg-[#0071e3] h-full transition-all duration-300 rounded-full shadow-[0_0_8px_rgba(0,113,227,0.35)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -384,25 +384,25 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
           <div className="flex items-center space-x-3">
             <div className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-full font-mono text-sm font-semibold transition-all shadow-sm ${
               questionSecondsLeft <= 5 
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse' 
+                ? 'bg-rose-50 text-rose-600 border border-rose-300 animate-pulse' 
                 : questionSecondsLeft <= 10
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                : 'bg-white/[0.08] text-[#f5f5f7] border border-white/[0.12]'
+                ? 'bg-amber-50 text-amber-700 border border-amber-300'
+                : 'bg-white text-[#1d1d1f] border border-[#d2d2d7]'
             }`}>
-              <Timer className="w-4 h-4 text-[#2997ff]" />
+              <Timer className="w-4 h-4 text-[#0071e3]" />
               <span>{questionSecondsLeft}s</span>
             </div>
           </div>
         ) : (
           /* CLASSICAL MODE OVERALL TIMER */
-          <div className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-full font-mono text-sm font-semibold transition-all ${
+          <div className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-full font-mono text-sm font-semibold transition-all shadow-sm ${
             overallTimeLeft <= 300 
-              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse' 
+              ? 'bg-rose-50 text-rose-600 border border-rose-300 animate-pulse' 
               : overallTimeLeft <= 600
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-              : 'bg-white/[0.08] text-[#f5f5f7] border border-white/[0.12]'
+              ? 'bg-amber-50 text-amber-700 border border-amber-300'
+              : 'bg-white text-[#1d1d1f] border border-[#d2d2d7]'
           }`}>
-            <Clock className="w-4 h-4 text-[#2997ff]" />
+            <Clock className="w-4 h-4 text-[#0071e3]" />
             <span>{formatTimer(overallTimeLeft)}</span>
           </div>
         )}
@@ -410,26 +410,26 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
 
       {/* ASSESSMENT MODE: Per-Question Countdown Progress Bar */}
       {isAssessmentMode && (
-        <div className="mb-6 apple-glass rounded-2xl p-3.5 shadow-lg">
+        <div className="mb-6 apple-glass rounded-2xl p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-medium text-[#86868b] mb-2 px-1 tracking-tight">
             <span className="flex items-center space-x-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>Question {currentQuestionIndex + 1} Limit</span>
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-[#1d1d1f] font-medium">Question {currentQuestionIndex + 1} Limit</span>
             </span>
             <span className={`font-mono font-medium ${
-              questionSecondsLeft <= 5 ? 'text-rose-400 animate-pulse' : questionSecondsLeft <= 10 ? 'text-amber-400' : 'text-white'
+              questionSecondsLeft <= 5 ? 'text-rose-600 animate-pulse' : questionSecondsLeft <= 10 ? 'text-amber-600' : 'text-[#1d1d1f]'
             }`}>
               {questionSecondsLeft}s / {perQuestionSeconds}s remaining
             </span>
           </div>
-          <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden border border-white/[0.06]">
+          <div className="w-full bg-[#e5e5ea] h-1.5 rounded-full overflow-hidden border border-[#d2d2d7]/40">
             <div 
               className={`h-full rounded-full transition-all duration-1000 ease-linear ${
                 questionSecondsLeft <= 5 
-                  ? 'bg-[#ff453a]' 
+                  ? 'bg-[#ff3b30]' 
                   : questionSecondsLeft <= 10 
-                  ? 'bg-[#ffd60a]' 
-                  : 'bg-[#2997ff]'
+                  ? 'bg-[#ff9500]' 
+                  : 'bg-[#0071e3]'
               }`}
               style={{ width: `${questionTimerPercent}%` }}
             />
@@ -440,23 +440,23 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
       <div className={`grid grid-cols-1 ${isAssessmentMode ? 'lg:grid-cols-1 max-w-4xl mx-auto' : 'lg:grid-cols-4'} gap-6`}>
         {/* Main Question Card */}
         <div className={`${isAssessmentMode ? 'w-full' : 'lg:col-span-3'} space-y-6`}>
-          <div className="apple-glass rounded-[28px] p-6 sm:p-10 shadow-2xl relative">
+          <div className="apple-glass rounded-[28px] p-6 sm:p-10 shadow-sm relative">
             {/* Question Header & Points */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-6 pb-5 border-b border-white/[0.08]">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-6 pb-5 border-b border-[#e5e5ea]">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-mono px-3 py-1 rounded-full bg-white/[0.08] text-white font-medium border border-white/[0.1]">
+                <span className="text-xs font-mono px-3 py-1 rounded-full bg-[#f5f5f7] text-[#1d1d1f] font-semibold border border-[#d2d2d7]">
                   Q{currentQuestionIndex + 1} / {questions.length}
                 </span>
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/[0.04] text-[#a1a1a6] border border-white/[0.06]">
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#f5f5f7] text-[#6e6e73] border border-[#d2d2d7]/70">
                   {currentQ.category || 'General'}
                 </span>
-                <span className="text-xs font-mono font-medium px-2.5 py-1 rounded-full bg-white/[0.04] text-[#86868b] border border-white/[0.06]">
+                <span className="text-xs font-mono font-medium px-2.5 py-1 rounded-full bg-[#f5f5f7] text-[#86868b] border border-[#d2d2d7]/70">
                   {currentQ.points ? `${currentQ.points.toLocaleString()} pts` : '1,000 pts'}
                 </span>
               </div>
 
               <div className="flex items-center space-x-2.5">
-                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-white/[0.06] text-[#86868b] uppercase tracking-wider">
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73] uppercase tracking-wider border border-[#d2d2d7]/70">
                   {currentType === 'single' ? 'Multiple Choice' : currentType === 'boolean' ? 'True / False' : currentType === 'multi' ? 'Multi-Select' : 'Type Answer'}
                 </span>
 
@@ -466,8 +466,8 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                     onClick={() => toggleFlag(currentQ.id)}
                     className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all ${
                       flaggedQuestions[currentQ.id]
-                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                        : 'bg-white/[0.04] border-white/[0.08] text-[#86868b] hover:text-white hover:border-white/[0.14]'
+                        ? 'bg-amber-50 border-amber-300 text-amber-700'
+                        : 'bg-white border-[#d2d2d7] text-[#6e6e73] hover:text-[#1d1d1f] hover:border-[#86868b]'
                     }`}
                   >
                     <Flag className="w-3.5 h-3.5" />
@@ -478,21 +478,21 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             </div>
 
             {/* Question Text */}
-            <h3 className="text-xl sm:text-2xl font-semibold text-white mb-8 leading-snug tracking-[-0.015em]">
+            <h3 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f] mb-8 leading-snug tracking-[-0.015em]">
               {currentQ.question}
             </h3>
 
             {/* ASSESSMENT MODE: Lock Notification Badge */}
             {isAssessmentMode && isAnswerLocked && (
-              <div className="mb-6 p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center justify-between shadow-lg">
+              <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-2.5">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   <span>Answer Recorded. Advancing to next question...</span>
                 </div>
                 <button
                   type="button"
                   onClick={advanceToNext}
-                  className="apple-btn-secondary px-3 py-1 text-xs text-white"
+                  className="apple-btn-secondary px-3 py-1 text-xs text-[#1d1d1f]"
                 >
                   <span>Skip Wait →</span>
                 </button>
@@ -517,10 +517,10 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                       className={`text-left p-5 rounded-2xl border-2 transition-all flex items-start space-x-3.5 group relative overflow-hidden transform active:scale-[0.98] ${
                         isSelected 
                           ? style.activeBg 
-                          : `${style.cardBg} text-slate-100`
-                      } ${isAnswerLocked ? 'opacity-90 cursor-default' : 'cursor-pointer hover:shadow-xl'}`}
+                          : `${style.cardBg} text-[#1d1d1f]`
+                      } ${isAnswerLocked ? 'opacity-90 cursor-default' : 'cursor-pointer hover:shadow-md'}`}
                     >
-                      <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all font-bold shadow-md ${
+                      <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all font-bold shadow-sm ${
                         isSelected ? 'bg-white/30 text-white' : style.badgeBg
                       }`}>
                         <Icon className="w-4 h-4 fill-current" />
@@ -546,8 +546,8 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                   onClick={() => selectSingleOption(currentQ.id, 0)}
                   className={`p-8 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center space-y-2 cursor-pointer ${
                     selectedAnswers[currentQ.id] === 0
-                      ? 'bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-600/30'
-                      : 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-300'
+                      ? 'bg-[#0071e3] border-[#0071e3] text-white shadow-lg shadow-blue-500/20'
+                      : 'bg-sky-50/80 border-sky-200 hover:bg-sky-100 text-[#0071e3]'
                   } ${isAnswerLocked ? 'opacity-90 cursor-default' : ''}`}
                 >
                   <Diamond className="w-10 h-10 fill-current mb-1" />
@@ -560,8 +560,8 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                   onClick={() => selectSingleOption(currentQ.id, 1)}
                   className={`p-8 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center space-y-2 cursor-pointer ${
                     selectedAnswers[currentQ.id] === 1
-                      ? 'bg-red-600 border-red-400 text-white shadow-xl shadow-red-600/30'
-                      : 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-300'
+                      ? 'bg-[#ff3b30] border-[#ff3b30] text-white shadow-lg shadow-rose-500/20'
+                      : 'bg-rose-50/80 border-rose-200 hover:bg-rose-100 text-[#ff3b30]'
                   } ${isAnswerLocked ? 'opacity-90 cursor-default' : ''}`}
                 >
                   <Triangle className="w-10 h-10 fill-current mb-1" />
@@ -573,7 +573,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             {/* TYPE 3: MULTI-SELECT CHECKBOXES */}
             {currentType === 'multi' && (
               <div className="space-y-3">
-                <div className="text-xs text-teal-400 font-semibold mb-2">
+                <div className="text-xs text-[#0071e3] font-semibold mb-2">
                   * Multi-Select: Choose all correct answers, then click {isAssessmentMode ? '"Lock Answer"' : '"Next"'}
                 </div>
                 {(currentQ.options || []).map((option, idx) => {
@@ -588,12 +588,12 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                       onClick={() => toggleMultiOption(currentQ.id, idx)}
                       className={`w-full text-left p-4 rounded-xl border transition-all flex items-start space-x-3 ${
                         isChecked
-                          ? 'bg-teal-600/20 border-teal-500 text-white shadow-md'
-                          : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                          ? 'bg-blue-50/90 border-[#0071e3] text-[#1d1d1f] shadow-sm'
+                          : 'bg-[#fbfbfd] border-[#d2d2d7] text-[#1d1d1f] hover:border-[#86868b]'
                       }`}
                     >
                       <div className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${
-                        isChecked ? 'bg-teal-500 border-teal-400 text-slate-950' : 'border-slate-700 bg-slate-900'
+                        isChecked ? 'bg-[#0071e3] border-[#0071e3] text-white' : 'border-[#d2d2d7] bg-white'
                       }`}>
                         {isChecked && <Check className="w-4 h-4 stroke-[3]" />}
                       </div>
@@ -611,7 +611,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                       setTransitioningToNext(true);
                       nextTransitionTimeoutRef.current = setTimeout(advanceToNext, 1200);
                     }}
-                    className="w-full mt-4 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-lg transition active:scale-95"
+                    className="apple-btn-primary w-full mt-4 py-3 font-semibold text-sm cursor-pointer"
                   >
                     Lock & Submit Answer
                   </button>
@@ -622,7 +622,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             {/* TYPE 4: SHORT ANSWER TEXT INPUT */}
             {currentType === 'text' && (
               <div className="space-y-3">
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider">
                   Type Your Answer
                 </label>
                 <input
@@ -631,9 +631,9 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                   placeholder=""
                   value={selectedAnswers[currentQ.id] || ''}
                   onChange={(e) => handleTextAnswer(currentQ.id, e.target.value)}
-                  className="w-full px-5 py-4 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium"
+                  className="apple-input w-full px-5 py-4 text-base font-medium"
                 />
-                <p className="text-xs text-slate-500">Case-insensitive matching applies upon submission.</p>
+                <p className="text-xs text-[#86868b]">Case-insensitive matching applies upon submission.</p>
 
                 {isAssessmentMode && (
                   <button
@@ -644,7 +644,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                       setTransitioningToNext(true);
                       nextTransitionTimeoutRef.current = setTimeout(advanceToNext, 1200);
                     }}
-                    className="w-full mt-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-lg transition active:scale-95"
+                    className="apple-btn-primary w-full mt-2 py-3 font-semibold text-sm cursor-pointer"
                   >
                     Lock & Submit Answer
                   </button>
@@ -654,7 +654,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
 
             {/* Bottom Nav: Only in Classical Mode (Assessment Mode advances automatically!) */}
             {!isAssessmentMode && (
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/[0.08]">
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#e5e5ea]">
                 <button
                   type="button"
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
@@ -678,7 +678,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                   <button
                     type="button"
                     onClick={() => setShowSubmitModal(true)}
-                    className="apple-btn-primary flex items-center space-x-2 px-6 py-2.5 text-xs cursor-pointer shadow-[0_2px_14px_rgba(48,209,88,0.4)] !bg-[#30d158] hover:!bg-[#34c759] !text-black font-semibold"
+                    className="apple-btn-primary flex items-center space-x-2 px-6 py-2.5 text-xs cursor-pointer shadow-[0_2px_14px_rgba(52,199,89,0.35)] !bg-[#34c759] hover:!bg-[#30d158] !text-white font-semibold"
                   >
                     <Send className="w-4 h-4" />
                     <span>Review & Submit</span>
@@ -692,7 +692,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
         {/* Question Grid Sidebar: Only visible in Classical Mode */}
         {!isAssessmentMode && (
           <div className="space-y-6">
-            <div className="apple-glass rounded-2xl p-5 shadow-xl">
+            <div className="apple-glass rounded-2xl p-5 shadow-sm">
               <h4 className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-4">
                 Question Navigator
               </h4>
@@ -708,29 +708,29 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                       key={q.id}
                       type="button"
                       onClick={() => setCurrentQuestionIndex(idx)}
-                      className={`relative w-full aspect-square rounded-xl text-xs font-mono font-medium flex items-center justify-center transition-all ${
+                      className={`relative w-full aspect-square rounded-xl text-xs font-mono font-medium flex items-center justify-center transition-all cursor-pointer ${
                         isCurrent
-                          ? 'ring-2 ring-[#2997ff] ring-offset-2 ring-offset-black font-bold scale-105'
+                          ? 'ring-2 ring-[#0071e3] ring-offset-2 ring-offset-white font-bold scale-105'
                           : ''
                       } ${
                         isAnswered
-                          ? 'bg-[#2997ff] text-white shadow-sm'
-                          : 'bg-white/[0.04] text-[#86868b] hover:bg-white/[0.08] hover:text-white'
+                          ? 'bg-[#0071e3] text-white shadow-sm'
+                          : 'bg-[#f5f5f7] text-[#6e6e73] hover:bg-[#e5e5ea] hover:text-[#1d1d1f]'
                       }`}
                     >
                       {idx + 1}
                       {isFlagged && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-black" />
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-white" />
                       )}
                     </button>
                   );
                 })}
               </div>
 
-              <div className="space-y-2.5 text-xs border-t border-white/[0.08] pt-4 text-[#86868b]">
+              <div className="space-y-2.5 text-xs border-t border-[#e5e5ea] pt-4 text-[#86868b]">
                 <div className="flex items-center justify-between">
                   <span>Answered</span>
-                  <span className="font-mono font-medium text-white">{answeredCount}</span>
+                  <span className="font-mono font-medium text-[#1d1d1f]">{answeredCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Unanswered</span>
@@ -738,7 +738,7 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Flagged</span>
-                  <span className="font-mono font-medium text-amber-400">{flaggedCount}</span>
+                  <span className="font-mono font-medium text-amber-600">{flaggedCount}</span>
                 </div>
               </div>
 
@@ -757,13 +757,13 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
 
       {/* Confirmation Modal (Classical Mode) - Apple macOS Alert */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="apple-glass rounded-[28px] max-w-md w-full p-8 shadow-2xl relative">
-            <div className="w-12 h-12 rounded-full bg-white/[0.08] border border-white/[0.12] flex items-center justify-center text-white mb-4 mx-auto">
-              <Send className="w-5 h-5 text-[#2997ff]" />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="apple-glass rounded-[28px] max-w-md w-full p-8 shadow-2xl relative border border-[#d2d2d7]">
+            <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3] mb-4 mx-auto">
+              <Send className="w-5 h-5" />
             </div>
 
-            <h3 className="text-xl font-semibold text-white text-center mb-1.5 tracking-tight">
+            <h3 className="text-xl font-semibold text-[#1d1d1f] text-center mb-1.5 tracking-tight">
               Submit Examination?
             </h3>
             <p className="text-xs text-[#86868b] text-center mb-6 leading-relaxed">
@@ -771,29 +771,29 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             </p>
 
             {submitError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs">
                 {submitError}
               </div>
             )}
 
-            <div className="bg-white/[0.04] rounded-2xl p-4 border border-white/[0.08] mb-6 space-y-2.5 text-xs">
+            <div className="bg-[#f5f5f7] rounded-2xl p-4 border border-[#e5e5ea] mb-6 space-y-2.5 text-xs">
               <div className="flex justify-between text-[#86868b]">
                 <span>Total Questions</span>
-                <strong className="text-white font-medium">{questions.length}</strong>
+                <strong className="text-[#1d1d1f] font-medium">{questions.length}</strong>
               </div>
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-[#1d1d1f]">
                 <span>Answered</span>
-                <strong className="text-emerald-400 font-medium">{answeredCount}</strong>
+                <strong className="text-[#34c759] font-medium">{answeredCount}</strong>
               </div>
               {unansweredCount > 0 && (
-                <div className="flex justify-between text-amber-400">
+                <div className="flex justify-between text-amber-600">
                   <span>Unanswered</span>
                   <strong className="font-medium">{unansweredCount}</strong>
                 </div>
               )}
               <div className="flex justify-between text-[#86868b]">
                 <span>Time Remaining</span>
-                <strong className="font-mono text-white">{formatTimer(overallTimeLeft)}</strong>
+                <strong className="font-mono text-[#1d1d1f]">{formatTimer(overallTimeLeft)}</strong>
               </div>
             </div>
 

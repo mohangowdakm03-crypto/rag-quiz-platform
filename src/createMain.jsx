@@ -58,8 +58,8 @@ function CreatePage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen apple-bg-ambient flex items-center justify-center p-4">
-        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-2xl relative border border-white/[0.1]">
-          <div className="w-14 h-14 rounded-full bg-white/[0.08] border border-white/[0.14] flex items-center justify-center text-[#2997ff] mb-6 mx-auto shadow-inner">
+        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-xl relative border border-[#d2d2d7]/70">
+          <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3] mb-6 mx-auto shadow-sm">
             <Lock className="w-6 h-6" />
           </div>
 
@@ -72,14 +72,14 @@ function CreatePage() {
 
           <form onSubmit={handleVerify} className="space-y-5">
             {passcodeError && (
-              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center space-x-2">
+              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{passcodeError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-[11px] font-semibold text-[#a1a1a6] uppercase tracking-[0.14em] mb-2 text-center">
+              <label className="block text-[11px] font-semibold text-[#6e6e73] uppercase tracking-[0.14em] mb-2 text-center">
                 Instructor Passcode (SHA-256 Verified)
               </label>
               <div className="relative">
@@ -89,7 +89,7 @@ function CreatePage() {
                   placeholder="••••••••••••"
                   value={enteredPasscode}
                   onChange={(e) => setEnteredPasscode(e.target.value)}
-                  className="apple-input w-full px-4 py-3 text-center text-white placeholder-[#6e6e73] text-sm tracking-[0.2em] font-mono"
+                  className="apple-input w-full px-4 py-3 text-center text-[#1d1d1f] placeholder-[#86868b] text-sm tracking-[0.2em] font-mono"
                 />
               </div>
             </div>
@@ -104,10 +104,10 @@ function CreatePage() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/[0.08] text-center">
+          <div className="mt-8 pt-6 border-t border-[#e5e5ea] text-center">
             <a
               href="/teacher"
-              className="text-xs text-[#86868b] hover:text-[#f5f5f7] transition-colors"
+              className="text-xs text-[#0071e3] hover:underline transition-colors"
             >
               ← Go to Sessions Hub
             </a>
@@ -118,19 +118,19 @@ function CreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">
       <header className="apple-glass-nav sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3.5">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-b from-white/20 to-white/5 border border-white/20 flex items-center justify-center shadow-[0_2px_12px_rgba(255,255,255,0.08)]">
+            <div className="w-9 h-9 rounded-2xl bg-[#0071e3] flex items-center justify-center shadow-md shadow-blue-500/20">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-semibold text-lg tracking-tight apple-title-gradient">
+                <span className="font-semibold text-lg tracking-tight text-[#1d1d1f]">
                   Oxvane
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[#a1a1a6] border border-white/[0.1]">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0071e3] border border-blue-200">
                   Quiz Creator
                 </span>
               </div>
@@ -159,7 +159,7 @@ function CreatePage() {
         />
       </main>
 
-      <footer className="border-t border-white/[0.06] bg-black/60 py-5 text-center text-xs text-[#86868b]">
+      <footer className="border-t border-[#d2d2d7]/60 bg-white/80 py-5 text-center text-xs text-[#86868b]">
         Oxvane Platform • Quiz Creator
       </footer>
     </div>

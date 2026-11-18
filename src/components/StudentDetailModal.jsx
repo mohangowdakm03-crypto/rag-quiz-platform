@@ -23,31 +23,31 @@ export default function StudentDetailModal({ student, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="apple-glass rounded-[28px] max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl fade-in overflow-hidden border border-white/[0.1]">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="apple-glass bg-white rounded-[28px] max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl fade-in overflow-hidden border border-[#d2d2d7]">
         {/* Header */}
-        <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
+        <div className="p-6 border-b border-[#e5e5ea] flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2.5">
-              <h2 className="text-xl font-semibold text-white tracking-tight">{studentName}</h2>
+              <h2 className="text-xl font-semibold text-[#1d1d1f] tracking-tight">{studentName}</h2>
               {studentId && (
-                <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[#2997ff] border border-white/[0.1]">
+                <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#f5f5f7] text-[#0071e3] border border-[#d2d2d7]/70">
                   USN: {studentId}
                 </span>
               )}
               <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
                 passed 
-                  ? 'bg-emerald-500/10 text-[#30d158] border border-emerald-500/20' 
-                  : 'bg-rose-500/10 text-[#ff453a] border border-rose-500/20'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                  : 'bg-rose-50 text-rose-800 border border-rose-200'
               }`}>
                 {passed ? 'PASSED' : 'FAILED'}
               </span>
             </div>
             <div className="text-xs text-[#86868b] mt-1.5 flex items-center space-x-3 tracking-tight">
-              <span>Score: <strong className="text-white font-medium">{score}/{totalQuestions}</strong> ({percentage}%)</span>
+              <span>Score: <strong className="text-[#1d1d1f] font-medium">{score}/{totalQuestions}</strong> ({percentage}%)</span>
               <span>•</span>
               <span className="flex items-center space-x-1">
-                <Clock className="w-3.5 h-3.5 text-[#2997ff]" />
+                <Clock className="w-3.5 h-3.5 text-[#0071e3]" />
                 <span>Time: {formatTime(timeTakenSeconds)}</span>
               </span>
             </div>
@@ -62,7 +62,7 @@ export default function StudentDetailModal({ student, onClose }) {
         </div>
 
         {/* Content list */}
-        <div className="p-6 overflow-y-auto space-y-3.5">
+        <div className="p-6 overflow-y-auto space-y-3.5 bg-[#f5f5f7]">
           {breakdown.map((item, idx) => {
             const isCorrect = item.isCorrect;
             const letter = item.studentChoice !== null && item.studentChoice !== undefined 
@@ -73,40 +73,40 @@ export default function StudentDetailModal({ student, onClose }) {
             return (
               <div 
                 key={idx}
-                className={`p-4 rounded-2xl border text-xs transition ${
+                className={`p-4 rounded-2xl border text-xs transition bg-white shadow-sm ${
                   isCorrect 
-                    ? 'apple-glass-card border-white/[0.06]' 
-                    : 'bg-rose-500/[0.04] border-rose-500/30'
+                    ? 'border-[#d2d2d7]/70' 
+                    : 'border-rose-300 bg-rose-50/30'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     {isCorrect ? (
-                      <CheckCircle2 className="w-4 h-4 text-[#30d158]" />
+                      <CheckCircle2 className="w-4 h-4 text-[#34c759]" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-[#ff453a]" />
+                      <XCircle className="w-4 h-4 text-[#ff3b30]" />
                     )}
-                    <span className="font-semibold text-white tracking-tight">Q{item.questionId || idx + 1}. {item.question}</span>
+                    <span className="font-semibold text-[#1d1d1f] tracking-tight">Q{item.questionId || idx + 1}. {item.question}</span>
                   </div>
-                  <span className="text-[10px] font-medium text-[#86868b] px-2 py-0.5 rounded-full bg-white/[0.06]">
+                  <span className="text-[10px] font-medium text-[#86868b] px-2 py-0.5 rounded-full bg-[#f5f5f7] border border-[#d2d2d7]/50">
                     {item.category}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/[0.06]">
-                  <div className={isCorrect ? 'text-[#30d158]' : 'text-[#ff453a]'}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pt-2 border-t border-[#e5e5ea]">
+                  <div className={isCorrect ? 'text-emerald-800 font-medium' : 'text-rose-800 font-medium'}>
                     Selected: <strong>{letter}</strong> ({item.options ? item.options[item.studentChoice] : 'N/A'})
                   </div>
                   {!isCorrect && (
-                    <div className="text-emerald-400">
+                    <div className="text-emerald-700 font-medium">
                       Correct: <strong>{correctLetter}</strong> ({item.options ? item.options[item.correctAnswer] : 'N/A'})
                     </div>
                   )}
                 </div>
 
                 {item.explanation && (
-                  <p className="mt-2 text-slate-400 text-[11px] bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
-                    💡 <strong className="text-slate-300">Explanation:</strong> {item.explanation}
+                  <p className="mt-2 text-[#424245] text-[11px] bg-[#f5f5f7] p-2.5 rounded-lg border border-[#e5e5ea]">
+                    💡 <strong className="text-[#1d1d1f]">Explanation:</strong> {item.explanation}
                   </p>
                 )}
               </div>
@@ -115,10 +115,10 @@ export default function StudentDetailModal({ student, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
+        <div className="p-4 border-t border-[#e5e5ea] bg-white flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition"
+            className="apple-btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
           >
             Close Window
           </button>

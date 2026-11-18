@@ -286,24 +286,24 @@ export default function ConductedSessionView({
       </div>
 
       {/* Session Header Card (Apple Glass) */}
-      <div className="apple-glass rounded-[32px] p-6 sm:p-8 mb-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="apple-glass rounded-[32px] p-6 sm:p-8 mb-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.12] text-white text-xs font-mono font-medium">
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] text-xs font-mono font-semibold">
               <span>GAME PIN: {sessionPin}</span>
             </span>
 
             <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
               isAssessment 
-                ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300' 
-                : 'bg-white/[0.06] border border-white/[0.1] text-[#f5f5f7]'
+                ? 'bg-amber-50 border border-amber-200 text-amber-700' 
+                : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
             }`}>
-              {isAssessment ? <Zap className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+              {isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
               <span>{isAssessment ? `Assessment (${sessionDef?.perQuestionSeconds || 30}s/Q)` : `Standard (${sessionDef?.timeLimitMinutes || 30}m)`}</span>
             </span>
 
             <span className="inline-flex items-center space-x-1 text-xs text-[#86868b] font-medium">
-              <Radio className="w-3 h-3 text-[#30d158] animate-pulse" />
+              <Radio className="w-3 h-3 text-[#34c759] animate-pulse" />
               <span>Live Cloud Sync</span>
             </span>
           </div>
@@ -333,7 +333,7 @@ export default function ConductedSessionView({
             className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
             title="Copy sorted table to paste directly into Google Sheets"
           >
-            {copiedSheets ? <Check className="w-3.5 h-3.5 text-[#30d158]" /> : <Table className="w-3.5 h-3.5 text-[#2997ff]" />}
+            {copiedSheets ? <Check className="w-3.5 h-3.5 text-[#34c759]" /> : <Table className="w-3.5 h-3.5 text-[#0071e3]" />}
             <span>{copiedSheets ? 'Copied for Sheets!' : 'Copy for Google Sheets'}</span>
           </button>
 
@@ -342,7 +342,7 @@ export default function ConductedSessionView({
             onClick={() => setShowSheetsModal(true)}
             className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
           >
-            <Link2 className="w-3.5 h-3.5 text-[#2997ff]" />
+            <Link2 className="w-3.5 h-3.5 text-[#0071e3]" />
             <span>Sheets Webhook</span>
           </button>
 
@@ -357,7 +357,7 @@ export default function ConductedSessionView({
 
           <button
             onClick={onLock}
-            className="apple-btn-secondary p-2 text-xs text-[#86868b] hover:text-[#ff453a] cursor-pointer"
+            className="apple-btn-secondary p-2 text-xs text-[#86868b] hover:text-[#ff3b30] cursor-pointer"
             title="Lock Console"
           >
             <Lock className="w-3.5 h-3.5" />
@@ -366,13 +366,13 @@ export default function ConductedSessionView({
       </div>
 
       {/* Tabs (iOS Segmented Control Style) */}
-      <div className="flex p-1 rounded-full bg-white/[0.06] border border-white/[0.08] space-x-1 mb-8 w-fit">
+      <div className="flex p-1 rounded-full bg-[#e5e5ea] border border-[#d2d2d7]/60 space-x-1 mb-8 w-fit">
         <button
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center space-x-2 py-1.5 px-4 rounded-full text-xs font-medium transition cursor-pointer ${
             activeTab === 'leaderboard'
-              ? 'bg-[#2997ff] text-white shadow-sm'
-              : 'text-[#86868b] hover:text-white'
+              ? 'bg-[#0071e3] text-white shadow-sm font-semibold'
+              : 'text-[#6e6e73] hover:text-[#1d1d1f]'
           }`}
         >
           <Award className="w-3.5 h-3.5" />
@@ -383,8 +383,8 @@ export default function ConductedSessionView({
           onClick={() => setActiveTab('item-analysis')}
           className={`flex items-center space-x-2 py-1.5 px-4 rounded-full text-xs font-medium transition cursor-pointer ${
             activeTab === 'item-analysis'
-              ? 'bg-[#2997ff] text-white shadow-sm'
-              : 'text-[#86868b] hover:text-white'
+              ? 'bg-[#0071e3] text-white shadow-sm font-semibold'
+              : 'text-[#6e6e73] hover:text-[#1d1d1f]'
           }`}
         >
           <BarChart3 className="w-3.5 h-3.5" />
@@ -395,8 +395,8 @@ export default function ConductedSessionView({
           onClick={() => setActiveTab('questions')}
           className={`flex items-center space-x-2 py-1.5 px-4 rounded-full text-xs font-medium transition cursor-pointer ${
             activeTab === 'questions'
-              ? 'bg-[#2997ff] text-white shadow-sm'
-              : 'text-[#86868b] hover:text-white'
+              ? 'bg-[#0071e3] text-white shadow-sm font-semibold'
+              : 'text-[#6e6e73] hover:text-[#1d1d1f]'
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -409,11 +409,11 @@ export default function ConductedSessionView({
         <div className="space-y-6">
           {/* WINNERS PODIUM (TOP 3 CANDIDATES) */}
           {winners.length > 0 && (
-            <div className="apple-glass rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div className="apple-glass rounded-[32px] p-6 sm:p-8 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold text-white flex items-center space-x-2 tracking-tight">
-                    <Crown className="w-4 h-4 text-[#ffd60a]" />
+                  <h3 className="text-xl font-semibold text-[#1d1d1f] flex items-center space-x-2 tracking-tight">
+                    <Crown className="w-4 h-4 text-amber-500" />
                     <span>Top Winners Podium</span>
                   </h3>
                   <p className="text-xs text-[#86868b] mt-0.5 tracking-tight">
@@ -424,9 +424,9 @@ export default function ConductedSessionView({
                 <button
                   type="button"
                   onClick={handleCopyForGoogleSheets}
-                  className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-[#a1a1a6] text-xs font-medium hover:bg-white/[0.1] transition cursor-pointer"
+                  className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] text-xs font-medium hover:bg-[#f5f5f7] transition cursor-pointer"
                 >
-                  <Table className="w-3.5 h-3.5" />
+                  <Table className="w-3.5 h-3.5 text-[#0071e3]" />
                   <span>{copiedSheets ? 'Copied to Clipboard!' : 'Copy Podium for Sheets'}</span>
                 </button>
               </div>
@@ -435,16 +435,16 @@ export default function ConductedSessionView({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                 {/* 2nd Place */}
                 {winners[1] ? (
-                  <div className="apple-glass-card border-white/20 rounded-2xl p-5 text-center flex flex-col justify-between order-2 sm:order-1 h-56 shadow-lg">
+                  <div className="apple-glass-card border-[#d2d2d7] rounded-2xl p-5 text-center flex flex-col justify-between order-2 sm:order-1 h-56 shadow-sm">
                     <div>
-                      <div className="w-10 h-10 rounded-full bg-white/[0.08] border border-white/[0.16] text-[#f5f5f7] flex items-center justify-center font-bold text-sm mx-auto mb-2">
+                      <div className="w-10 h-10 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] flex items-center justify-center font-bold text-sm mx-auto mb-2">
                         🥈 2
                       </div>
-                      <h4 className="font-semibold text-white text-base truncate tracking-tight">{winners[1].studentName}</h4>
-                      <p className="text-xs font-mono font-medium text-[#2997ff] mt-0.5">USN: {winners[1].studentId}</p>
+                      <h4 className="font-semibold text-[#1d1d1f] text-base truncate tracking-tight">{winners[1].studentName}</h4>
+                      <p className="text-xs font-mono font-medium text-[#0071e3] mt-0.5">USN: {winners[1].studentId}</p>
                     </div>
-                    <div className="pt-3 border-t border-white/[0.06]">
-                      <div className="text-2xl font-semibold font-mono text-[#f5f5f7]">{winners[1].score?.toLocaleString()} pts</div>
+                    <div className="pt-3 border-t border-[#e5e5ea]">
+                      <div className="text-2xl font-semibold font-mono text-[#1d1d1f]">{winners[1].score?.toLocaleString()} pts</div>
                       <div className="text-xs text-[#86868b] font-medium">{winners[1].percentage}% • {Math.floor((winners[1].timeTakenSeconds || 0) / 60)}m {(winners[1].timeTakenSeconds || 0) % 60}s</div>
                     </div>
                   </div>
@@ -454,39 +454,39 @@ export default function ConductedSessionView({
 
                 {/* 1st Place (Center / Tallest) */}
                 {winners[0] && (
-                  <div className="apple-glass-card border-amber-400/40 bg-gradient-to-b from-amber-500/[0.08] via-white/[0.02] to-transparent rounded-[24px] p-6 text-center flex flex-col justify-between order-1 sm:order-2 h-64 shadow-[0_12px_40px_rgba(255,214,10,0.12)] relative">
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#ffd60a] text-black font-semibold text-[10px] uppercase tracking-wider flex items-center space-x-1 shadow-sm">
+                  <div className="apple-glass-card border-amber-300 bg-gradient-to-b from-amber-50 to-white rounded-[24px] p-6 text-center flex flex-col justify-between order-1 sm:order-2 h-64 shadow-md relative">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-400 text-amber-950 font-bold text-[10px] uppercase tracking-wider flex items-center space-x-1 shadow-sm">
                       <Crown className="w-3 h-3" />
                       <span>1st Place Winner</span>
                     </div>
 
                     <div className="mt-2">
-                      <div className="w-12 h-12 rounded-full bg-amber-400/20 border-2 border-[#ffd60a] text-[#ffd60a] flex items-center justify-center font-bold text-lg mx-auto mb-2 shadow-inner">
+                      <div className="w-12 h-12 rounded-full bg-amber-100 border-2 border-amber-400 text-amber-800 flex items-center justify-center font-bold text-lg mx-auto mb-2 shadow-inner">
                         🥇 1
                       </div>
-                      <h4 className="font-semibold text-white text-lg truncate tracking-tight">{winners[0].studentName}</h4>
-                      <p className="text-xs font-mono font-medium text-[#ffd60a] mt-0.5">USN: {winners[0].studentId}</p>
+                      <h4 className="font-bold text-[#1d1d1f] text-lg truncate tracking-tight">{winners[0].studentName}</h4>
+                      <p className="text-xs font-mono font-bold text-amber-700 mt-0.5">USN: {winners[0].studentId}</p>
                     </div>
 
-                    <div className="pt-3 border-t border-amber-500/20">
-                      <div className="text-3xl font-semibold font-mono text-white">{winners[0].score?.toLocaleString()} pts</div>
-                      <div className="text-xs text-[#30d158] font-medium">{winners[0].percentage}% • Completed in {Math.floor((winners[0].timeTakenSeconds || 0) / 60)}m {(winners[0].timeTakenSeconds || 0) % 60}s</div>
+                    <div className="pt-3 border-t border-amber-200">
+                      <div className="text-3xl font-bold font-mono text-[#1d1d1f]">{winners[0].score?.toLocaleString()} pts</div>
+                      <div className="text-xs text-emerald-700 font-semibold">{winners[0].percentage}% • Completed in {Math.floor((winners[0].timeTakenSeconds || 0) / 60)}m {(winners[0].timeTakenSeconds || 0) % 60}s</div>
                     </div>
                   </div>
                 )}
 
                 {/* 3rd Place */}
                 {winners[2] ? (
-                  <div className="apple-glass-card border-amber-600/30 rounded-2xl p-5 text-center flex flex-col justify-between order-3 h-52 shadow-lg">
+                  <div className="apple-glass-card border-[#d2d2d7] rounded-2xl p-5 text-center flex flex-col justify-between order-3 h-52 shadow-sm">
                     <div>
-                      <div className="w-10 h-10 rounded-full bg-amber-900/30 border border-amber-700/40 text-amber-500 flex items-center justify-center font-bold text-sm mx-auto mb-2">
+                      <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold text-sm mx-auto mb-2">
                         🥉 3
                       </div>
-                      <h4 className="font-semibold text-white text-base truncate tracking-tight">{winners[2].studentName}</h4>
-                      <p className="text-xs font-mono font-medium text-[#2997ff] mt-0.5">USN: {winners[2].studentId}</p>
+                      <h4 className="font-semibold text-[#1d1d1f] text-base truncate tracking-tight">{winners[2].studentName}</h4>
+                      <p className="text-xs font-mono font-medium text-[#0071e3] mt-0.5">USN: {winners[2].studentId}</p>
                     </div>
-                    <div className="pt-3 border-t border-white/[0.06]">
-                      <div className="text-2xl font-semibold font-mono text-[#f5f5f7]">{winners[2].score?.toLocaleString()} pts</div>
+                    <div className="pt-3 border-t border-[#e5e5ea]">
+                      <div className="text-2xl font-semibold font-mono text-[#1d1d1f]">{winners[2].score?.toLocaleString()} pts</div>
                       <div className="text-xs text-[#86868b] font-medium">{winners[2].percentage}% • {Math.floor((winners[2].timeTakenSeconds || 0) / 60)}m {(winners[2].timeTakenSeconds || 0) % 60}s</div>
                     </div>
                   </div>
@@ -499,12 +499,12 @@ export default function ConductedSessionView({
 
           {/* KPI Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08]">
+            <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70">
               <div className="flex items-center justify-between text-[#86868b] text-[10px] font-semibold uppercase tracking-[0.16em] mb-2">
                 <span>Submissions</span>
-                <Users className="w-4 h-4 text-[#2997ff]" />
+                <Users className="w-4 h-4 text-[#0071e3]" />
               </div>
-              <div className="text-3xl font-semibold text-white font-mono tracking-tight">
+              <div className="text-3xl font-semibold text-[#1d1d1f] font-mono tracking-tight">
                 {totalSubmissions}
               </div>
               <div className="text-[11px] text-[#86868b] mt-1 font-mono">
@@ -512,34 +512,34 @@ export default function ConductedSessionView({
               </div>
             </div>
 
-            <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08]">
+            <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70">
               <div className="flex items-center justify-between text-[#86868b] text-[10px] font-semibold uppercase tracking-[0.16em] mb-2">
                 <span>Class Average</span>
-                <TrendingUp className="w-4 h-4 text-[#2997ff]" />
+                <TrendingUp className="w-4 h-4 text-[#0071e3]" />
               </div>
-              <div className="text-3xl font-semibold text-[#2997ff] font-mono tracking-tight">
+              <div className="text-3xl font-semibold text-[#0071e3] font-mono tracking-tight">
                 {averageScore}%
               </div>
               <div className="text-[11px] text-[#86868b] mt-1">Across all candidates</div>
             </div>
 
-            <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08]">
+            <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70">
               <div className="flex items-center justify-between text-[#86868b] text-[10px] font-semibold uppercase tracking-[0.16em] mb-2">
                 <span>Pass Rate (≥{sessionDef?.passingScore || 70}%)</span>
-                <CheckCircle2 className="w-4 h-4 text-[#30d158]" />
+                <CheckCircle2 className="w-4 h-4 text-[#34c759]" />
               </div>
-              <div className="text-3xl font-semibold text-[#30d158] font-mono tracking-tight">
+              <div className="text-3xl font-semibold text-[#34c759] font-mono tracking-tight">
                 {passRate}%
               </div>
               <div className="text-[11px] text-[#86868b] mt-1">{passedCount} passed</div>
             </div>
 
-            <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08]">
+            <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70">
               <div className="flex items-center justify-between text-[#86868b] text-[10px] font-semibold uppercase tracking-[0.16em] mb-2">
                 <span>Highest Score</span>
-                <Award className="w-4 h-4 text-[#ffd60a]" />
+                <Award className="w-4 h-4 text-amber-500" />
               </div>
-              <div className="text-3xl font-semibold text-[#ffd60a] font-mono tracking-tight">
+              <div className="text-3xl font-semibold text-amber-600 font-mono tracking-tight">
                 {highestScore.toLocaleString()}
               </div>
               <div className="text-[11px] text-[#86868b] mt-1">Top candidate</div>
@@ -547,7 +547,7 @@ export default function ConductedSessionView({
           </div>
 
           {/* Search & Sort Controls */}
-          <div className="apple-glass rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="apple-glass rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="relative w-full sm:w-80">
               <Search className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
               <input
@@ -575,14 +575,14 @@ export default function ConductedSessionView({
           </div>
 
           {/* Submissions Table with Prominent USN Column */}
-          <div className="apple-glass rounded-[28px] overflow-hidden shadow-xl border border-white/[0.08]">
+          <div className="apple-glass rounded-[28px] overflow-hidden shadow-sm border border-[#d2d2d7]/70">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.04] text-[#86868b] uppercase font-semibold tracking-[0.14em] border-b border-white/[0.08]">
+                <thead className="bg-[#f5f5f7] text-[#6e6e73] uppercase font-semibold tracking-[0.14em] border-b border-[#e5e5ea]">
                   <tr>
                     <th className="py-3.5 px-4">Rank</th>
                     <th className="py-3.5 px-4">Student Full Name</th>
-                    <th className="py-3.5 px-4 text-[#2997ff]">USN / Roll Number</th>
+                    <th className="py-3.5 px-4 text-[#0071e3]">USN / Roll Number</th>
                     <th className="py-3.5 px-4">Score</th>
                     <th className="py-3.5 px-4">Percentage</th>
                     <th className="py-3.5 px-4">Status</th>
@@ -590,7 +590,7 @@ export default function ConductedSessionView({
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04] font-medium">
+                <tbody className="divide-y divide-[#e5e5ea] font-medium">
                   {filteredSubmissions.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-[#86868b]">
@@ -608,29 +608,29 @@ export default function ConductedSessionView({
                       const isWinner = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
 
                       return (
-                        <tr key={sub.id} className="hover:bg-white/[0.04] transition-colors">
-                          <td className="py-3.5 px-4 font-mono font-semibold text-white">
+                        <tr key={sub.id} className="hover:bg-[#fbfbfd] transition-colors">
+                          <td className="py-3.5 px-4 font-mono font-semibold text-[#1d1d1f]">
                             {isWinner}
                           </td>
-                          <td className="py-3.5 px-4 font-semibold text-white">
+                          <td className="py-3.5 px-4 font-semibold text-[#1d1d1f]">
                             {sub.studentName}
                           </td>
-                          <td className="py-3.5 px-4 font-mono font-medium text-[#2997ff]">
+                          <td className="py-3.5 px-4 font-mono font-medium text-[#0071e3]">
                             {sub.studentId || 'N/A'}
                           </td>
-                          <td className="py-3.5 px-4 font-mono font-medium text-white">
+                          <td className="py-3.5 px-4 font-mono font-medium text-[#1d1d1f]">
                             {sub.score?.toLocaleString()}
                           </td>
-                          <td className="py-3.5 px-4 font-medium text-white">
+                          <td className="py-3.5 px-4 font-medium text-[#1d1d1f]">
                             {sub.percentage}%
                           </td>
                           <td className="py-3.5 px-4">
                             <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                               sub.passed 
-                                ? 'bg-emerald-500/10 text-[#30d158] border border-emerald-500/20' 
-                                : 'bg-rose-500/10 text-[#ff453a] border border-rose-500/20'
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                : 'bg-rose-50 text-rose-800 border border-rose-200'
                             }`}>
-                              {sub.passed ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                              {sub.passed ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <XCircle className="w-3 h-3 text-rose-600" />}
                               <span>{sub.passed ? 'PASSED' : 'FAILED'}</span>
                             </span>
                           </td>
@@ -642,7 +642,7 @@ export default function ConductedSessionView({
                               onClick={() => setSelectedStudent(sub)}
                               className="apple-btn-secondary inline-flex items-center space-x-1 px-3 py-1 text-xs cursor-pointer"
                             >
-                              <Eye className="w-3 h-3 text-[#2997ff]" />
+                              <Eye className="w-3 h-3 text-[#0071e3]" />
                               <span>View Answers</span>
                             </button>
                           </td>
@@ -660,12 +660,12 @@ export default function ConductedSessionView({
       {/* TAB 2: ITEM ANALYSIS HEATMAP */}
       {activeTab === 'item-analysis' && (
         <div className="space-y-6">
-          <div className="apple-glass rounded-[32px] p-6 sm:p-8 shadow-xl border border-white/[0.08]">
-            <h3 className="text-lg font-semibold text-white mb-1 tracking-tight">
+          <div className="apple-glass rounded-[32px] p-6 sm:p-8 shadow-sm border border-[#d2d2d7]/70">
+            <h3 className="text-lg font-semibold text-[#1d1d1f] mb-1 tracking-tight">
               Question Difficulty & Accuracy Heatmap
             </h3>
             <p className="text-xs text-[#86868b] mb-6 tracking-tight">
-              Accuracy rate per question across {totalSubmissions} submissions for Game PIN <strong className="text-white font-mono">{sessionPin}</strong>.
+              Accuracy rate per question across {totalSubmissions} submissions for Game PIN <strong className="text-[#1d1d1f] font-mono">{sessionPin}</strong>.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -679,24 +679,24 @@ export default function ConductedSessionView({
                 const pct = totalSubmissions > 0 ? Math.round((correctCount / totalSubmissions) * 100) : 0;
 
                 return (
-                  <div key={q.id || idx} className="apple-glass-card rounded-2xl p-5 space-y-2.5 border border-white/[0.08]">
+                  <div key={q.id || idx} className="apple-glass-card rounded-2xl p-5 space-y-2.5 border border-[#d2d2d7]/70">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono font-semibold text-[#2997ff]">Q{idx + 1}</span>
+                      <span className="font-mono font-semibold text-[#0071e3]">Q{idx + 1}</span>
                       <span className="text-[#86868b] text-[11px] font-medium">{q.category || 'General'}</span>
                     </div>
-                    <div className="text-xs text-white font-medium line-clamp-2 leading-relaxed">
+                    <div className="text-xs text-[#1d1d1f] font-medium line-clamp-2 leading-relaxed">
                       {q.question}
                     </div>
                     <div className="space-y-1.5 pt-1">
                       <div className="flex justify-between text-[11px] text-[#86868b]">
                         <span>Accuracy</span>
-                        <span className={`font-mono font-medium ${pct >= 70 ? 'text-[#30d158]' : pct >= 40 ? 'text-[#ffd60a]' : 'text-[#ff453a]'}`}>
+                        <span className={`font-mono font-medium ${pct >= 70 ? 'text-[#34c759]' : pct >= 40 ? 'text-amber-600' : 'text-[#ff3b30]'}`}>
                           {pct}% ({correctCount}/{totalSubmissions})
                         </span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="w-full h-1.5 rounded-full bg-[#e5e5ea] overflow-hidden">
                         <div 
-                          className={`h-full rounded-full ${pct >= 70 ? 'bg-[#30d158]' : pct >= 40 ? 'bg-[#ffd60a]' : 'bg-[#ff453a]'}`}
+                          className={`h-full rounded-full ${pct >= 70 ? 'bg-[#34c759]' : pct >= 40 ? 'bg-[#ff9500]' : 'bg-[#ff3b30]'}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -713,12 +713,12 @@ export default function ConductedSessionView({
       {activeTab === 'questions' && (
         <div className="space-y-4">
           {questionsList.map((q, idx) => (
-            <div key={idx} className="apple-glass-card rounded-2xl p-5 shadow-lg border border-white/[0.08]">
+            <div key={idx} className="apple-glass-card rounded-2xl p-5 shadow-sm border border-[#d2d2d7]/70">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-medium text-[#2997ff]">Question #{idx + 1}</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-[#a1a1a6]">{q.points || 1000} pts</span>
+                <span className="text-xs font-mono font-medium text-[#0071e3]">Question #{idx + 1}</span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73] font-medium border border-[#d2d2d7]/70">{q.points || 1000} pts</span>
               </div>
-              <h4 className="text-sm font-semibold text-white mb-3 tracking-tight">{q.question}</h4>
+              <h4 className="text-sm font-semibold text-[#1d1d1f] mb-3 tracking-tight">{q.question}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {(q.options || []).map((opt, optIdx) => {
                   const isCorrect = q.type === 'single'
@@ -729,19 +729,19 @@ export default function ConductedSessionView({
                     <div 
                       key={optIdx} 
                       className={`p-3 rounded-xl border flex items-center space-x-2 ${
-                        isCorrect ? 'bg-emerald-500/[0.08] border-emerald-500/40 text-white font-medium' : 'bg-white/[0.02] border-white/[0.06] text-[#86868b]'
+                        isCorrect ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-medium' : 'bg-[#fbfbfd] border-[#e5e5ea] text-[#6e6e73]'
                       }`}
                     >
                       <span className="font-mono text-xs opacity-60 w-5">{String.fromCharCode(65 + optIdx)}.</span>
                       <span className="flex-1">{opt}</span>
-                      {isCorrect && <Check className="w-3.5 h-3.5 ml-auto text-[#30d158]" />}
+                      {isCorrect && <Check className="w-3.5 h-3.5 ml-auto text-emerald-600" />}
                     </div>
                   );
                 })}
               </div>
               {q.explanation && (
-                <p className="text-xs text-[#86868b] mt-3 pt-2.5 border-t border-white/[0.06] leading-relaxed">
-                  <strong className="text-white font-medium">Explanation:</strong> {q.explanation}
+                <p className="text-xs text-[#6e6e73] mt-3 pt-2.5 border-t border-[#e5e5ea] leading-relaxed">
+                  <strong className="text-[#1d1d1f] font-medium">Explanation:</strong> {q.explanation}
                 </p>
               )}
             </div>
@@ -751,15 +751,15 @@ export default function ConductedSessionView({
 
       {/* GOOGLE SHEETS SYNC MODAL (APPLE MAC DIALOG) */}
       {showSheetsModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="apple-glass rounded-[28px] max-w-xl w-full p-8 shadow-2xl relative border border-white/[0.1]">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="apple-glass rounded-[28px] max-w-xl w-full p-8 shadow-2xl relative border border-[#d2d2d7]">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-white/[0.08] border border-white/[0.12] flex items-center justify-center text-[#2997ff]">
+                <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3]">
                   <Table className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white tracking-tight">Google Sheets Integration</h3>
+                  <h3 className="text-lg font-semibold text-[#1d1d1f] tracking-tight">Google Sheets Integration</h3>
                   <p className="text-xs text-[#86868b]">Sync candidate USN roster and scores.</p>
                 </div>
               </div>
@@ -774,10 +774,10 @@ export default function ConductedSessionView({
             </div>
 
             {/* Quick Option 1: 1-Click Copy */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 mb-5 space-y-3">
+            <div className="bg-[#fbfbfd] border border-[#d2d2d7] rounded-2xl p-5 mb-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <strong className="text-white text-xs block font-medium">Option A: Instant Paste into Google Sheets</strong>
+                  <strong className="text-[#1d1d1f] text-xs block font-semibold">Option A: Instant Paste into Google Sheets</strong>
                   <span className="text-[11px] text-[#86868b]">Copies clean tab-separated table with Rank, Name, USN, and Score.</span>
                 </div>
                 <button
@@ -790,13 +790,13 @@ export default function ConductedSessionView({
                 </button>
               </div>
 
-              <div className="pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-[#86868b]">
+              <div className="pt-2.5 border-t border-[#e5e5ea] flex items-center justify-between text-[11px] text-[#86868b]">
                 <span>Then paste into your sheet with <strong>Cmd+V / Ctrl+V</strong>.</span>
                 <a
                   href="https://sheets.new"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[#2997ff] hover:underline flex items-center space-x-1"
+                  className="text-[#0071e3] hover:underline flex items-center space-x-1"
                 >
                   <span>Open sheets.new</span>
                   <ExternalLink className="w-3 h-3" />
@@ -805,14 +805,14 @@ export default function ConductedSessionView({
             </div>
 
             {/* Quick Option 2: Live Webhook */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 space-y-3">
+            <div className="bg-[#fbfbfd] border border-[#d2d2d7] rounded-2xl p-5 space-y-3">
               <div>
-                <strong className="text-white text-xs block font-medium">Option B: Real-Time Webhook to Google Sheets</strong>
+                <strong className="text-[#1d1d1f] text-xs block font-semibold">Option B: Real-Time Webhook to Google Sheets</strong>
                 <span className="text-[11px] text-[#86868b]">Automatically push all student entries to your Google Apps Script URL.</span>
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-[#a1a1a6] mb-1">
+                <label className="block text-[11px] font-medium text-[#6e6e73] mb-1">
                   Google Apps Script Web App URL
                 </label>
                 <input
@@ -825,7 +825,7 @@ export default function ConductedSessionView({
               </div>
 
               {syncSheetsMsg && (
-                <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-medium">
+                <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-medium">
                   {syncSheetsMsg}
                 </div>
               )}

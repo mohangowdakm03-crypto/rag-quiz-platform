@@ -114,10 +114,10 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               </div>
             )}
 
-            {/* 1. 6-DIGIT GAME PIN (APPLE STYLE) */}
-            <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] relative group hover:border-white/[0.14] transition-all">
-              <label className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a1a1a6] text-center mb-2.5">
-                6-Digit Game PIN <span className="text-red-400 font-bold">*</span>
+            {/* 1. 6-DIGIT GAME PIN (APPLE STYLE LIGHT) */}
+            <div className="p-5 rounded-2xl bg-[#fbfbfd] border border-[#d2d2d7]/70 shadow-sm relative group hover:border-[#86868b] transition-all">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6e6e73] text-center mb-2.5">
+                6-Digit Game PIN <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -126,7 +126,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
                 placeholder=""
                 value={quizId}
                 onChange={(e) => setQuizId(e.target.value)}
-                className="w-full text-center text-3xl sm:text-4xl font-mono font-semibold py-2.5 px-4 rounded-xl bg-black/40 border border-white/[0.1] text-white focus:outline-none focus:border-[#2997ff] focus:ring-4 focus:ring-[#2997ff]/20 transition-all tracking-[0.25em] uppercase"
+                className="w-full text-center text-3xl sm:text-4xl font-mono font-semibold py-3 px-4 rounded-xl bg-white border border-[#d2d2d7] text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/15 transition-all tracking-[0.25em] uppercase shadow-sm"
               />
               <p className="text-[11px] text-[#86868b] text-center mt-2.5 tracking-tight">
                 Displayed on the instructor's console or in your invite link.
@@ -135,11 +135,11 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
 
             {/* 2. USN / ROLL NUMBER */}
             <div>
-              <label className="block text-xs font-medium text-[#f5f5f7] mb-2 flex items-center justify-between">
+              <label className="block text-xs font-medium text-[#1d1d1f] mb-2 flex items-center justify-between">
                 <span className="flex items-center space-x-1.5">
                   <IdCard className="w-3.5 h-3.5 text-[#86868b]" />
                   <span>University Seat Number (USN)</span>
-                  <span className="text-red-400 font-bold">*</span>
+                  <span className="text-red-500 font-bold">*</span>
                 </span>
                 <span className="text-[11px] text-[#86868b]">Required for score certification</span>
               </label>
@@ -155,10 +155,10 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
 
             {/* 3. CANDIDATE FULL NAME */}
             <div>
-              <label className="block text-xs font-medium text-[#f5f5f7] mb-2 flex items-center space-x-1.5">
+              <label className="block text-xs font-medium text-[#1d1d1f] mb-2 flex items-center space-x-1.5">
                 <User className="w-3.5 h-3.5 text-[#86868b]" />
                 <span>Full Name</span>
-                <span className="text-red-400 font-bold">*</span>
+                <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -188,7 +188,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
           </form>
 
           {/* Footer security tag */}
-          <div className="mt-8 pt-6 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#86868b]">
+          <div className="mt-8 pt-6 border-t border-[#e5e5ea] flex items-center justify-between text-xs text-[#86868b]">
             <div className="flex items-center space-x-1.5">
               <ShieldCheck className="w-4 h-4 text-[#86868b]" />
               <span>Anti-Cheat Monitored</span>

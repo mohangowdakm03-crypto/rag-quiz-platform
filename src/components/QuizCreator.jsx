@@ -263,10 +263,10 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
       )}
 
       {/* 1. QUIZ SETTINGS & GAME MODE */}
-      <div className="apple-glass rounded-[32px] p-6 sm:p-8 mb-8 shadow-2xl space-y-6 border border-white/[0.08]">
+      <div className="apple-glass rounded-[32px] p-6 sm:p-8 mb-8 shadow-sm space-y-6 border border-[#d2d2d7]/70">
         <div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-white flex items-center space-x-2.5 tracking-tight">
-            <Settings className="w-5 h-5 text-[#2997ff]" />
+          <h2 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f] flex items-center space-x-2.5 tracking-tight">
+            <Settings className="w-5 h-5 text-[#0071e3]" />
             <span>Session Configuration</span>
           </h2>
           <p className="text-xs text-[#86868b] mt-1 tracking-tight">
@@ -277,8 +277,8 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
         {/* Title & Description */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-[#f5f5f7] mb-1.5">
-              Quiz / Session Title <span className="text-red-400 font-bold">*</span>
+            <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
+              Quiz / Session Title <span className="text-red-500 font-bold">*</span>
             </label>
             <input
               type="text"
@@ -286,12 +286,12 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
               placeholder=""
               value={quizConfig.title}
               onChange={(e) => setQuizConfig({ ...quizConfig, title: e.target.value })}
-              className="apple-input w-full px-4 py-3 text-sm"
+              className="apple-input w-full px-4 py-3 text-sm font-medium"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#f5f5f7] mb-1.5">
+            <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
               Passing Score %
             </label>
             <input
@@ -307,7 +307,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
         {/* Answering Modes Cards */}
         <div>
-          <label className="block text-xs font-medium text-[#f5f5f7] mb-3">
+          <label className="block text-xs font-semibold text-[#1d1d1f] mb-3">
             Select Answering Mode *
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -316,18 +316,18 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
               onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'classic' })}
               className={`apple-glass-card p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between ${
                 quizConfig.gameMode === 'classic'
-                  ? 'border-[#2997ff] shadow-[0_0_24px_rgba(41,151,255,0.2)]'
-                  : 'border-white/[0.08]'
+                  ? 'border-[#0071e3] ring-2 ring-[#0071e3]/30 shadow-md'
+                  : 'border-[#d2d2d7]/70'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">🎮</span>
-                    <h4 className="font-semibold text-white text-base tracking-tight">Classical Mode</h4>
+                    <h4 className="font-semibold text-[#1d1d1f] text-base tracking-tight">Classical Mode</h4>
                   </div>
                   {quizConfig.gameMode === 'classic' && (
-                    <span className="text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full bg-[#2997ff] text-white">Selected</span>
+                    <span className="text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full bg-[#0071e3] text-white">Selected</span>
                   )}
                 </div>
                 <p className="text-xs text-[#86868b] leading-relaxed mb-4 tracking-tight">
@@ -335,8 +335,8 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                <span className="text-xs font-medium text-[#a1a1a6]">Total Exam Timer:</span>
+              <div className="pt-3 border-t border-[#e5e5ea] flex items-center justify-between">
+                <span className="text-xs font-medium text-[#6e6e73]">Total Exam Timer:</span>
                 <select
                   value={quizConfig.timeLimitMinutes}
                   onChange={(e) => setQuizConfig({ ...quizConfig, timeLimitMinutes: Number(e.target.value) })}
@@ -357,18 +357,18 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
               onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'assessment' })}
               className={`apple-glass-card p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between ${
                 quizConfig.gameMode === 'assessment'
-                  ? 'border-[#ffd60a] shadow-[0_0_24px_rgba(255,214,10,0.2)]'
-                  : 'border-white/[0.08]'
+                  ? 'border-amber-400 ring-2 ring-amber-400/30 shadow-md'
+                  : 'border-[#d2d2d7]/70'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">⚡</span>
-                    <h4 className="font-semibold text-white text-base tracking-tight">Assessment Mode</h4>
+                    <h4 className="font-semibold text-[#1d1d1f] text-base tracking-tight">Assessment Mode</h4>
                   </div>
                   {quizConfig.gameMode === 'assessment' && (
-                    <span className="text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full bg-[#ffd60a] text-black">Selected</span>
+                    <span className="text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 font-bold">Selected</span>
                   )}
                 </div>
                 <p className="text-xs text-[#86868b] leading-relaxed mb-4 tracking-tight">
@@ -376,8 +376,8 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                <span className="text-xs font-medium text-[#a1a1a6]">Seconds Per Question:</span>
+              <div className="pt-3 border-t border-[#e5e5ea] flex items-center justify-between">
+                <span className="text-xs font-medium text-[#6e6e73]">Seconds Per Question:</span>
                 <select
                   value={quizConfig.perQuestionSeconds}
                   onChange={(e) => setQuizConfig({ ...quizConfig, perQuestionSeconds: Number(e.target.value) })}
@@ -401,7 +401,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
       {/* 2. QUESTIONS LIST & SINGLE QUESTION EDITOR */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Question Navigator */}
-        <div className="apple-glass rounded-[28px] p-5 shadow-xl max-h-[700px] overflow-y-auto border border-white/[0.08]">
+        <div className="apple-glass rounded-[28px] p-5 shadow-sm max-h-[700px] overflow-y-auto border border-[#d2d2d7]/70">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] font-semibold uppercase text-[#86868b] tracking-[0.16em]">
               Questions ({quizConfig.questions.length})
@@ -425,13 +425,13 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                   onClick={() => setEditingIndex(idx)}
                   className={`p-3 rounded-2xl border cursor-pointer transition flex items-center justify-between text-xs ${
                     isSelected
-                      ? 'bg-white/[0.1] border-white/20 text-white shadow-md'
-                      : 'bg-white/[0.02] border-white/[0.06] text-[#86868b] hover:border-white/[0.12] hover:text-white'
+                      ? 'bg-blue-50/80 border-[#0071e3] text-[#1d1d1f] shadow-sm font-semibold'
+                      : 'bg-white border-[#e5e5ea] text-[#6e6e73] hover:border-[#86868b] hover:text-[#1d1d1f]'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5 flex-1 min-w-0 pr-2">
                     <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-medium text-xs shrink-0 ${
-                      isSelected ? 'bg-white text-black' : 'bg-white/[0.06] text-[#86868b]'
+                      isSelected ? 'bg-[#0071e3] text-white' : 'bg-[#f5f5f7] text-[#6e6e73]'
                     }`}>
                       {idx + 1}
                     </span>
@@ -441,7 +441,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                   </div>
 
                   <div className="flex items-center space-x-1.5 shrink-0">
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-[#a1a1a6]">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#f5f5f7] text-[#6e6e73] border border-[#d2d2d7]/50">
                       {q.points || 1000}p
                     </span>
                     <button
@@ -450,7 +450,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                         e.stopPropagation();
                         handleDeleteQuestion(idx);
                       }}
-                      className="p-1 rounded text-[#86868b] hover:text-[#ff453a] hover:bg-rose-500/10 transition"
+                      className="p-1 rounded text-[#86868b] hover:text-[#ff3b30] hover:bg-rose-50 transition"
                       title="Delete Question"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -464,9 +464,9 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
         {/* Right 2 Columns: Question Editor (Clean Inputs!) */}
         {currentQ && (
-          <div className="lg:col-span-2 apple-glass rounded-[28px] p-6 sm:p-8 shadow-2xl space-y-6 border border-white/[0.08]">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
-              <span className="text-xs font-mono px-3 py-1 rounded-full bg-white/[0.08] text-white font-medium border border-white/[0.1]">
+          <div className="lg:col-span-2 apple-glass rounded-[28px] p-6 sm:p-8 shadow-sm space-y-6 border border-[#d2d2d7]/70">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#e5e5ea]">
+              <span className="text-xs font-mono px-3 py-1 rounded-full bg-[#f5f5f7] text-[#1d1d1f] font-semibold border border-[#d2d2d7]">
                 Editing Question #{editingIndex + 1}
               </span>
 
@@ -485,7 +485,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
             {/* Question Type Selector */}
             <div>
-              <label className="block text-xs font-medium text-[#f5f5f7] mb-2">Question Type</label>
+              <label className="block text-xs font-semibold text-[#1d1d1f] mb-2">Question Type</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
                   { id: 'single', label: 'Single Choice', desc: '4 Options (Kahoot)' },
@@ -507,13 +507,13 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                         handleUpdateCurrentQ('correctAnswer', 0);
                       }
                     }}
-                    className={`p-3 rounded-2xl border text-left transition ${
+                    className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
                       (currentQ.type || 'single') === t.id
-                        ? 'bg-white/[0.1] border-white/20 text-white shadow-sm'
-                        : 'bg-white/[0.02] border-white/[0.06] text-[#86868b] hover:border-white/[0.12]'
+                        ? 'bg-blue-50/80 border-[#0071e3] text-[#1d1d1f] shadow-sm'
+                        : 'bg-[#fbfbfd] border-[#e5e5ea] text-[#6e6e73] hover:border-[#86868b]'
                     }`}
                   >
-                    <div className="font-semibold text-xs">{t.label}</div>
+                    <div className="font-semibold text-xs text-[#1d1d1f]">{t.label}</div>
                     <div className="text-[10px] text-[#86868b]">{t.desc}</div>
                   </button>
                 ))}
@@ -522,7 +522,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
             {/* Question Prompt (Clean Empty!) */}
             <div>
-              <label className="block text-xs font-medium text-[#f5f5f7] mb-2">
+              <label className="block text-xs font-semibold text-[#1d1d1f] mb-2">
                 Question Prompt *
               </label>
               <textarea
@@ -537,7 +537,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
             {/* Options Editor (Clean Empty!) */}
             {(currentQ.type === 'single' || currentQ.type === 'multi') && (
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider mb-2">
                   Answer Options & Correct Answer Selection
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -550,7 +550,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                       <div 
                         key={optIdx} 
                         className={`p-3.5 rounded-2xl border flex items-center space-x-3 transition ${
-                          isCorrect ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-950 border-slate-800'
+                          isCorrect ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-[#d2d2d7]'
                         }`}
                       >
                         <button
@@ -564,8 +564,8 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                               handleUpdateCurrentQ('correctAnswer', updated);
                             }
                           }}
-                          className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition ${
-                            isCorrect ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-md' : 'border-slate-700 bg-slate-900 text-slate-500 hover:text-white'
+                          className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer ${
+                            isCorrect ? 'bg-[#34c759] border-[#34c759] text-white shadow-sm' : 'border-[#d2d2d7] bg-[#f5f5f7] text-[#86868b] hover:text-[#1d1d1f]'
                           }`}
                           title={isCorrect ? 'Correct Answer' : 'Click to mark as correct'}
                         >
@@ -577,7 +577,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                           placeholder=""
                           value={opt || ''}
                           onChange={(e) => handleUpdateOption(optIdx, e.target.value)}
-                          className="flex-1 bg-transparent text-white text-xs sm:text-sm focus:outline-none placeholder-slate-600 font-medium"
+                          className="flex-1 bg-transparent text-[#1d1d1f] text-xs sm:text-sm focus:outline-none placeholder-[#86868b] font-medium"
                         />
                       </div>
                     );
@@ -589,15 +589,15 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
             {/* True / False Option */}
             {currentQ.type === 'boolean' && (
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Correct Answer</label>
+                <label className="block text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider mb-2">Correct Answer</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => handleUpdateCurrentQ('correctAnswer', 0)}
-                    className={`p-5 rounded-2xl border text-center font-bold text-sm transition ${
+                    className={`p-5 rounded-2xl border text-center font-bold text-sm transition cursor-pointer ${
                       currentQ.correctAnswer === 0
-                        ? 'bg-blue-600 border-blue-400 text-white shadow-lg'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-[#0071e3] border-[#0071e3] text-white shadow-sm'
+                        : 'bg-white border-[#d2d2d7] text-[#6e6e73] hover:border-[#86868b]'
                     }`}
                   >
                     True (Correct)
@@ -605,10 +605,10 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                   <button
                     type="button"
                     onClick={() => handleUpdateCurrentQ('correctAnswer', 1)}
-                    className={`p-5 rounded-2xl border text-center font-bold text-sm transition ${
+                    className={`p-5 rounded-2xl border text-center font-bold text-sm transition cursor-pointer ${
                       currentQ.correctAnswer === 1
-                        ? 'bg-red-600 border-red-400 text-white shadow-lg'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-[#ff3b30] border-[#ff3b30] text-white shadow-sm'
+                        : 'bg-white border-[#d2d2d7] text-[#6e6e73] hover:border-[#86868b]'
                     }`}
                   >
                     False (Correct)
@@ -620,7 +620,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
             {/* Short Answer Target */}
             {currentQ.type === 'text' && (
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider mb-1.5">
                   Accepted Correct Answer (Case-Insensitive)
                 </label>
                 <input
@@ -628,14 +628,14 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                   placeholder=""
                   value={currentQ.correctAnswer || ''}
                   onChange={(e) => handleUpdateCurrentQ('correctAnswer', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono placeholder-slate-600"
+                  className="apple-input w-full px-4 py-3 text-xs font-mono"
                 />
               </div>
             )}
 
             {/* Explanation (Clean Empty!) */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider mb-1.5">
                 Explanation (Shown to students after submission)
               </label>
               <textarea
@@ -643,7 +643,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                 placeholder=""
                 value={currentQ.explanation || ''}
                 onChange={(e) => handleUpdateCurrentQ('explanation', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed placeholder-slate-600"
+                className="apple-input w-full px-4 py-2.5 text-xs leading-relaxed"
               />
             </div>
           </div>
@@ -652,9 +652,9 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
       {/* LAUNCH SUCCESS MODAL (APPLE MAC ALERT) */}
       {launchModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="apple-glass rounded-[32px] max-w-lg w-full p-8 shadow-2xl relative border border-white/[0.1]">
-            <div className="w-14 h-14 rounded-full bg-white/[0.08] border border-white/[0.14] flex items-center justify-center text-[#2997ff] mb-6 mx-auto shadow-inner">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="apple-glass rounded-[32px] max-w-lg w-full p-8 shadow-2xl relative border border-[#d2d2d7]">
+            <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3] mb-6 mx-auto shadow-sm">
               <Sparkles className="w-6 h-6" />
             </div>
 
@@ -666,18 +666,18 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
             </p>
 
             {/* BIG 6-DIGIT PIN */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 text-center mb-6">
+            <div className="bg-[#fbfbfd] border border-[#d2d2d7] rounded-2xl p-6 text-center mb-6">
               <span className="text-[10px] font-semibold text-[#86868b] uppercase tracking-[0.2em] block mb-2">
                 6-DIGIT GAME PIN
               </span>
-              <div className="text-4xl sm:text-5xl font-mono font-semibold text-white tracking-[0.2em]">
+              <div className="text-4xl sm:text-5xl font-mono font-semibold text-[#1d1d1f] tracking-[0.2em]">
                 {launchModal.sessionPin}
               </div>
               <div className="mt-3 flex items-center justify-center space-x-2">
-                <span className="text-xs px-3 py-1 rounded-full bg-white/[0.06] text-[#a1a1a6] font-medium border border-white/[0.08]">
+                <span className="text-xs px-3 py-1 rounded-full bg-white text-[#6e6e73] font-medium border border-[#d2d2d7]/70">
                   Mode: {launchModal.gameMode === 'assessment' ? `⚡ Assessment (${launchModal.perQuestionSeconds}s/Q)` : 'Standard'}
                 </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-white/[0.06] text-[#a1a1a6] font-medium border border-white/[0.08]">
+                <span className="text-xs px-3 py-1 rounded-full bg-white text-[#6e6e73] font-medium border border-[#d2d2d7]/70">
                   {launchModal.totalQuestions} Questions
                 </span>
               </div>
@@ -685,7 +685,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
 
             {/* Direct Student Link */}
             <div className="space-y-2 mb-6">
-              <label className="block text-xs font-medium text-[#f5f5f7]">
+              <label className="block text-xs font-semibold text-[#1d1d1f]">
                 Direct Student Link (Auto-fills PIN)
               </label>
               <div className="flex items-center space-x-2">
@@ -700,7 +700,7 @@ export default function QuizCreator({ onBackToHub, onSessionCreated, teacherPass
                   onClick={() => handleCopyLink(launchModal.studentLink)}
                   className="apple-btn-secondary px-4 py-2.5 text-xs font-medium cursor-pointer"
                 >
-                  {copiedLink ? <Check className="w-3.5 h-3.5 text-[#30d158]" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-[#34c759]" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>

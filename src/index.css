@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
-    background-color: #000000;
-    color: #f5f5f7;
+    background-color: #f5f5f7;
+    color: #1d1d1f;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -23,68 +23,67 @@
   }
 }
 
-/* Apple Keynote Ambient Background Gradients */
+/* Apple Keynote Ambient Background Gradients (Light Theme) */
 .apple-bg-ambient {
   background: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(41, 151, 255, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(94, 92, 230, 0.06), transparent),
-    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(48, 209, 88, 0.04), transparent),
-    #000000;
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 113, 227, 0.06), transparent),
+    radial-gradient(ellipse 60% 40% at 85% 60%, rgba(94, 92, 230, 0.04), transparent),
+    radial-gradient(ellipse 50% 30% at 15% 75%, rgba(52, 199, 89, 0.03), transparent),
+    #f5f5f7;
 }
 
-/* Apple Signature Glassmorphism (SF Floating Materials) */
+/* Apple Signature Glassmorphism (Light Theme SF Materials) */
 .apple-glass {
-  background: rgba(18, 18, 22, 0.65);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 
-    0 12px 40px -10px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    0 12px 36px -4px rgba(0, 0, 0, 0.06),
+    0 4px 12px -2px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
 .apple-glass-card {
-  background: rgba(22, 22, 27, 0.55);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 
-    0 8px 30px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    0 4px 20px -2px rgba(0, 0, 0, 0.05),
+    0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .apple-glass-card:hover {
-  background: rgba(26, 26, 32, 0.7);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.16);
   transform: translateY(-2px);
   box-shadow: 
-    0 16px 48px -12px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+    0 16px 36px -6px rgba(0, 0, 0, 0.09),
+    0 4px 12px -2px rgba(0, 0, 0, 0.04);
 }
 
 .apple-glass-nav {
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* Apple Typography Gradients */
+/* Apple Typography Gradients (Light Theme) */
 .apple-title-gradient {
-  background: linear-gradient(180deg, #FFFFFF 0%, #E2E2E6 65%, #94949C 100%);
+  background: linear-gradient(180deg, #1d1d1f 0%, #3a3a3c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .apple-blue-gradient {
-  background: linear-gradient(180deg, #60A5FA 0%, #2997FF 50%, #0071E3 100%);
+  background: linear-gradient(180deg, #0071e3 0%, #005bb5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .apple-silver-gradient {
-  background: linear-gradient(180deg, #F5F5F7 0%, #D2D2D7 50%, #86868B 100%);
+  background: linear-gradient(180deg, #1d1d1f 0%, #48484a 50%, #86868b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -96,12 +95,12 @@
   border-radius: 9999px;
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 10px rgba(0, 113, 227, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
 }
 
 .apple-btn-primary:hover {
   background: #0077ed;
-  box-shadow: 0 4px 18px rgba(0, 113, 227, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.35);
   transform: translateY(-1px);
 }
 
@@ -110,19 +109,19 @@
 }
 
 .apple-btn-secondary {
-  background: rgba(255, 255, 255, 0.07);
-  color: #f5f5f7;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  color: #1d1d1f;
+  border: 1px solid #d2d2d7;
   border-radius: 9999px;
-  backdrop-filter: blur(12px);
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .apple-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  background: #f5f5f7;
+  border-color: #86868b;
+  color: #1d1d1f;
 }
 
 .apple-btn-secondary:active {
@@ -131,21 +130,21 @@
 
 /* Apple Inputs */
 .apple-input {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f5f5f7;
-  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #d2d2d7;
+  color: #1d1d1f;
+  border-radius: 14px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .apple-input:focus {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: #2997ff;
+  background: #ffffff;
+  border-color: #0071e3;
   outline: none;
-  box-shadow: 0 0 0 4px rgba(41, 151, 255, 0.18);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
 }
 
-/* Minimalist macOS Overlay Scrollbars */
+/* Minimalist macOS Overlay Scrollbars (Light Theme) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -156,12 +155,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.16);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* Smooth page transitions */

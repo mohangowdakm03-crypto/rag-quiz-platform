@@ -119,37 +119,37 @@ export default function SessionsHub({
 
       {/* Overview Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-        <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08]">
+        <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70">
           <div className="text-[10px] text-[#86868b] font-semibold uppercase tracking-[0.16em] mb-1">
             Total Sessions
           </div>
-          <div className="text-3xl font-semibold text-white font-mono tracking-tight">
+          <div className="text-3xl font-semibold text-[#1d1d1f] font-mono tracking-tight">
             {sessions.length}
           </div>
         </div>
 
-        <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08]">
+        <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70">
           <div className="text-[10px] text-[#86868b] font-semibold uppercase tracking-[0.16em] mb-1">
             Total Submissions
           </div>
-          <div className="text-3xl font-semibold text-white font-mono tracking-tight">
+          <div className="text-3xl font-semibold text-[#1d1d1f] font-mono tracking-tight">
             {totalAllSubmissions}
           </div>
         </div>
 
-        <div className="apple-glass-card rounded-2xl p-5 border border-white/[0.08] col-span-2 sm:col-span-1">
+        <div className="apple-glass-card rounded-2xl p-5 border border-[#d2d2d7]/70 col-span-2 sm:col-span-1">
           <div className="text-[10px] text-[#86868b] font-semibold uppercase tracking-[0.16em] mb-1">
             Database Engine
           </div>
-          <div className="text-sm sm:text-base font-semibold text-[#30d158] flex items-center space-x-1.5 mt-2">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="text-sm sm:text-base font-semibold text-[#34c759] flex items-center space-x-1.5 mt-2">
+            <CheckCircle2 className="w-4 h-4 text-[#34c759]" />
             <span>Supabase Realtime PostgreSQL</span>
           </div>
         </div>
       </div>
 
       {/* Filter / Search Bar */}
-      <div className="apple-glass rounded-2xl p-4 mb-6 shadow-xl flex items-center justify-between gap-4">
+      <div className="apple-glass rounded-2xl p-4 mb-6 shadow-sm flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
           <input
@@ -161,20 +161,20 @@ export default function SessionsHub({
           />
         </div>
         <div className="text-xs text-[#86868b] font-medium hidden sm:block">
-          Showing <strong className="text-white">{filteredSessions.length}</strong> of {sessions.length} sessions
+          Showing <strong className="text-[#1d1d1f]">{filteredSessions.length}</strong> of {sessions.length} sessions
         </div>
       </div>
 
       {/* SESSIONS GRID OF BOXES / CARDS */}
       {isLoading ? (
         <div className="py-20 text-center text-[#86868b]">
-          <div className="w-8 h-8 border-2 border-[#2997ff] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <div className="w-8 h-8 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
           <span className="text-xs">Loading sessions from cloud...</span>
         </div>
       ) : filteredSessions.length === 0 ? (
         <div className="apple-glass rounded-[32px] p-12 text-center max-w-lg mx-auto">
-          <Sparkles className="w-10 h-10 text-[#2997ff] mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2 tracking-tight">No Quiz Sessions Found</h3>
+          <Sparkles className="w-10 h-10 text-[#0071e3] mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-[#1d1d1f] mb-2 tracking-tight">No Quiz Sessions Found</h3>
           <p className="text-xs text-[#86868b] mb-6 leading-relaxed">
             Create your first quiz session to generate a 6-digit PIN and invite candidates to participate.
           </p>
@@ -196,17 +196,17 @@ export default function SessionsHub({
               <div
                 key={session.sessionPin}
                 onClick={() => onOpenSession(session.sessionPin)}
-                className="apple-glass-card rounded-[28px] p-6 shadow-xl cursor-pointer flex flex-col justify-between group relative overflow-hidden"
+                className="apple-glass-card rounded-[28px] p-6 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between group relative overflow-hidden transition-all duration-300"
               >
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                       isAssessment 
-                        ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300' 
-                        : 'bg-white/[0.08] border border-white/[0.1] text-[#f5f5f7]'
+                        ? 'bg-amber-50 border border-amber-200 text-amber-700' 
+                        : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
                     }`}>
-                      {isAssessment ? <Zap className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
                       <span>{isAssessment ? `Assessment (${session.perQuestionSeconds || 30}s/Q)` : `Standard (${session.timeLimitMinutes || 30}m)`}</span>
                     </span>
 
@@ -218,7 +218,7 @@ export default function SessionsHub({
                           e.stopPropagation();
                           onDeleteSession(session.sessionPin);
                         }}
-                        className="p-1 rounded-lg text-[#86868b] hover:text-[#ff453a] hover:bg-rose-500/10 transition"
+                        className="p-1 rounded-lg text-[#86868b] hover:text-[#ff3b30] hover:bg-rose-50 transition"
                         title="Delete Session"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -227,21 +227,21 @@ export default function SessionsHub({
                   </div>
 
                   {/* Session Title */}
-                  <h3 className="text-lg font-semibold text-white group-hover:text-[#2997ff] transition-colors line-clamp-2 mb-2 tracking-tight">
+                  <h3 className="text-lg font-semibold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors line-clamp-2 mb-2 tracking-tight">
                     {session.title || 'Untitled Quiz Session'}
                   </h3>
 
                   {/* Date & Time conducted */}
                   <div className="flex items-center space-x-1.5 text-xs text-[#86868b] mb-4">
                     <Calendar className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
-                    <span>Conducted: <strong className="text-[#a1a1a6] font-medium">{dateDisplay}</strong></span>
+                    <span>Conducted: <strong className="text-[#1d1d1f] font-medium">{dateDisplay}</strong></span>
                   </div>
 
                   {/* 6-Digit Game PIN Banner */}
-                  <div className="bg-white/[0.03] border border-white/[0.08] group-hover:border-white/[0.14] rounded-2xl p-3.5 mb-5 flex items-center justify-between transition-colors">
+                  <div className="bg-[#fbfbfd] border border-[#d2d2d7]/70 group-hover:border-[#0071e3]/40 rounded-2xl p-3.5 mb-5 flex items-center justify-between transition-colors">
                     <div>
                       <span className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] block">Game PIN</span>
-                      <span className="text-xl font-mono font-semibold text-white tracking-widest">
+                      <span className="text-xl font-mono font-semibold text-[#1d1d1f] tracking-widest">
                         {session.sessionPin}
                       </span>
                     </div>
@@ -253,7 +253,7 @@ export default function SessionsHub({
                         className="apple-btn-secondary px-3 py-1.5 text-[11px] font-mono flex items-center space-x-1 cursor-pointer"
                         title="Copy PIN only"
                       >
-                        {copiedPin === session.sessionPin ? <Check className="w-3.5 h-3.5 text-[#30d158]" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedPin === session.sessionPin ? <Check className="w-3.5 h-3.5 text-[#34c759]" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedPin === session.sessionPin ? 'Copied' : 'PIN'}</span>
                       </button>
 
@@ -270,24 +270,24 @@ export default function SessionsHub({
                   </div>
 
                   {/* Submissions & Performance Stats */}
-                  <div className="grid grid-cols-3 gap-2 py-3 px-3.5 bg-white/[0.02] rounded-xl border border-white/[0.06] mb-4 text-center">
+                  <div className="grid grid-cols-3 gap-2 py-3 px-3.5 bg-[#fbfbfd] rounded-xl border border-[#e5e5ea] mb-4 text-center">
                     <div>
                       <span className="text-[10px] text-[#86868b] uppercase block font-semibold tracking-wider">Submissions</span>
-                      <span className="text-sm font-semibold text-white font-mono">{session.submissionCount || 0}</span>
+                      <span className="text-sm font-semibold text-[#1d1d1f] font-mono">{session.submissionCount || 0}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#86868b] uppercase block font-semibold tracking-wider">Class Avg</span>
-                      <span className="text-sm font-semibold text-[#2997ff] font-mono">{session.classAverage || 0}%</span>
+                      <span className="text-sm font-semibold text-[#0071e3] font-mono">{session.classAverage || 0}%</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#86868b] uppercase block font-semibold tracking-wider">Pass Rate</span>
-                      <span className="text-sm font-semibold text-[#30d158] font-mono">{session.passRate || 0}%</span>
+                      <span className="text-sm font-semibold text-[#34c759] font-mono">{session.passRate || 0}%</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Card Action Button */}
-                <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs font-medium text-[#2997ff] group-hover:text-[#60a5fa] transition-colors">
+                <div className="pt-3 border-t border-[#e5e5ea] flex items-center justify-between text-xs font-medium text-[#0071e3] group-hover:text-[#0077ed] transition-colors">
                   <span>Open Session Analytics</span>
                   <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                 </div>

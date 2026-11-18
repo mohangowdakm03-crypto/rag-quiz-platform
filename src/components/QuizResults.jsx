@@ -68,9 +68,9 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 fade-in">
       {/* Header Results Card - Apple Glass */}
-      <div className="apple-glass rounded-[32px] p-8 sm:p-12 shadow-2xl relative overflow-hidden mb-8">
+      <div className="apple-glass rounded-[32px] p-8 sm:p-12 shadow-sm relative overflow-hidden mb-8">
         <div className="relative z-10 text-center">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 bg-white/[0.08] border border-white/[0.12]">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full text-xs font-semibold mb-4 bg-white border border-[#d2d2d7]/70 shadow-sm">
             <Award className={`w-3.5 h-3.5 ${tier.text}`} />
             <span className={tier.text}>{tier.title}</span>
           </div>
@@ -78,36 +78,36 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] apple-title-gradient mb-2">
             Assessment Completed
           </h1>
-          <p className="text-[#86868b] text-sm max-w-lg mx-auto mb-6 tracking-tight">
-            Submission confirmed for <strong className="text-white font-medium">{studentName}</strong> ({studentId}). Recorded in the central evaluation registry.
+          <p className="text-[#6e6e73] text-sm max-w-lg mx-auto mb-6 tracking-tight">
+            Submission confirmed for <strong className="text-[#1d1d1f] font-semibold">{studentName}</strong> ({studentId}). Recorded in the central evaluation registry.
           </p>
 
           {/* Big Score Display */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 my-6 py-6 border-y border-white/[0.08]">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 my-6 py-6 border-y border-[#e5e5ea]">
             <div>
               <div className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-1">Final Score</div>
-              <div className="text-5xl sm:text-6xl font-semibold tracking-tight text-white">
+              <div className="text-5xl sm:text-6xl font-semibold tracking-tight text-[#1d1d1f]">
                 {score} <span className="text-2xl text-[#86868b] font-normal">/ {totalQuestions}</span>
               </div>
             </div>
 
-            <div className="h-12 w-[1px] bg-white/[0.08] hidden sm:block" />
+            <div className="h-12 w-[1px] bg-[#e5e5ea] hidden sm:block" />
 
             <div>
               <div className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-1">Percentage</div>
               <div className={`text-5xl sm:text-6xl font-semibold tracking-tight ${
-                passed ? 'text-[#30d158]' : 'text-[#ff453a]'
+                passed ? 'text-[#34c759]' : 'text-[#ff3b30]'
               }`}>
                 {percentage}%
               </div>
             </div>
 
-            <div className="h-12 w-[1px] bg-white/[0.08] hidden sm:block" />
+            <div className="h-12 w-[1px] bg-[#e5e5ea] hidden sm:block" />
 
             <div>
               <div className="text-[10px] uppercase font-semibold text-[#86868b] tracking-[0.16em] mb-1">Time Elapsed</div>
-              <div className="text-2xl sm:text-3xl font-semibold text-[#2997ff] flex items-center justify-center space-x-2">
-                <Clock className="w-5 h-5 text-[#2997ff]" />
+              <div className="text-2xl sm:text-3xl font-semibold text-[#0071e3] flex items-center justify-center space-x-2">
+                <Clock className="w-5 h-5 text-[#0071e3]" />
                 <span>{formatTime(timeTakenSeconds)}</span>
               </div>
             </div>
@@ -116,13 +116,13 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
           {/* Status Message */}
           <div className="flex items-center justify-center space-x-3 mt-4">
             {passed ? (
-              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#30d158] font-medium text-xs">
-                <CheckCircle2 className="w-4 h-4" />
+              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Passed with Official Proficiency</span>
               </span>
             ) : (
-              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[#ff453a] font-medium text-xs">
-                <XCircle className="w-4 h-4" />
+              <span className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-800 font-semibold text-xs">
+                <XCircle className="w-4 h-4 text-rose-600" />
                 <span>Passing threshold is 70% (Review Recommended)</span>
               </span>
             )}
@@ -144,32 +144,32 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
       {/* Review Section */}
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-white tracking-tight">Question Item Analysis</h2>
+          <h2 className="text-xl font-semibold text-[#1d1d1f] tracking-tight">Question Item Analysis</h2>
           <p className="text-xs text-[#86868b] tracking-tight">Review technical explanations and correct option breakdown.</p>
         </div>
 
         {/* Filter Segmented Control */}
-        <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08]">
+        <div className="flex items-center p-1 rounded-full bg-[#e5e5ea] border border-[#d2d2d7]/60">
           <button
             onClick={() => setFilterMode('all')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-              filterMode === 'all' ? 'bg-[#2997ff] text-white shadow-sm' : 'text-[#86868b] hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+              filterMode === 'all' ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             All ({totalQuestions})
           </button>
           <button
             onClick={() => setFilterMode('correct')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-              filterMode === 'correct' ? 'bg-[#30d158] text-black shadow-sm font-semibold' : 'text-[#86868b] hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+              filterMode === 'correct' ? 'bg-[#34c759] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             Correct ({correctCount})
           </button>
           <button
             onClick={() => setFilterMode('incorrect')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-              filterMode === 'incorrect' ? 'bg-[#ff453a] text-white shadow-sm' : 'text-[#86868b] hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+              filterMode === 'incorrect' ? 'bg-[#ff3b30] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             Missed ({incorrectCount})
@@ -187,19 +187,19 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
             <div
               key={item.questionId}
               className={`apple-glass-card rounded-2xl p-5 sm:p-6 transition-all ${
-                isCorrect ? 'border-white/[0.08]' : 'border-rose-500/30 bg-rose-500/[0.04]'
+                isCorrect ? 'border-[#d2d2d7]/70' : 'border-rose-300 bg-rose-50/40'
               }`}
             >
               {/* Question Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
-                    isCorrect ? 'bg-emerald-500/20 text-[#30d158]' : 'bg-rose-500/20 text-[#ff453a]'
+                    isCorrect ? 'bg-emerald-100 text-[#34c759]' : 'bg-rose-100 text-[#ff3b30]'
                   }`}>
                     {isCorrect ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                   </span>
                   <span className="text-xs font-medium text-[#86868b]">Question {qNumber}</span>
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/[0.06] text-[#2997ff] font-medium border border-white/[0.06]">
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#f5f5f7] text-[#0071e3] font-medium border border-[#d2d2d7]/70">
                     {item.category}
                   </span>
                 </div>
@@ -209,7 +209,7 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
               </div>
 
               {/* Question Text */}
-              <h3 className="text-base font-semibold text-white mb-4 tracking-tight">
+              <h3 className="text-base font-semibold text-[#1d1d1f] mb-4 tracking-tight">
                 {item.question}
               </h3>
 
@@ -220,21 +220,21 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
                   const isStudentPick = item.studentChoice === optIdx;
                   const isTheCorrectAnswer = item.correctAnswer === optIdx;
 
-                  let optionStyle = 'bg-white/[0.02] border-white/[0.06] text-[#86868b]';
+                  let optionStyle = 'bg-[#fbfbfd] border-[#e5e5ea] text-[#6e6e73]';
                   let badge = null;
 
                   if (isTheCorrectAnswer) {
-                    optionStyle = 'bg-emerald-500/[0.08] border-emerald-500/40 text-white';
+                    optionStyle = 'bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold';
                     badge = (
-                      <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[#30d158] flex items-center space-x-1 shrink-0">
+                      <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-emerald-700 flex items-center space-x-1 shrink-0">
                         <Check className="w-3 h-3" />
                         <span>Correct Answer</span>
                       </span>
                     );
                   } else if (isStudentPick && !isCorrect) {
-                    optionStyle = 'bg-rose-500/[0.08] border-rose-500/40 text-rose-200';
+                    optionStyle = 'bg-rose-50 border-rose-300 text-rose-950 font-semibold';
                     badge = (
-                      <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[#ff453a] flex items-center space-x-1 shrink-0">
+                      <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-rose-700 flex items-center space-x-1 shrink-0">
                         <XCircle className="w-3 h-3" />
                         <span>Your Answer</span>
                       </span>
@@ -256,9 +256,9 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
 
               {/* Explanation Card */}
               {item.explanation && (
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-[#a1a1a6] leading-relaxed">
-                  <div className="flex items-center space-x-1.5 font-semibold text-white mb-1">
-                    <Sparkles className="w-3.5 h-3.5 text-[#2997ff]" />
+                <div className="p-4 rounded-xl bg-[#f5f5f7] border border-[#e5e5ea] text-xs text-[#424245] leading-relaxed">
+                  <div className="flex items-center space-x-1.5 font-semibold text-[#1d1d1f] mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-[#0071e3]" />
                     <span>Technical Rationalization</span>
                   </div>
                   {item.explanation}
