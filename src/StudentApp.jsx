@@ -3,6 +3,7 @@ import StudentHeader from './components/StudentHeader';
 import JoinQuiz from './components/JoinQuiz';
 import QuizRunner from './components/QuizRunner';
 import QuizResults from './components/QuizResults';
+import { getStudentQuizDefinition } from './supabase';
 import { STUDENT_QUIZ_DATA } from './data/ragQuestions';
 
 export default function StudentApp() {
@@ -10,6 +11,8 @@ export default function StudentApp() {
   const [quizState, setQuizState] = useState('join'); // 'join' | 'taking' | 'completed'
   const [sessionData, setSessionData] = useState(null);
   const [results, setResults] = useState(null);
+  const [quizData, setQuizData] = useState(STUDENT_QUIZ_DATA);
+  const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
 
   // Parse URL query params on load (e.g. ?quiz=rag-mastery-2025)
   useEffect(() => {
@@ -23,6 +26,25 @@ export default function StudentApp() {
       console.warn('URL parsing error:', e);
     }
   }, []);
+
+  // Fetch dynamic customized quiz from cloud database
+  useEffect(() => {
+    async function loadQuizFromCloud() {
+      setIsLoadingQuiz(true);
+      try {
+        const cloudQuiz = await getStudentQuizDefinition(quizId);
+        if (cloudQuiz && cloudQuiz.questions && cloudQuiz.questions.length > 0) {
+          setQuizData(cloudQuiz);
+        }
+      } catch (err) {
+        console.warn('Fallback to local quiz data:', err);
+      } finally {
+        setIsLoadingQuiz(false);
+      }
+    }
+
+    loadQuizFromCloud();
+  }, [quizId]);
 
   const handleStartQuiz = (data) => {
     setSessionData(data);
@@ -57,7 +79,7 @@ export default function StudentApp() {
         {quizState === 'taking' && sessionData && (
           <QuizRunner
             sessionData={sessionData}
-            quizData={STUDENT_QUIZ_DATA}
+            quizData={quizData}
             onCompleteQuiz={handleCompleteQuiz}
           />
         )}
