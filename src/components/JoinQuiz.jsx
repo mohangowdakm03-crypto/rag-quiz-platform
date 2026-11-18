@@ -18,14 +18,20 @@ import { joinQuizRoom, getStudentQuizDefinition } from '../supabase';
 export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher }) {
   const [studentName, setStudentName] = useState('');
   const [studentId, setStudentId] = useState(''); // USN / Roll Number (Compulsory)
-  const [quizId, setQuizId] = useState(defaultQuizId && defaultQuizId !== 'rag-mastery-2025' ? defaultQuizId : '');
+  const [quizId, setQuizId] = useState(() => {
+    const raw = (defaultQuizId || '').toString();
+    return raw.replace(/\D/g, '').slice(0, 6);
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Update quizId if defaultQuizId changes via URL params
   useEffect(() => {
-    if (defaultQuizId && defaultQuizId !== 'rag-mastery-2025') {
-      setQuizId(defaultQuizId);
+    if (defaultQuizId) {
+      const numeric = defaultQuizId.toString().replace(/\D/g, '').slice(0, 6);
+      if (numeric) {
+        setQuizId(numeric);
+      }
     }
   }, [defaultQuizId]);
 
@@ -33,12 +39,12 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
     e.preventDefault();
     setError('');
 
-    const trimmedPin = quizId.trim();
+    const trimmedPin = quizId.replace(/\D/g, '').slice(0, 6);
     const trimmedName = studentName.trim();
     const trimmedUsn = studentId.trim();
 
-    if (!trimmedPin) {
-      setError('Please enter the 6-digit Game PIN provided by your teacher.');
+    if (!trimmedPin || trimmedPin.length !== 6) {
+      setError('Please enter a valid 6-digit Game PIN.');
       return;
     }
 
@@ -58,7 +64,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
       // Validate that the session PIN exists in Supabase
       const cloudQuiz = await getStudentQuizDefinition(trimmedPin);
       if (!cloudQuiz || !cloudQuiz.questions || cloudQuiz.questions.length === 0) {
-        setError(`Invalid Game PIN "${trimmedPin}". No active quiz session was found. Please check with your instructor.`);
+        setError(`Invalid Game PIN "${trimmedPin}". No active quiz session was found.`);
         setIsLoading(false);
         return;
       }
@@ -73,7 +79,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
       });
     } catch (err) {
       console.warn('Join note:', err);
-      setError(`Could not join session: ${err.message || 'Please check your internet connection.'}`);
+      setError(`Could not join session: ${err.message || 'Please check your connection.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -114,22 +120,29 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               </div>
             )}
 
-            {/* 1. 6-DIGIT GAME PIN (APPLE STYLE LIGHT) */}
+            {/* 1. 6-DIGIT GAME PIN (STRICTLY NUMERIC & MAX 6 DIGITS) */}
             <div className="p-5 rounded-2xl bg-[#fbfbfd] border border-[#d2d2d7]/70 shadow-sm relative group hover:border-[#86868b] transition-all">
               <label className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6e6e73] text-center mb-2.5">
                 6-Digit Game PIN <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
                 required
                 autoFocus
-                placeholder=""
+                placeholder="••••••"
                 value={quizId}
-                onChange={(e) => setQuizId(e.target.value)}
-                className="w-full text-center text-3xl sm:text-4xl font-mono font-semibold py-3 px-4 rounded-xl bg-white border border-[#d2d2d7] text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/15 transition-all tracking-[0.25em] uppercase shadow-sm"
+                onChange={(e) => {
+                  const numeric = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setQuizId(numeric);
+                  if (error) setError('');
+                }}
+                className="w-full text-center text-3xl sm:text-4xl font-mono font-semibold py-3 px-4 rounded-xl bg-white border border-[#d2d2d7] text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/15 transition-all tracking-[0.25em] shadow-sm"
               />
               <p className="text-[11px] text-[#86868b] text-center mt-2.5 tracking-tight">
-                Displayed on the instructor's console or in your invite link.
+                Enter the 6-digit PIN shown on the host screen or in your invite link.
               </p>
             </div>
 

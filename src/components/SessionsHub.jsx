@@ -211,7 +211,7 @@ export default function SessionsHub({
                     </span>
 
                     {/* Delete button (except default) */}
-                    {session.sessionPin !== 'rag-mastery-2025' && (
+                    {session.sessionPin !== 'rag-mastery-2025' && session.sessionPin !== '202500' && (
                       <button
                         type="button"
                         onClick={(e) => {

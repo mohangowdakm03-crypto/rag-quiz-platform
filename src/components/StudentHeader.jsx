@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Share2, Check, Sparkles, Database, Shield } from 'lucide-react';
+import { Share2, Check, Sparkles } from 'lucide-react';
 
 export default function StudentHeader({ quizId }) {
   const [copied, setCopied] = useState(false);
@@ -46,7 +46,7 @@ export default function StudentHeader({ quizId }) {
           </div>
 
           {/* Share Quiz ID button (only if quizId is active) */}
-          {quizId ? (
+          {quizId && (
             <button
               onClick={handleCopyLink}
               className="apple-btn-secondary flex items-center space-x-2 px-3.5 py-1.5 text-xs font-medium cursor-pointer"
@@ -64,14 +64,6 @@ export default function StudentHeader({ quizId }) {
                 </>
               )}
             </button>
-          ) : (
-            <a
-              href="/teacher"
-              className="text-xs text-[#86868b] hover:text-[#0071e3] transition-colors duration-200 flex items-center space-x-1"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Instructor Console</span>
-            </a>
           )}
         </div>
       </div>

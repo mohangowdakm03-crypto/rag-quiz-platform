@@ -168,7 +168,7 @@ export default function TeacherApp() {
   };
 
   const handleDeleteSession = async (pin) => {
-    if (pin === 'rag-mastery-2025') {
+    if (pin === 'rag-mastery-2025' || pin === '202500') {
       alert('The default template session cannot be deleted.');
       return;
     }

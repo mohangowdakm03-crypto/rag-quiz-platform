@@ -87,10 +87,10 @@ export async function getQuizDefinition(quizId) {
       .limit(1);
 
     if (error || !data || data.length === 0) {
-      // If default quiz ID, return default RAG template
-      if (quizId === 'rag-mastery-2025' || quizId === 'default' || !quizId) {
+      // If default 6-digit quiz ID or legacy rag-mastery-2025, return default RAG template
+      if (quizId === '202500' || quizId === 'rag-mastery-2025' || quizId === 'default' || !quizId) {
         return {
-          id: 'rag-mastery-2025',
+          id: '202500',
           title: RAG_QUIZ_DATA.title,
           description: RAG_QUIZ_DATA.description,
           timeLimitMinutes: RAG_QUIZ_DATA.timeLimitMinutes || 30,
@@ -124,9 +124,9 @@ export async function getQuizDefinition(quizId) {
     };
   } catch (err) {
     console.warn('Quiz definition load error:', err);
-    if (quizId === 'rag-mastery-2025' || !quizId) {
+    if (quizId === '202500' || quizId === 'rag-mastery-2025' || !quizId) {
       return {
-        id: 'rag-mastery-2025',
+        id: '202500',
         title: RAG_QUIZ_DATA.title,
         description: RAG_QUIZ_DATA.description,
         timeLimitMinutes: 30,
@@ -341,11 +341,11 @@ export async function fetchTeacherSessions() {
       };
     });
 
-    // Ensure default rag-mastery-2025 is included if not in DB
-    if (!sessions.some(s => s.sessionPin === 'rag-mastery-2025')) {
-      const defaultStat = statsMap['rag-mastery-2025'] || { count: 0, totalPct: 0, passedCount: 0 };
-      sessions.push({
-        sessionPin: 'rag-mastery-2025',
+    // Ensure default 6-digit template 202500 is included if not in DB
+    if (!sessions.some(s => s.sessionPin === '202500' || s.sessionPin === 'rag-mastery-2025')) {
+      const defaultStat = statsMap['202500'] || statsMap['rag-mastery-2025'] || { count: 0, totalPct: 0, passedCount: 0 };
+      sessions.unshift({
+        sessionPin: '202500',
         title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
         description: 'Comprehensive 20-question technical evaluation covering RAG architecture and paradigms.',
         gameMode: 'classic',
@@ -369,6 +369,10 @@ export async function fetchTeacherSessions() {
 
 // 4D. Delete a session and its submissions
 export async function deleteTeacherSession(sessionPin, rawPasscode) {
+  if (sessionPin === '202500' || sessionPin === 'rag-mastery-2025') {
+    throw new Error('The default template session cannot be deleted.');
+  }
+
   const auth = await verifyInstructorPasscode(sessionPin, rawPasscode);
   if (!auth.valid) {
     throw new Error('Unauthorized: Invalid Instructor Passcode');
