@@ -8,18 +8,16 @@ import {
   Users, 
   CheckCircle2,
   Cpu,
-  Database
+  Lock
 } from 'lucide-react';
-import { joinQuizRoom, getSupabaseConfig } from '../supabase';
+import { joinQuizRoom } from '../supabase';
 
-export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher, onOpenDbModal }) {
+export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher }) {
   const [studentName, setStudentName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [quizId, setQuizId] = useState(defaultQuizId || 'rag-mastery-2025');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const { isConfigured } = getSupabaseConfig();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +34,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
     setError('');
 
     try {
-      // Register participant presence in Supabase
+      // Register presence in Supabase
       await joinQuizRoom(quizId.trim(), studentName.trim(), studentId.trim());
       
       onStartQuiz({
@@ -45,7 +43,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
         quizId: quizId.trim()
       });
     } catch (err) {
-      console.error('Join error:', err);
+      console.warn('Join note:', err);
       onStartQuiz({
         studentName: studentName.trim(),
         studentId: studentId.trim(),
@@ -61,24 +59,20 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
       <div className="max-w-2xl w-full">
         {/* Glow decoration */}
         <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-500 rounded-3xl blur-xl opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-500 rounded-3xl blur-xl opacity-30"></div>
 
           <div className="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
-            {/* Badge */}
+            {/* Header Badge */}
             <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <Cpu className="w-3.5 h-3.5" />
                 <span>Advanced AI / LLM Examination System</span>
               </div>
 
-              <button
-                type="button"
-                onClick={onOpenDbModal}
-                className="inline-flex items-center space-x-1.5 text-xs text-slate-400 hover:text-emerald-400 transition"
-              >
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Database: <strong>{isConfigured ? 'Supabase Connected' : 'Setup Supabase'}</strong></span>
-              </button>
+              <div className="inline-flex items-center space-x-1.5 text-xs text-emerald-400 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Cloud Sync Live (60+ Students)</span>
+              </div>
             </div>
 
             {/* Title */}
@@ -86,10 +80,10 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               RAG (Retrieval-Augmented Generation) Quiz
             </h1>
             <p className="text-slate-400 text-sm sm:text-base mb-8 leading-relaxed">
-              Test your deep understanding of dense & sparse vector retrieval, chunking algorithms, HNSW indexing, cross-encoder rerankers, evaluation metrics (Ragas), and multi-agent RAG paradigms.
+              Test your technical knowledge across dense & sparse vector retrieval, chunking algorithms, HNSW indexing, cross-encoder rerankers, Ragas evaluation, and production RAG security.
             </p>
 
-            {/* Exam Highlights */}
+            {/* Highlights */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col items-center text-center">
                 <HelpCircle className="w-5 h-5 text-emerald-400 mb-1" />
@@ -109,7 +103,7 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col items-center text-center">
                 <Users className="w-5 h-5 text-blue-400 mb-1" />
                 <span className="text-lg font-bold text-white">60+</span>
-                <span className="text-[11px] text-slate-400 font-medium">Live Students</span>
+                <span className="text-[11px] text-slate-400 font-medium">Simultaneous</span>
               </div>
             </div>
 
@@ -180,18 +174,19 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
               </button>
             </form>
 
-            {/* Footer switcher */}
+            {/* Footer switcher (Discreet Instructor Portal) */}
             <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
-              <div className="flex items-center space-x-1.5 text-emerald-400">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Supabase PostgreSQL Cloud Ready</span>
+              <div className="flex items-center space-x-1.5 text-slate-500">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500/70" />
+                <span>Anti-Cheat Protected • Server Graded</span>
               </div>
               <button
                 type="button"
                 onClick={onSwitchToTeacher}
-                className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-4"
+                className="text-slate-500 hover:text-slate-300 text-[11px] flex items-center space-x-1 transition"
               >
-                Instructor? View Live Dashboard →
+                <Lock className="w-3 h-3 text-slate-500" />
+                <span>Instructor Portal</span>
               </button>
             </div>
           </div>

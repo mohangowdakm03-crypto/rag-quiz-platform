@@ -4,8 +4,7 @@ import JoinQuiz from './components/JoinQuiz';
 import QuizRunner from './components/QuizRunner';
 import QuizResults from './components/QuizResults';
 import TeacherDashboard from './components/TeacherDashboard';
-import SupabaseConfigModal from './components/SupabaseConfigModal';
-import { RAG_QUIZ_DATA } from './data/ragQuestions';
+import { STUDENT_QUIZ_DATA } from './data/ragQuestions';
 
 export default function App() {
   const [mode, setMode] = useState('student'); // 'student' | 'teacher'
@@ -13,8 +12,23 @@ export default function App() {
   const [quizState, setQuizState] = useState('join'); // 'join' | 'taking' | 'completed'
   const [sessionData, setSessionData] = useState(null);
   const [results, setResults] = useState(null);
-  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
-  const [, setDbVersion] = useState(0); // Force re-render on DB config change
+
+  // Instructor security authentication state
+  const [teacherPasscode, setTeacherPasscode] = useState(() => {
+    try {
+      return sessionStorage.getItem('rag_instructor_passcode') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [isTeacherAuthenticated, setIsTeacherAuthenticated] = useState(() => {
+    try {
+      return Boolean(sessionStorage.getItem('rag_instructor_passcode'));
+    } catch {
+      return false;
+    }
+  });
 
   // Parse URL query params on load (e.g. ?quiz=rag-mastery-2025&mode=teacher)
   useEffect(() => {
@@ -26,7 +40,7 @@ export default function App() {
       if (urlQuiz) {
         setQuizId(urlQuiz);
       }
-      if (urlMode === 'teacher') {
+      if (urlMode === 'teacher' || urlMode === 'instructor' || urlMode === 'admin') {
         setMode('teacher');
       }
     } catch (e) {
@@ -50,8 +64,15 @@ export default function App() {
     setResults(null);
   };
 
-  const handleDbSaved = () => {
-    setDbVersion((v) => v + 1);
+  const handleLockTeacher = () => {
+    setIsTeacherAuthenticated(false);
+    setTeacherPasscode('');
+    try {
+      sessionStorage.removeItem('rag_instructor_passcode');
+    } catch {
+      // ignore
+    }
+    setMode('student');
   };
 
   return (
@@ -59,9 +80,8 @@ export default function App() {
       {/* Top Navigation */}
       <Header 
         currentMode={mode} 
-        setMode={setMode} 
+        onLockTeacher={handleLockTeacher}
         quizId={quizId} 
-        onOpenDbModal={() => setIsDbModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -70,7 +90,10 @@ export default function App() {
           <TeacherDashboard 
             quizId={quizId}
             onSwitchToStudent={() => setMode('student')}
-            onOpenDbModal={() => setIsDbModalOpen(true)}
+            teacherPasscode={teacherPasscode}
+            setTeacherPasscode={setTeacherPasscode}
+            isAuthenticated={isTeacherAuthenticated}
+            setIsAuthenticated={setIsTeacherAuthenticated}
           />
         ) : (
           <>
@@ -79,14 +102,13 @@ export default function App() {
                 defaultQuizId={quizId}
                 onStartQuiz={handleStartQuiz}
                 onSwitchToTeacher={() => setMode('teacher')}
-                onOpenDbModal={() => setIsDbModalOpen(true)}
               />
             )}
 
             {quizState === 'taking' && sessionData && (
               <QuizRunner
                 sessionData={sessionData}
-                quizData={RAG_QUIZ_DATA}
+                quizData={STUDENT_QUIZ_DATA}
                 onCompleteQuiz={handleCompleteQuiz}
               />
             )}
@@ -95,19 +117,11 @@ export default function App() {
               <QuizResults
                 results={results}
                 onRetake={handleRetakeQuiz}
-                onSwitchToTeacher={() => setMode('teacher')}
               />
             )}
           </>
         )}
       </main>
-
-      {/* Supabase Connection Modal */}
-      <SupabaseConfigModal
-        isOpen={isDbModalOpen}
-        onClose={() => setIsDbModalOpen(false)}
-        onConfigSaved={handleDbSaved}
-      />
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
@@ -115,9 +129,16 @@ export default function App() {
           <div>
             RAG Master Assessment Platform • Real-time Cloud Sync for 60+ Concurrent Students
           </div>
-          <div className="font-mono text-slate-500 text-[11px] flex items-center space-x-1">
-            <span>Backed by</span>
-            <span className="text-emerald-400 font-semibold">Supabase PostgreSQL</span>
+          <div className="flex items-center space-x-4 text-[11px]">
+            <span className="text-slate-600">•</span>
+            <button
+              onClick={() => setMode(mode === 'teacher' ? 'student' : 'teacher')}
+              className="text-slate-500 hover:text-slate-400 transition"
+            >
+              {mode === 'teacher' ? 'Student View' : 'Instructor Access'}
+            </button>
+            <span className="text-slate-600">•</span>
+            <span className="text-emerald-500 font-semibold">Supabase PostgreSQL Encrypted</span>
           </div>
         </div>
       </footer>

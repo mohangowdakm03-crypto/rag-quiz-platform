@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Share2, Check, LayoutDashboard, BookOpen, Sparkles, Database } from 'lucide-react';
+import { Share2, Check, Sparkles, Database, Lock, LogOut } from 'lucide-react';
 import { getSupabaseConfig } from '../supabase';
 
-export default function Header({ currentMode, setMode, quizId, onOpenDbModal }) {
+export default function Header({ currentMode, onLockTeacher, quizId }) {
   const [copied, setCopied] = useState(false);
   const { isConfigured } = getSupabaseConfig();
 
@@ -19,10 +19,10 @@ export default function Header({ currentMode, setMode, quizId, onOpenDbModal }) 
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setMode('student')}>
+        <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-400 p-[1px] shadow-lg shadow-emerald-500/20">
             <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+              <Sparkles className="w-5 h-5 text-emerald-400" />
             </div>
           </div>
           <div>
@@ -31,30 +31,23 @@ export default function Header({ currentMode, setMode, quizId, onOpenDbModal }) 
                 RAG Master
               </span>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                Supabase
+                2025 Exam
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">Retrieval-Augmented Generation Exam</p>
+            <p className="text-xs text-slate-400 hidden sm:block">Retrieval-Augmented Generation Evaluation</p>
           </div>
         </div>
 
         {/* Action Controls */}
         <div className="flex items-center space-x-3">
-          {/* Supabase status / config button */}
-          <button
-            onClick={onOpenDbModal}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-              isConfigured
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                : 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 animate-pulse'
-            }`}
-            title="Configure Supabase Database Credentials"
+          {/* Supabase status indicator */}
+          <div
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+            title="Real-time cloud database connected"
           >
             <Database className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {isConfigured ? 'Supabase Connected' : 'Connect Supabase'}
-            </span>
-          </button>
+            <span className="hidden sm:inline">Cloud Connected</span>
+          </div>
 
           {/* Share Quiz ID button */}
           <button
@@ -65,7 +58,7 @@ export default function Header({ currentMode, setMode, quizId, onOpenDbModal }) 
             {copied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Invite Link Copied!</span>
+                <span className="text-emerald-400">Link Copied!</span>
               </>
             ) : (
               <>
@@ -75,31 +68,17 @@ export default function Header({ currentMode, setMode, quizId, onOpenDbModal }) 
             )}
           </button>
 
-          {/* Mode Switcher */}
-          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {/* If teacher mode is active, show exit/lock button */}
+          {currentMode === 'teacher' && (
             <button
-              onClick={() => setMode('student')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                currentMode === 'student'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={onLockTeacher}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-all"
+              title="Lock Instructor Dashboard"
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Student</span>
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Lock Instructor Mode</span>
             </button>
-            <button
-              onClick={() => setMode('teacher')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                currentMode === 'teacher'
-                  ? 'bg-teal-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Teacher Dashboard</span>
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </header>
