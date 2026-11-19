@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { auth } from './firebase';
 
 // Production Supabase project credentials for rag-quiz-platform
 const SUPABASE_URL = "https://zcdauivbacingwrxjsgf.supabase.co";
@@ -235,7 +236,7 @@ export async function getStudentQuizDefinition(quizId) {
 export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
-  const isAuthUser = instructorPasscode === 'authenticated_user';
+  const isAuthUser = instructorPasscode === 'authenticated_user' && Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
 
   // Check existing quiz to verify passcode
   const existing = await getQuizDefinition(quizId);
@@ -307,10 +308,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
   const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
-  const isAuthUser = instructorPasscode === 'authenticated_user';
+  const isAuthUser = instructorPasscode === 'authenticated_user' && Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
   
   if (!isMaster && !isAuthUser) {
-    throw new Error('Unauthorized: Valid Instructor Passcode or Logged-in Teacher required to publish a session.');
+    throw new Error('Unauthorized: Valid Instructor Passcode or Verified Teacher Login required to publish a session.');
   }
 
   // Generate unique 6-digit PIN (e.g. 582914) or use custom code
@@ -396,8 +397,28 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   };
 }
 
-// 4C. Fetch all available teacher sessions with real-time stats
-export async function fetchTeacherSessions() {
+// 4C. Fetch all available teacher sessions with real-time stats (Strictly Authenticated)
+export async function fetchTeacherSessions(rawPasscode = '') {
+  // Enforce authentication: must have active Firebase User OR valid Master Passcode
+  const isFirebaseUser = Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
+  let isMaster = false;
+
+  const code = rawPasscode || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode') : '');
+  if (code && code !== 'authenticated_user') {
+    const hash = await sha256(code);
+    isMaster = (hash === MASTER_PASSCODE_HASH_1 || hash === MASTER_PASSCODE_HASH_2);
+  } else if (typeof sessionStorage !== 'undefined') {
+    const storedHash = sessionStorage.getItem('rag_instructor_passcode_hash');
+    if (storedHash === MASTER_PASSCODE_HASH_1 || storedHash === MASTER_PASSCODE_HASH_2) {
+      isMaster = true;
+    }
+  }
+
+  if (!isFirebaseUser && !isMaster) {
+    console.warn('Unauthorized attempt to fetch teacher sessions blocked.');
+    return [];
+  }
+
   const adminClient = getSupabaseAdminClient();
   try {
     const [{ data, error }, { data: subsData }] = await Promise.all([
@@ -801,18 +822,21 @@ export async function checkStudentAlreadySubmitted(quizId, studentId) {
   return res.alreadySubmitted;
 }
 
-// 6. Verify Instructor Passcode with SHA-256 Hashing
+// 6. Verify Instructor Passcode with SHA-256 Hashing & Firebase Authentication
 export async function verifyInstructorPasscode(quizId, rawPasscode) {
   if (!rawPasscode || !rawPasscode.trim()) {
     return { valid: false, error: 'Passcode cannot be empty' };
   }
 
-  const enteredHash = await sha256(rawPasscode);
-
-  // Check authenticated teacher user or master hashes first
+  // 1. If 'authenticated_user', strictly verify that Firebase Auth has an active non-anonymous user!
   if (rawPasscode === 'authenticated_user') {
-    return { valid: true, hash: 'auth_user' };
+    if (auth.currentUser && !auth.currentUser.isAnonymous) {
+      return { valid: true, hash: 'auth_user', uid: auth.currentUser.uid };
+    }
+    return { valid: false, error: 'Unauthorized: No active teacher account session' };
   }
+
+  const enteredHash = await sha256(rawPasscode);
 
   if (enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2) {
     return { valid: true, hash: enteredHash };

@@ -7,41 +7,41 @@ import { subscribeToTeacherAuth } from './services/authService';
 import { Sparkles } from 'lucide-react';
 
 function CreatePage() {
-  const [currentTeacher, setCurrentTeacher] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('oxvane_teacher_auth');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [passcode, setPasscode] = useState(() => {
-    try {
-      return sessionStorage.getItem('rag_instructor_passcode') || '';
-    } catch {
-      return '';
-    }
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      return Boolean(sessionStorage.getItem('rag_instructor_passcode') || sessionStorage.getItem('oxvane_teacher_auth'));
-    } catch {
-      return false;
-    }
-  });
+  const [currentTeacher, setCurrentTeacher] = useState(null);
+  const [passcode, setPasscode] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
     const unsubscribe = subscribeToTeacherAuth((teacher) => {
       if (teacher) {
         setCurrentTeacher(teacher);
         setIsAuthenticated(true);
-        setPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+        const code = teacher.provider === 'passcode' 
+          ? (sessionStorage.getItem('rag_instructor_passcode') || '') 
+          : 'authenticated_user';
+        setPasscode(code);
+      } else {
+        sessionStorage.removeItem('oxvane_teacher_auth');
+        sessionStorage.removeItem('rag_instructor_passcode');
+        sessionStorage.removeItem('rag_instructor_passcode_hash');
+        setCurrentTeacher(null);
+        setIsAuthenticated(false);
+        setPasscode('');
       }
+      setIsAuthChecking(false);
     });
     return () => unsubscribe();
   }, []);
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen apple-bg-ambient flex flex-col items-center justify-center p-4">
+        <div className="w-9 h-9 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-xs text-[#86868b] font-medium tracking-tight">Verifying instructor security credentials...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -49,7 +49,10 @@ function CreatePage() {
         onAuthenticated={(teacher) => {
           setCurrentTeacher(teacher);
           setIsAuthenticated(true);
-          setPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+          const code = teacher.provider === 'passcode' 
+            ? (sessionStorage.getItem('rag_instructor_passcode') || '') 
+            : 'authenticated_user';
+          setPasscode(code);
         }}
       />
     );

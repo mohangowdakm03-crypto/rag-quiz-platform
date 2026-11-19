@@ -17,46 +17,30 @@ import {
 import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle, Tv, LogOut, User } from 'lucide-react';
 
 export default function TeacherApp() {
-  const [currentTeacher, setCurrentTeacher] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('oxvane_teacher_auth');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [currentTeacher, setCurrentTeacher] = useState(null);
+  const [teacherPasscode, setTeacherPasscode] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  const [teacherPasscode, setTeacherPasscode] = useState(() => {
-    try {
-      return sessionStorage.getItem('rag_instructor_passcode') || '';
-    } catch {
-      return '';
-    }
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      return Boolean(sessionStorage.getItem('rag_instructor_passcode') || sessionStorage.getItem('oxvane_teacher_auth'));
-    } catch {
-      return false;
-    }
-  });
-
-  // Subscribe to real-time teacher authentication state
+  // Subscribe to real-time teacher authentication state with strict cryptographic verification
   useEffect(() => {
-    const unsubscribe = subscribeToTeacherAuth((teacher) => {
+    const unsubscribe = subscribeToTeacherAuth(async (teacher) => {
       if (teacher) {
         setCurrentTeacher(teacher);
         setIsAuthenticated(true);
-        setTeacherPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+        const code = teacher.provider === 'passcode'
+          ? (sessionStorage.getItem('rag_instructor_passcode') || '')
+          : 'authenticated_user';
+        setTeacherPasscode(code);
       } else {
-        const savedPasscode = sessionStorage.getItem('rag_instructor_passcode');
-        if (!savedPasscode) {
-          setCurrentTeacher(null);
-          setIsAuthenticated(false);
-          setTeacherPasscode('');
-        }
+        sessionStorage.removeItem('oxvane_teacher_auth');
+        sessionStorage.removeItem('rag_instructor_passcode');
+        sessionStorage.removeItem('rag_instructor_passcode_hash');
+        setCurrentTeacher(null);
+        setIsAuthenticated(false);
+        setTeacherPasscode('');
       }
+      setIsAuthChecking(false);
     });
     return () => unsubscribe();
   }, []);
@@ -79,18 +63,18 @@ export default function TeacherApp() {
     data: null
   });
 
-  // Load all sessions
+  // Load all sessions (Strictly authenticated)
   const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
     try {
-      const list = await fetchTeacherSessions();
+      const list = await fetchTeacherSessions(teacherPasscode);
       setSessions(list);
     } catch (err) {
       console.error('Failed to load sessions:', err);
     } finally {
       setIsLoadingSessions(false);
     }
-  }, []);
+  }, [teacherPasscode]);
 
   // Parse initial route from URL
   useEffect(() => {
@@ -272,14 +256,27 @@ export default function TeacherApp() {
     }
   };
 
-  // IF NOT AUTHENTICATED: RENDER APPLE MULTI-PROVIDER AUTH MODAL
+  // 1. IF AUTHENTICATION CHECK IS IN PROGRESS: RENDER APPLE SPINNER
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen apple-bg-ambient flex flex-col items-center justify-center p-4">
+        <div className="w-9 h-9 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-xs text-[#86868b] font-medium tracking-tight">Verifying instructor security credentials...</p>
+      </div>
+    );
+  }
+
+  // 2. IF NOT AUTHENTICATED: RENDER APPLE MULTI-PROVIDER AUTH MODAL
   if (!isAuthenticated) {
     return (
       <TeacherAuthModal
         onAuthenticated={(teacher) => {
           setCurrentTeacher(teacher);
           setIsAuthenticated(true);
-          setTeacherPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+          const code = teacher.provider === 'passcode' 
+            ? (sessionStorage.getItem('rag_instructor_passcode') || '') 
+            : 'authenticated_user';
+          setTeacherPasscode(code);
         }}
       />
     );

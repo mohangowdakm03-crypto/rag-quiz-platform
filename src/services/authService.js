@@ -213,11 +213,11 @@ export async function logoutTeacher() {
 }
 
 /**
- * 9. Real-time Auth State Subscription
+ * 9. Real-time Auth State Subscription with Strict Cryptographic Verification
  */
 export function subscribeToTeacherAuth(onTeacherChanged) {
-  return onAuthStateChanged(auth, (user) => {
-    if (user) {
+  return onAuthStateChanged(auth, async (user) => {
+    if (user && !user.isAnonymous) {
       const teacher = formatTeacherUser(user);
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('oxvane_teacher_auth', JSON.stringify(teacher));
@@ -225,16 +225,45 @@ export function subscribeToTeacherAuth(onTeacherChanged) {
       }
       onTeacherChanged(teacher);
     } else {
-      // Check if logged in via master passcode in session
+      // Check if logged in via strictly verified master passcode in session
+      const savedHash = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode_hash') : '';
       const savedPasscode = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode') : '';
-      if (savedPasscode && savedPasscode !== 'authenticated_user') {
+
+      if (savedHash && (savedHash === MASTER_PASSCODE_HASH_1 || savedHash === MASTER_PASSCODE_HASH_2)) {
         onTeacherChanged({
           uid: 'master_admin',
           displayName: 'Master Administrator',
           email: 'admin@oxvane.local',
           provider: 'passcode'
         });
+      } else if (savedPasscode && savedPasscode !== 'authenticated_user') {
+        try {
+          const computedHash = await sha256(savedPasscode);
+          if (computedHash === MASTER_PASSCODE_HASH_1 || computedHash === MASTER_PASSCODE_HASH_2) {
+            sessionStorage.setItem('rag_instructor_passcode_hash', computedHash);
+            onTeacherChanged({
+              uid: 'master_admin',
+              displayName: 'Master Administrator',
+              email: 'admin@oxvane.local',
+              provider: 'passcode'
+            });
+          } else {
+            // Tampered or invalid passcode: purge and lock!
+            sessionStorage.removeItem('rag_instructor_passcode');
+            sessionStorage.removeItem('rag_instructor_passcode_hash');
+            sessionStorage.removeItem('oxvane_teacher_auth');
+            onTeacherChanged(null);
+          }
+        } catch {
+          onTeacherChanged(null);
+        }
       } else {
+        // Purge any forged tokens
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('oxvane_teacher_auth');
+          sessionStorage.removeItem('rag_instructor_passcode');
+          sessionStorage.removeItem('rag_instructor_passcode_hash');
+        }
         onTeacherChanged(null);
       }
     }
@@ -242,7 +271,44 @@ export function subscribeToTeacherAuth(onTeacherChanged) {
 }
 
 /**
- * 10. Direct Master Passcode Verification (Fallback for offline/admin mode)
+ * 10. Check if Current Session is Truly Authenticated
+ */
+export async function isTeacherAuthorized() {
+  if (auth.currentUser && !auth.currentUser.isAnonymous) {
+    return { authorized: true, user: formatTeacherUser(auth.currentUser) };
+  }
+  const savedHash = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode_hash') : '';
+  if (savedHash === MASTER_PASSCODE_HASH_1 || savedHash === MASTER_PASSCODE_HASH_2) {
+    return {
+      authorized: true,
+      user: {
+        uid: 'master_admin',
+        displayName: 'Master Administrator',
+        email: 'admin@oxvane.local',
+        provider: 'passcode'
+      }
+    };
+  }
+  const savedPasscode = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode') : '';
+  if (savedPasscode && savedPasscode !== 'authenticated_user') {
+    const computedHash = await sha256(savedPasscode);
+    if (computedHash === MASTER_PASSCODE_HASH_1 || computedHash === MASTER_PASSCODE_HASH_2) {
+      return {
+        authorized: true,
+        user: {
+          uid: 'master_admin',
+          displayName: 'Master Administrator',
+          email: 'admin@oxvane.local',
+          provider: 'passcode'
+        }
+      };
+    }
+  }
+  return { authorized: false, user: null };
+}
+
+/**
+ * 11. Direct Master Passcode Verification (Fallback for offline/admin mode)
  */
 export async function verifyAdminPasscode(code) {
   const enteredHash = await sha256(code.trim());
