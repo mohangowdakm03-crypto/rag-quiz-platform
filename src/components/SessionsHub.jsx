@@ -205,6 +205,7 @@ export default function SessionsHub({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSessions.map((session) => {
             const isAssessment = session.gameMode === 'assessment';
+            const isLiveKahoot = session.gameMode === 'live_kahoot';
             const dateDisplay = formatSessionDate(session.createdAt);
 
             return (
@@ -218,12 +219,14 @@ export default function SessionsHub({
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center space-x-1.5 flex-wrap gap-1">
                       <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                        isAssessment 
-                          ? 'bg-amber-50 border border-amber-200 text-amber-700' 
-                          : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
+                        isLiveKahoot
+                          ? 'bg-purple-50 border border-purple-200 text-purple-700 font-bold'
+                          : isAssessment 
+                            ? 'bg-amber-50 border border-amber-200 text-amber-700' 
+                            : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
                       }`}>
-                        {isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
-                        <span>{isAssessment ? `Assessment (${session.perQuestionSeconds || 30}s/Q)` : `Standard (${session.timeLimitMinutes || 30}m)`}</span>
+                        {isLiveKahoot ? <Sparkles className="w-3 h-3 text-[#af52de]" /> : isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
+                        <span>{isLiveKahoot ? `Live Kahoot (${session.perQuestionSeconds || 20}s/Q)` : isAssessment ? `Assessment (${session.perQuestionSeconds || 30}s/Q)` : `Classical (${session.timeLimitMinutes || 30}m)`}</span>
                       </span>
 
                       {!session.showScore && (

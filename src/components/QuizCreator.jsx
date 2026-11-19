@@ -552,8 +552,8 @@ export default function QuizCreator({
           <label className="block text-xs font-semibold text-[#1d1d1f] mb-3">
             Select Answering Mode *
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Classical Mode Card */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* 1. Classical Mode Card */}
             <div
               onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'classic' })}
               className={`apple-glass-card p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between ${
@@ -594,7 +594,7 @@ export default function QuizCreator({
               </div>
             </div>
 
-            {/* Assessment Mode Card */}
+            {/* 2. Assessment Mode Card */}
             <div
               onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'assessment' })}
               className={`apple-glass-card p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between ${
@@ -633,6 +633,46 @@ export default function QuizCreator({
                   <option value={60}>60 Seconds (1 Min)</option>
                   <option value={90}>90 Seconds</option>
                   <option value={120}>120 Seconds (2 Min)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 3. Live Kahoot Game Mode Card (Optional Synchronous) */}
+            <div
+              onClick={() => setQuizConfig({ ...quizConfig, gameMode: 'live_kahoot', perQuestionSeconds: quizConfig.perQuestionSeconds || 20 })}
+              className={`apple-glass-card p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between ${
+                quizConfig.gameMode === 'live_kahoot'
+                  ? 'border-[#af52de] ring-2 ring-[#af52de]/30 shadow-md'
+                  : 'border-[#d2d2d7]/70'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg">📺</span>
+                    <h4 className="font-semibold text-[#1d1d1f] text-base tracking-tight">Live Kahoot Mode</h4>
+                  </div>
+                  {quizConfig.gameMode === 'live_kahoot' && (
+                    <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#af52de] to-[#0071e3] text-white">Selected</span>
+                  )}
+                </div>
+                <p className="text-xs text-[#86868b] leading-relaxed mb-4 tracking-tight">
+                  Synchronous classroom projector game. Teacher controls rounds on the big screen; students tap 4 vibrant mobile color buttons with speed bonus, live charts & grand podium.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-[#e5e5ea] flex items-center justify-between">
+                <span className="text-xs font-medium text-[#6e6e73]">Seconds Per Round:</span>
+                <select
+                  value={quizConfig.perQuestionSeconds || 20}
+                  onChange={(e) => setQuizConfig({ ...quizConfig, perQuestionSeconds: Number(e.target.value) })}
+                  className="apple-input px-3 py-1.5 text-xs font-mono font-medium cursor-pointer"
+                >
+                  <option value={10}>10 Seconds (Speed)</option>
+                  <option value={15}>15 Seconds</option>
+                  <option value={20}>20 Seconds (Standard)</option>
+                  <option value={30}>30 Seconds</option>
+                  <option value={45}>45 Seconds</option>
                 </select>
               </div>
             </div>
@@ -1263,7 +1303,7 @@ export default function QuizCreator({
               </div>
               <div className="mt-3 flex items-center justify-center space-x-2">
                 <span className="text-xs px-3 py-1 rounded-full bg-white text-[#6e6e73] font-medium border border-[#d2d2d7]/70">
-                  Mode: {launchModal.gameMode === 'assessment' ? `⚡ Assessment (${launchModal.perQuestionSeconds}s/Q)` : 'Standard'}
+                  Mode: {launchModal.gameMode === 'assessment' ? `⚡ Assessment (${launchModal.perQuestionSeconds}s/Q)` : launchModal.gameMode === 'live_kahoot' ? `📺 Live Kahoot (${launchModal.perQuestionSeconds || 20}s/Q)` : '🎮 Classical'}
                 </span>
                 <span className="text-xs px-3 py-1 rounded-full bg-white text-[#6e6e73] font-medium border border-[#d2d2d7]/70">
                   {launchModal.totalQuestions} Questions

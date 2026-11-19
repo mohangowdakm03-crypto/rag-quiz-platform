@@ -187,11 +187,17 @@ export default function HostProjectorView({
                 {quizDef?.title || 'Interactive Quiz Session'}
               </h2>
               <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full ${
-                isAssessment 
-                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
-                  : 'bg-blue-500/10 text-[#0071e3] border border-blue-500/20'
+                quizDef?.gameMode === 'live_kahoot'
+                  ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20 font-bold'
+                  : isAssessment 
+                    ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
+                    : 'bg-blue-500/10 text-[#0071e3] border border-blue-500/20'
               }`}>
-                {isAssessment ? `Assessment (${quizDef?.perQuestionSeconds || 30}s/Q)` : `Standard (${quizDef?.timeLimitMinutes || 30}m)`}
+                {quizDef?.gameMode === 'live_kahoot'
+                  ? `Live Kahoot (${quizDef?.perQuestionSeconds || 20}s/Q)`
+                  : isAssessment 
+                    ? `Assessment (${quizDef?.perQuestionSeconds || 30}s/Q)` 
+                    : `Standard (${quizDef?.timeLimitMinutes || 30}m)`}
               </span>
             </div>
             <p className="text-[11px] text-[#86868b] tracking-tight">
@@ -488,16 +494,29 @@ export default function HostProjectorView({
 
                 {/* QR Download & Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                  <button
-                    onClick={() => {
-                      playStartChime();
-                      setActiveTab('live_kahoot');
-                    }}
-                    className="apple-btn-primary w-full sm:w-auto px-5 py-2.5 text-xs font-bold flex items-center justify-center space-x-2 cursor-pointer rounded-xl bg-gradient-to-r from-[#ff3b30] via-[#ff9500] to-[#0071e3] hover:opacity-95 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all text-white"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-white" />
-                    <span>Start Live Kahoot Game</span>
-                  </button>
+                  {quizDef?.gameMode === 'live_kahoot' ? (
+                    <button
+                      onClick={() => {
+                        playStartChime();
+                        setActiveTab('live_kahoot');
+                      }}
+                      className="apple-btn-primary w-full sm:w-auto px-5 py-2.5 text-xs font-bold flex items-center justify-center space-x-2 cursor-pointer rounded-xl bg-gradient-to-r from-[#ff3b30] via-[#ff9500] to-[#0071e3] hover:opacity-95 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all text-white"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-white" />
+                      <span>Start Live Kahoot Game</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        playStartChime();
+                        setActiveTab('monitor');
+                      }}
+                      className="apple-btn-primary w-full sm:w-auto px-5 py-2.5 text-xs font-semibold flex items-center justify-center space-x-1.5 cursor-pointer rounded-xl shadow-sm"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>Live Monitor</span>
+                    </button>
+                  )}
 
                   <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <button
@@ -509,16 +528,19 @@ export default function HostProjectorView({
                       <span>Save QR</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        playStartChime();
-                        setActiveTab('monitor');
-                      }}
-                      className="apple-btn-secondary flex-1 sm:flex-none px-3.5 py-2 text-xs font-semibold flex items-center justify-center space-x-1.5 cursor-pointer rounded-xl"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5" />
-                      <span>Live Monitor</span>
-                    </button>
+                    {quizDef?.gameMode !== 'live_kahoot' && (
+                      <button
+                        onClick={() => {
+                          playStartChime();
+                          setActiveTab('live_kahoot');
+                        }}
+                        className="apple-btn-secondary flex-1 sm:flex-none px-3.5 py-2 text-xs font-medium flex items-center justify-center space-x-1.5 cursor-pointer rounded-xl text-[#ff9500] hover:text-[#ff3b30] border-[#ff9500]/30 hover:border-[#ff3b30]/50"
+                        title="Optional: Launch a synchronous Live Kahoot game round"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Try Live Kahoot</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

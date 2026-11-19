@@ -373,12 +373,14 @@ export default function ConductedSessionView({
             </span>
 
             <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-              isAssessment 
-                ? 'bg-amber-50 border border-amber-200 text-amber-700' 
-                : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
+              sessionDef?.gameMode === 'live_kahoot'
+                ? 'bg-purple-50 border border-purple-200 text-purple-700 font-bold'
+                : isAssessment 
+                  ? 'bg-amber-50 border border-amber-200 text-amber-700' 
+                  : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
             }`}>
-              {isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
-              <span>{isAssessment ? `Assessment (${sessionDef?.perQuestionSeconds || 30}s/Q)` : `Standard (${sessionDef?.timeLimitMinutes || 30}m)`}</span>
+              {sessionDef?.gameMode === 'live_kahoot' ? <Sparkles className="w-3 h-3 text-[#af52de]" /> : isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
+              <span>{sessionDef?.gameMode === 'live_kahoot' ? `Live Kahoot (${sessionDef?.perQuestionSeconds || 20}s/Q)` : isAssessment ? `Assessment (${sessionDef?.perQuestionSeconds || 30}s/Q)` : `Classical (${sessionDef?.timeLimitMinutes || 30}m)`}</span>
             </span>
 
             <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${

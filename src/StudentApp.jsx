@@ -76,9 +76,10 @@ export default function StudentApp() {
         setSessionData(sData);
         setQuizId(targetId);
 
-        // Check if teacher has initiated a Live Kahoot game round
-        const liveState = await fetchLiveRoomState(targetId);
-        if (liveState && liveState.status === 'live') {
+        // Check answering mode:
+        // If mode is 'live_kahoot', join the live synchronous game
+        // Otherwise ('classic' or 'assessment'), proceed to standard self-paced QuizRunner
+        if (cloudQuiz.gameMode === 'live_kahoot') {
           setQuizState('live_kahoot');
         } else {
           setQuizState('taking');
@@ -93,9 +94,9 @@ export default function StudentApp() {
     }
   };
 
-  // Real-time synchronization: If teacher launches Live Kahoot on the projector, transition student automatically
+  // Real-time synchronization: ONLY for Live Kahoot sessions, sync rounds
   useEffect(() => {
-    if (!sessionData?.quizId) return;
+    if (!sessionData?.quizId || sessionData?.gameMode !== 'live_kahoot') return;
     const unsubscribe = subscribeToLiveGame(sessionData.quizId, {
       onGameState: (payload) => {
         if (payload?.status === 'live') {
@@ -104,7 +105,7 @@ export default function StudentApp() {
       }
     });
     return () => unsubscribe();
-  }, [sessionData?.quizId]);
+  }, [sessionData?.quizId, sessionData?.gameMode]);
 
   const handleCompleteQuiz = (submissionResults) => {
     setResults(submissionResults);
