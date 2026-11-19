@@ -56,5 +56,14 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Oxvane Quiz Platform",
+        "supportEmail": "mohangowdakm03@gmail.com"
+      }
+    }
   }
 }
