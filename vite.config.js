@@ -11,6 +11,11 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         teacher: resolve(__dirname, 'teacher.html'),
         create: resolve(__dirname, 'create.html')
+      },
+      output: {
+        manualChunks: {
+          pdfjs: ['pdfjs-dist']
+        }
       }
     }
   },

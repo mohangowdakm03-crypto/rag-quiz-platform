@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { publishQuizSession, saveQuizDefinition } from '../supabase';
 import { RAG_QUIZ_DATA } from '../data/ragQuestions';
+import GeminiAiChatDrawer from './GeminiAiChatDrawer';
 
 // Official Apple iOS / macOS Tactile Switch Toggle (Large, Touch-Friendly 56px x 32px)
 function AppleToggle({ checked, onChange, label = '', disabled = false }) {
@@ -142,6 +143,31 @@ export default function QuizCreator({
   const [errorMsg, setErrorMsg] = useState('');
   const [launchModal, setLaunchModal] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showAiDrawer, setShowAiDrawer] = useState(false);
+
+  // Apply AI Generated Questions (from Gemini AI Studio)
+  const handleApplyAiQuestions = (newQuestions, newTitle, newDescription, mode = 'replace') => {
+    setQuizConfig(prev => {
+      if (mode === 'append') {
+        const startId = prev.questions.length;
+        const adjusted = newQuestions.map((q, idx) => ({
+          ...q,
+          id: startId + idx + 1
+        }));
+        return {
+          ...prev,
+          questions: [...prev.questions, ...adjusted]
+        };
+      }
+      return {
+        ...prev,
+        title: newTitle || prev.title,
+        description: newDescription || prev.description,
+        questions: newQuestions
+      };
+    });
+    setEditingIndex(0);
+  };
 
   // Load 20 RAG Template
   const handleLoadRAGTemplate = () => {
@@ -374,6 +400,19 @@ export default function QuizCreator({
         </button>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Gemini AI Generator Option via Small Logo */}
+          <button
+            type="button"
+            onClick={() => setShowAiDrawer(true)}
+            className="apple-btn-secondary flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-[#0071e3] border-blue-200/90 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-purple-50/60 hover:border-[#0071e3] transition shadow-xs cursor-pointer group"
+            title="AI Quiz Generator via Google Gemini (Free Tier)"
+          >
+            <span className="w-4 h-4 rounded-full bg-gradient-to-tr from-[#0071e3] via-[#5e5ce6] to-[#af52de] flex items-center justify-center text-white shadow-xs group-hover:scale-110 transition-transform">
+              <Sparkles className="w-2.5 h-2.5" />
+            </span>
+            <span>Gemini AI Studio</span>
+          </button>
+
           {creatorMode !== 'edit' && (
             <>
               <button
@@ -833,14 +872,25 @@ export default function QuizCreator({
             <span className="text-[10px] font-semibold uppercase text-[#86868b] tracking-[0.16em]">
               Questions ({quizConfig.questions.length})
             </span>
-            <button
-              type="button"
-              onClick={handleAddQuestion}
-              className="apple-btn-secondary flex items-center space-x-1 px-3 py-1 text-xs font-medium cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Question</span>
-            </button>
+            <div className="flex items-center space-x-1.5">
+              <button
+                type="button"
+                onClick={() => setShowAiDrawer(true)}
+                className="apple-btn-secondary flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold text-[#0071e3] border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 cursor-pointer shadow-xs"
+                title="Generate with Gemini AI"
+              >
+                <Sparkles className="w-3 h-3 text-[#0071e3]" />
+                <span>AI</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleAddQuestion}
+                className="apple-btn-secondary flex items-center space-x-1 px-3 py-1 text-xs font-medium cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Question</span>
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -1155,6 +1205,13 @@ export default function QuizCreator({
           </div>
         </div>
       )}
+
+      {/* Gemini AI Quiz Generator Side Chat Drawer */}
+      <GeminiAiChatDrawer
+        isOpen={showAiDrawer}
+        onClose={() => setShowAiDrawer(false)}
+        onApplyQuestions={handleApplyAiQuestions}
+      />
     </div>
   );
 }
