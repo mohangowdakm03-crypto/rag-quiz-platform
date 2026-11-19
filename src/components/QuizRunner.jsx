@@ -9,6 +9,7 @@ import {
   CheckCircle2, 
   Check, 
   ShieldAlert, 
+  ShieldCheck,
   X,
   Square,
   Triangle,
@@ -16,9 +17,15 @@ import {
   Diamond,
   Zap,
   Timer,
-  ArrowRight
+  ArrowRight,
+  EyeOff,
+  AlertOctagon
 } from 'lucide-react';
-import { submitStudentQuizUniversal } from '../supabase';
+import { 
+  submitStudentQuizUniversal, 
+  getOrCreateDeviceUid, 
+  markDeviceAttemptCompleted 
+} from '../supabase';
 
 // Apple-refined Shape & Color Palette for Options (White Theme)
 const KAHOOT_STYLES = [
@@ -63,6 +70,12 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
   const isAssessmentMode = (quizData.gameMode === 'assessment' || sessionData.gameMode === 'assessment');
   const perQuestionSeconds = Number(quizData.perQuestionSeconds || sessionData.perQuestionSeconds || 30);
 
+  // Exam Integrity & Anti-Cheat Settings
+  const antiCheatEnabled = quizData.antiCheatEnabled !== false;
+  const strictAutoSubmit = quizData.strictAutoSubmit !== false;
+  const maxTabSwitches = Number(quizData.maxTabSwitches || 3);
+  const deviceUid = sessionData.deviceUid || getOrCreateDeviceUid();
+
   const draftKey = `kahoot_quiz_draft_${quizId}_${studentName.replace(/\s+/g, '_')}`;
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -89,9 +102,13 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [transitioningToNext, setTransitioningToNext] = useState(false);
 
-  // Anti-cheat tab switch monitoring
+  // Anti-cheat telemetry & proctoring alerts
   const [tabSwitches, setTabSwitches] = useState(0);
-  const [showTabWarning, setShowTabWarning] = useState(false);
+  const [screenshotAttempts, setScreenshotAttempts] = useState(0);
+  const [violationsLog, setViolationsLog] = useState([]);
+  const [proctorModal, setProctorModal] = useState(null); // { title, message, isDanger, count, max }
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const lastBlurTimestampRef = useRef(0);
 
   // Overall timer in seconds (used primarily in Classical Mode)
   const [overallTimeLeft, setOverallTimeLeft] = useState(() => {
@@ -115,39 +132,19 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
 
   const nextTransitionTimeoutRef = useRef(null);
 
-  // Tab switch listener
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setTabSwitches((prev) => {
-          const next = prev + 1;
-          setShowTabWarning(true);
-          return next;
-        });
-      }
+  // Helper to log academic violations
+  const recordViolation = useCallback((type, details = '') => {
+    const entry = {
+      type,
+      details,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    setViolationsLog(prev => [...prev, entry]);
   }, []);
 
-  // Persist draft
-  useEffect(() => {
-    try {
-      localStorage.setItem(draftKey, JSON.stringify({
-        answers: selectedAnswers,
-        flagged: flaggedQuestions,
-        overallTimeLeft,
-        currentQuestionIndex
-      }));
-    } catch {
-      // ignore
-    }
-  }, [selectedAnswers, flaggedQuestions, overallTimeLeft, currentQuestionIndex, draftKey]);
-
-  // Handle final submission (Universal server-graded)
-  const handleFinalSubmit = useCallback(async () => {
-    if (isSubmitting) return;
+  // Handle final submission (Universal server-graded with Anti-Cheat Telemetry)
+  const handleFinalSubmit = useCallback(async (isForced = false, reason = '') => {
+    if (isSubmitting || hasSubmitted) return;
     setIsSubmitting(true);
     setSubmitError('');
 
@@ -165,8 +162,18 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
         answers: selectedAnswers,
         answeredCount,
         flaggedCount,
-        totalQuestions: questions.length
+        totalQuestions: questions.length,
+        deviceUid,
+        tabSwitches,
+        screenshotAttempts,
+        violationsLog: isForced 
+          ? [...violationsLog, { type: 'forced_auto_submit', details: reason || 'Auto-submitted due to violations', timestamp: new Date().toLocaleTimeString() }]
+          : violationsLog
       });
+
+      // Mark single attempt completed on this device (Google Forms style)
+      markDeviceAttemptCompleted(quizId, studentId);
+      setHasSubmitted(true);
 
       try {
         localStorage.removeItem(draftKey);
@@ -181,7 +188,165 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [timeLimitMinutes, overallTimeLeft, quizId, studentName, studentId, selectedAnswers, draftKey, onCompleteQuiz, isSubmitting]);
+  }, [isSubmitting, hasSubmitted, timeLimitMinutes, overallTimeLeft, selectedAnswers, flaggedQuestions, quizId, studentName, studentId, questions.length, deviceUid, tabSwitches, screenshotAttempts, violationsLog, draftKey, onCompleteQuiz]);
+
+  // Tab switch & window defocus listener
+  const handleTabViolation = useCallback(() => {
+    if (!antiCheatEnabled || hasSubmitted || isSubmitting) return;
+
+    const now = Date.now();
+    // Debounce to prevent double trigger when both visibilitychange and blur fire
+    if (now - lastBlurTimestampRef.current < 1200) return;
+    lastBlurTimestampRef.current = now;
+
+    setTabSwitches(prevSwitches => {
+      const nextSwitches = prevSwitches + 1;
+      recordViolation('tab_switch', `Candidate switched away from exam tab (Count: ${nextSwitches})`);
+
+      if (strictAutoSubmit && nextSwitches >= maxTabSwitches) {
+        setProctorModal({
+          isDanger: true,
+          title: 'Maximum Tab Switches Exceeded',
+          message: `You have switched away from the examination window ${nextSwitches} times. Under strict academic integrity rules, your assessment is now being automatically submitted.`,
+          count: nextSwitches,
+          max: maxTabSwitches
+        });
+
+        // Trigger automatic submission after 1.5s
+        setTimeout(() => {
+          handleFinalSubmit(true, `Exceeded max allowed tab switches (${nextSwitches}/${maxTabSwitches})`);
+        }, 1500);
+      } else {
+        setProctorModal({
+          isDanger: nextSwitches >= maxTabSwitches - 1,
+          title: 'Academic Integrity Notice',
+          message: `Tab switch or window defocus detected. You must remain on this exam tab throughout the assessment. (Violation ${nextSwitches} of ${maxTabSwitches})${strictAutoSubmit ? ' — Reaching the maximum will automatically force-submit your exam.' : ''}`,
+          count: nextSwitches,
+          max: maxTabSwitches
+        });
+      }
+
+      return nextSwitches;
+    });
+  }, [antiCheatEnabled, hasSubmitted, isSubmitting, recordViolation, strictAutoSubmit, maxTabSwitches, handleFinalSubmit]);
+
+  useEffect(() => {
+    if (!antiCheatEnabled) return;
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        handleTabViolation();
+      }
+    };
+
+    const onWindowBlur = () => {
+      handleTabViolation();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('blur', onWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('blur', onWindowBlur);
+    };
+  }, [antiCheatEnabled, handleTabViolation]);
+
+  // Screenshot shortcut & print prevention
+  useEffect(() => {
+    if (!antiCheatEnabled) return;
+
+    const handleKeyDown = (e) => {
+      const key = e.key;
+      const isPrintScreen = key === 'PrintScreen';
+      const isMacScreenshot = (e.metaKey || e.ctrlKey) && e.shiftKey && ['3', '4', '5'].includes(key);
+      const isWinSnipping = (e.metaKey || e.ctrlKey || key === 'Meta') && e.shiftKey && (key.toLowerCase() === 's');
+      const isPrint = (e.metaKey || e.ctrlKey) && key.toLowerCase() === 'p';
+
+      if (isPrintScreen || isMacScreenshot || isWinSnipping || isPrint) {
+        try {
+          e.preventDefault();
+          e.stopPropagation();
+        } catch {
+          // ignore
+        }
+
+        // Wipe clipboard immediately to stop screenshot paste
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('');
+          }
+        } catch {
+          // ignore
+        }
+
+        setScreenshotAttempts(prev => {
+          const next = prev + 1;
+          recordViolation('screenshot_attempt', `Attempted screen capture shortcut (${key})`);
+          setProctorModal({
+            isDanger: true,
+            title: 'Screenshot Prohibited',
+            message: 'Screen capture shortcuts, snipping tools, and page printing are strictly prohibited and recorded during this examination. All question contents remain confidential.',
+            count: null,
+            max: null
+          });
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [antiCheatEnabled, recordViolation]);
+
+  // Tab closing / leaving protection (beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!hasSubmitted && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = 'You have an active examination in progress. Leaving or refreshing the page will interrupt your submission.';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasSubmitted, isSubmitting]);
+
+  // Block copy/cut/paste and right-click during exam
+  useEffect(() => {
+    if (!antiCheatEnabled) return;
+
+    const preventDefaultAction = (e) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener('copy', preventDefaultAction);
+    document.addEventListener('cut', preventDefaultAction);
+    document.addEventListener('paste', preventDefaultAction);
+    document.addEventListener('contextmenu', preventDefaultAction);
+
+    return () => {
+      document.removeEventListener('copy', preventDefaultAction);
+      document.removeEventListener('cut', preventDefaultAction);
+      document.removeEventListener('paste', preventDefaultAction);
+      document.removeEventListener('contextmenu', preventDefaultAction);
+    };
+  }, [antiCheatEnabled]);
+
+  // Persist draft
+  useEffect(() => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        answers: selectedAnswers,
+        flagged: flaggedQuestions,
+        overallTimeLeft,
+        currentQuestionIndex
+      }));
+    } catch {
+      // ignore
+    }
+  }, [selectedAnswers, flaggedQuestions, overallTimeLeft, currentQuestionIndex, draftKey]);
 
   // Advance to Next Question (used in Assessment Mode auto-transition)
   const advanceToNext = useCallback(() => {
@@ -325,25 +490,6 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
       onContextMenu={(e) => e.preventDefault()}
       onCopy={(e) => e.preventDefault()}
     >
-      {/* Tab Switch Alert */}
-      {showTabWarning && (
-        <div className="mb-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-amber-300 text-xs">
-          <div className="flex items-center space-x-3">
-            <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
-            <div>
-              <strong className="text-white block">Academic Integrity Notice</strong>
-              <span>Tab switch detected ({tabSwitches} time{tabSwitches > 1 ? 's' : ''}). Please stay on the exam page.</span>
-            </div>
-          </div>
-          <button 
-            onClick={() => setShowTabWarning(false)}
-            className="p-1 rounded-lg hover:bg-amber-500/20 text-amber-400"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Apple-styled Top Bar */}
       <div className="apple-glass rounded-2xl p-4 sm:p-5 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -358,6 +504,28 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
             {!isAssessmentMode && (
               <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f] text-[10px] font-semibold">
                 <span>Standard Exam</span>
+              </span>
+            )}
+            {/* Academic Integrity / Proctor Status Badge */}
+            {antiCheatEnabled && (
+              <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                tabSwitches === 0 && screenshotAttempts === 0
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                  : tabSwitches >= maxTabSwitches
+                  ? 'bg-rose-50 border border-rose-300 text-rose-700 animate-pulse'
+                  : 'bg-amber-50 border border-amber-300 text-amber-800'
+              }`}>
+                {tabSwitches === 0 && screenshotAttempts === 0 ? (
+                  <>
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    <span>Protected</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="w-3 h-3 text-amber-600" />
+                    <span>{tabSwitches} Switch{tabSwitches > 1 ? 'es' : ''} ({tabSwitches}/{maxTabSwitches})</span>
+                  </>
+                )}
               </span>
             )}
           </div>
@@ -829,6 +997,61 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Proctoring Warning & Violation Alert Modal */}
+      {proctorModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="apple-glass bg-white/95 rounded-[28px] max-w-md w-full p-7 sm:p-8 shadow-2xl relative border border-[#d2d2d7]">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto ${
+              proctorModal.isDanger 
+                ? 'bg-rose-50 border border-rose-200 text-[#ff3b30]' 
+                : 'bg-amber-50 border border-amber-200 text-[#ff9500]'
+            }`}>
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-xl font-semibold text-[#1d1d1f] text-center mb-2 tracking-tight">
+              {proctorModal.title}
+            </h3>
+            
+            <p className="text-xs text-[#6e6e73] text-center mb-6 leading-relaxed">
+              {proctorModal.message}
+            </p>
+
+            {proctorModal.max && (
+              <div className="bg-[#f5f5f7] rounded-2xl p-4 border border-[#e5e5ea] mb-6 flex items-center justify-between text-xs">
+                <span className="text-[#86868b] font-medium">Logged Tab Switches</span>
+                <span className={`font-semibold font-mono px-2.5 py-0.5 rounded-full ${
+                  proctorModal.isDanger 
+                    ? 'bg-rose-100 text-[#ff3b30]' 
+                    : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {proctorModal.count} / {proctorModal.max} allowed
+                </span>
+              </div>
+            )}
+
+            {!isSubmitting && (
+              <button
+                type="button"
+                onClick={() => setProctorModal(null)}
+                className={`w-full py-3 px-4 rounded-xl text-xs font-semibold text-white shadow-sm transition cursor-pointer ${
+                  proctorModal.isDanger 
+                    ? 'bg-[#ff3b30] hover:bg-[#d70015]' 
+                    : 'bg-[#0071e3] hover:bg-[#0077ed]'
+                }`}
+              >
+                I Understand & Return to Exam
+              </button>
+            )}
+            {isSubmitting && (
+              <div className="text-center text-xs text-[#ff3b30] font-semibold animate-pulse py-2">
+                Submitting your examination...
+              </div>
+            )}
           </div>
         </div>
       )}

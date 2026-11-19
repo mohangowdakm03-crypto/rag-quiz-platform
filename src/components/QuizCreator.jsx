@@ -15,6 +15,9 @@ import {
   Copy,
   ExternalLink,
   ShieldCheck,
+  ShieldAlert,
+  Smartphone,
+  Lock,
   Award
 } from 'lucide-react';
 import { publishQuizSession, saveQuizDefinition } from '../supabase';
@@ -42,6 +45,10 @@ export default function QuizCreator({
         showItemAnalysis: initialQuizConfig.showItemAnalysis === true,
         allowRetake: initialQuizConfig.allowRetake === true,
         showRank: initialQuizConfig.showRank === true,
+        oneAttemptPerDevice: initialQuizConfig.oneAttemptPerDevice !== false,
+        antiCheatEnabled: initialQuizConfig.antiCheatEnabled !== false,
+        strictAutoSubmit: initialQuizConfig.strictAutoSubmit !== false,
+        maxTabSwitches: initialQuizConfig.maxTabSwitches || 3,
         questions: (initialQuizConfig.questions && initialQuizConfig.questions.length > 0)
           ? initialQuizConfig.questions.map((q, idx) => ({
               ...q,
@@ -79,6 +86,10 @@ export default function QuizCreator({
       showItemAnalysis: false,
       allowRetake: false,
       showRank: false,
+      oneAttemptPerDevice: true,
+      antiCheatEnabled: true,
+      strictAutoSubmit: true,
+      maxTabSwitches: 3,
       questions: [
         {
           id: 1,
@@ -131,6 +142,10 @@ export default function QuizCreator({
       showItemAnalysis: false,
       allowRetake: false,
       showRank: false,
+      oneAttemptPerDevice: true,
+      antiCheatEnabled: true,
+      strictAutoSubmit: true,
+      maxTabSwitches: 3,
       questions: [
         {
           id: 1,
@@ -253,7 +268,11 @@ export default function QuizCreator({
           showScore: quizConfig.showScore,
           showItemAnalysis: quizConfig.showItemAnalysis,
           allowRetake: quizConfig.allowRetake,
-          showRank: quizConfig.showRank
+          showRank: quizConfig.showRank,
+          oneAttemptPerDevice: quizConfig.oneAttemptPerDevice !== false,
+          antiCheatEnabled: quizConfig.antiCheatEnabled !== false,
+          strictAutoSubmit: quizConfig.strictAutoSubmit !== false,
+          maxTabSwitches: quizConfig.maxTabSwitches || 3
         });
 
         const pin = res.sessionPin;
@@ -630,6 +649,116 @@ export default function QuizCreator({
                   quizConfig.showRank ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Academic Integrity & Anti-Cheat Suite (Google Forms Style) */}
+        <div className="pt-6 border-t border-[#e5e5ea]">
+          <div className="mb-4">
+            <div className="flex items-center space-x-2">
+              <ShieldAlert className="w-4 h-4 text-[#0071e3]" />
+              <h3 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
+                Academic Integrity & Anti-Cheat Suite (Google Forms Style)
+              </h3>
+            </div>
+            <p className="text-xs text-[#86868b] mt-0.5 tracking-tight">
+              Enforce single attempt rules per device/candidate and prevent cheating through active browser event monitoring.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Toggle A: One Attempt per Device */}
+            <div className="apple-glass-card p-4 rounded-2xl flex flex-col justify-between gap-3 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Smartphone className="w-4 h-4 text-[#0071e3]" />
+                    <span className="text-xs font-semibold text-[#1d1d1f]">Limit to 1 Response / Device</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={quizConfig.oneAttemptPerDevice}
+                    onClick={() => setQuizConfig(prev => ({ ...prev, oneAttemptPerDevice: !prev.oneAttemptPerDevice }))}
+                    className={`w-11 h-6.5 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                      quizConfig.oneAttemptPerDevice ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                    }`}
+                    title="Toggle single response per device"
+                  >
+                    <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      quizConfig.oneAttemptPerDevice ? 'translate-x-4.5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.oneAttemptPerDevice 
+                    ? 'Google Forms style: Blocks duplicate submissions from the same device and candidate USN.' 
+                    : 'Unrestricted: Candidates can submit multiple times from this device.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Toggle B: Anti-Cheat Suite */}
+            <div className="apple-glass-card p-4 rounded-2xl flex flex-col justify-between gap-3 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ShieldCheck className="w-4 h-4 text-[#0071e3]" />
+                    <span className="text-xs font-semibold text-[#1d1d1f]">Proctoring & Anti-Cheat</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={quizConfig.antiCheatEnabled}
+                    onClick={() => setQuizConfig(prev => ({ ...prev, antiCheatEnabled: !prev.antiCheatEnabled }))}
+                    className={`w-11 h-6.5 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                      quizConfig.antiCheatEnabled ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                    }`}
+                    title="Toggle proctoring & anti-cheat suite"
+                  >
+                    <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      quizConfig.antiCheatEnabled ? 'translate-x-4.5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.antiCheatEnabled 
+                    ? 'Monitors tab switches, blocks screenshot shortcuts, and prevents copy-paste & right-click.' 
+                    : 'Disabled: No browser event monitoring or screenshot restrictions.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Toggle C: Strict Auto-Submit */}
+            <div className="apple-glass-card p-4 rounded-2xl flex flex-col justify-between gap-3 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Lock className="w-4 h-4 text-[#0071e3]" />
+                    <span className="text-xs font-semibold text-[#1d1d1f]">Auto-Submit on 3 Violations</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={quizConfig.strictAutoSubmit}
+                    onClick={() => setQuizConfig(prev => ({ ...prev, strictAutoSubmit: !prev.strictAutoSubmit }))}
+                    className={`w-11 h-6.5 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                      quizConfig.strictAutoSubmit ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                    }`}
+                    title="Toggle auto-submit on violations"
+                  >
+                    <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      quizConfig.strictAutoSubmit ? 'translate-x-4.5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.strictAutoSubmit 
+                    ? 'Strict fairness: Force-submits the candidate’s assessment if they leave the tab 3 times.' 
+                    : 'Log only: Violations are logged to instructor console without forced submission.'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

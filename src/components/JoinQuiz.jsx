@@ -13,7 +13,12 @@ import {
   IdCard,
   User
 } from 'lucide-react';
-import { joinQuizRoom, getStudentQuizDefinition, checkStudentAlreadySubmitted } from '../supabase';
+import { 
+  joinQuizRoom, 
+  getStudentQuizDefinition, 
+  checkStudentOrDeviceAlreadySubmitted,
+  getOrCreateDeviceUid
+} from '../supabase';
 
 export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher }) {
   const [studentName, setStudentName] = useState('');
@@ -69,11 +74,12 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
         return;
       }
 
-      // Check retake permission if this candidate already completed the exam
-      if (cloudQuiz.allowRetake === false) {
-        const alreadySubmitted = await checkStudentAlreadySubmitted(trimmedPin, trimmedUsn);
-        if (alreadySubmitted) {
-          setError(`Candidate USN "${trimmedUsn}" has already submitted this examination. Retakes are disabled for this session.`);
+      // Check Single Attempt / One Attempt per Device (Google Forms style)
+      const deviceUid = getOrCreateDeviceUid();
+      if (cloudQuiz.oneAttemptPerDevice !== false || cloudQuiz.allowRetake === false) {
+        const checkRes = await checkStudentOrDeviceAlreadySubmitted(trimmedPin, trimmedUsn, deviceUid);
+        if (checkRes.alreadySubmitted) {
+          setError(checkRes.message || `Candidate USN "${trimmedUsn}" or this device has already completed this examination.`);
           setIsLoading(false);
           return;
         }
@@ -85,7 +91,8 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
       onStartQuiz({
         studentName: trimmedName,
         studentId: trimmedUsn,
-        quizId: trimmedPin
+        quizId: trimmedPin,
+        deviceUid
       });
     } catch (err) {
       console.warn('Join note:', err);

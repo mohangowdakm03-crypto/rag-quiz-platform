@@ -124,6 +124,10 @@ export async function getQuizDefinition(quizId) {
       showItemAnalysis: answers.showItemAnalysis === true,
       allowRetake: answers.allowRetake === true,
       showRank: answers.showRank === true,
+      oneAttemptPerDevice: answers.oneAttemptPerDevice !== false,
+      antiCheatEnabled: answers.antiCheatEnabled !== false,
+      strictAutoSubmit: answers.strictAutoSubmit !== false,
+      maxTabSwitches: Number(answers.maxTabSwitches || 3),
       questions: row.breakdown || []
     };
   } catch (err) {
@@ -142,6 +146,10 @@ export async function getQuizDefinition(quizId) {
         showItemAnalysis: false,
         allowRetake: false,
         showRank: false,
+        oneAttemptPerDevice: true,
+        antiCheatEnabled: true,
+        strictAutoSubmit: true,
+        maxTabSwitches: 3,
         questions: RAG_QUIZ_DATA.questions.map(q => ({ ...q, type: 'single', points: 1000 }))
       };
     }
@@ -167,6 +175,10 @@ export async function getStudentQuizDefinition(quizId) {
     showItemAnalysis: fullQuiz.showItemAnalysis === true,
     allowRetake: fullQuiz.allowRetake === true,
     showRank: fullQuiz.showRank === true,
+    oneAttemptPerDevice: fullQuiz.oneAttemptPerDevice !== false,
+    antiCheatEnabled: fullQuiz.antiCheatEnabled !== false,
+    strictAutoSubmit: fullQuiz.strictAutoSubmit !== false,
+    maxTabSwitches: fullQuiz.maxTabSwitches || 3,
     totalQuestions: fullQuiz.questions.length,
     questions: fullQuiz.questions.map(q => ({
       id: q.id,
@@ -226,6 +238,10 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
           showItemAnalysis: quizData.showItemAnalysis === true,
           allowRetake: quizData.allowRetake === true,
           showRank: quizData.showRank === true,
+          oneAttemptPerDevice: quizData.oneAttemptPerDevice !== false,
+          antiCheatEnabled: quizData.antiCheatEnabled !== false,
+          strictAutoSubmit: quizData.strictAutoSubmit !== false,
+          maxTabSwitches: Number(quizData.maxTabSwitches || 3),
           passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1,
           updatedAt: new Date().toISOString()
         },
@@ -265,6 +281,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const showItemAnalysis = options.showItemAnalysis ?? quizData.showItemAnalysis ?? false;
   const allowRetake = options.allowRetake ?? quizData.allowRetake ?? false;
   const showRank = options.showRank ?? quizData.showRank ?? false;
+  const oneAttemptPerDevice = options.oneAttemptPerDevice ?? quizData.oneAttemptPerDevice ?? true;
+  const antiCheatEnabled = options.antiCheatEnabled ?? quizData.antiCheatEnabled ?? true;
+  const strictAutoSubmit = options.strictAutoSubmit ?? quizData.strictAutoSubmit ?? true;
+  const maxTabSwitches = Number(options.maxTabSwitches || quizData.maxTabSwitches || 3);
 
   // Insert fresh session definition
   const { data, error } = await adminClient
@@ -290,6 +310,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
           showItemAnalysis,
           allowRetake,
           showRank,
+          oneAttemptPerDevice,
+          antiCheatEnabled,
+          strictAutoSubmit,
+          maxTabSwitches,
           passcodeHash: enteredHash,
           publishedAt: new Date().toISOString()
         },
@@ -311,6 +335,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
     showItemAnalysis,
     allowRetake,
     showRank,
+    oneAttemptPerDevice,
+    antiCheatEnabled,
+    strictAutoSubmit,
+    maxTabSwitches,
     id: data?.[0]?.id
   };
 }
@@ -368,6 +396,10 @@ export async function fetchTeacherSessions() {
           showItemAnalysis: ans.showItemAnalysis === true,
           allowRetake: ans.allowRetake === true,
           showRank: ans.showRank === true,
+          oneAttemptPerDevice: ans.oneAttemptPerDevice !== false,
+          antiCheatEnabled: ans.antiCheatEnabled !== false,
+          strictAutoSubmit: ans.strictAutoSubmit !== false,
+          maxTabSwitches: Number(ans.maxTabSwitches || 3),
           createdAt: row.created_at,
           submissionCount: stat.count,
           classAverage: avg,
@@ -430,8 +462,44 @@ export async function rehostQuizSession(sourcePin, rawPasscode) {
     showItemAnalysis: def.showItemAnalysis,
     allowRetake: def.allowRetake,
     showRank: def.showRank,
+    oneAttemptPerDevice: def.oneAttemptPerDevice,
+    antiCheatEnabled: def.antiCheatEnabled,
+    strictAutoSubmit: def.strictAutoSubmit,
+    maxTabSwitches: def.maxTabSwitches,
     questions: def.questions
   }, rawPasscode);
+}
+
+// Device UID & Single Attempt Local Helpers
+export function getOrCreateDeviceUid() {
+  const KEY = 'oxvane_device_uid';
+  try {
+    let uid = localStorage.getItem(KEY);
+    if (!uid) {
+      uid = 'dev_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      localStorage.setItem(KEY, uid);
+    }
+    return uid;
+  } catch {
+    return 'dev_' + Math.random().toString(36).substring(2, 10);
+  }
+}
+
+export function isDeviceAttemptCompleted(quizId) {
+  try {
+    return localStorage.getItem(`oxvane_submitted_${quizId}`) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function markDeviceAttemptCompleted(quizId, studentId) {
+  try {
+    localStorage.setItem(`oxvane_submitted_${quizId}`, 'true');
+    localStorage.setItem(`oxvane_attempt_${quizId}_${(studentId || '').trim().toUpperCase()}`, new Date().toISOString());
+  } catch {
+    // ignore
+  }
 }
 
 // 5. Submit student quiz securely (Universal grading across any question type and points)
@@ -444,7 +512,10 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
     answers,
     flaggedCount = 0,
     answeredCount,
-    totalQuestions: clientTotalQuestions 
+    deviceUid = '',
+    tabSwitches = 0,
+    screenshotAttempts = 0,
+    violationsLog = []
   } = submissionData;
 
   // Retrieve official quiz definition from database
@@ -501,6 +572,21 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
   const percentage = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
   const passed = percentage >= (fullQuiz?.passingScore || 70);
 
+  // Compute Academic Integrity Status
+  const integrityStatus = (Number(tabSwitches || 0) >= (fullQuiz?.maxTabSwitches || 3) || Number(screenshotAttempts || 0) > 0)
+    ? 'Flagged'
+    : (Number(tabSwitches || 0) > 0 ? 'Warning' : 'Clean');
+
+  // Package answers payload with proctoring telemetry
+  const proctoredAnswers = {
+    ...answers,
+    _deviceUid: deviceUid,
+    _tabSwitches: Number(tabSwitches || 0),
+    _screenshotAttempts: Number(screenshotAttempts || 0),
+    _violationsLog: violationsLog || [],
+    _integrityStatus: integrityStatus
+  };
+
   // Write verified record into database
   const { data, error } = await adminClient
     .from('quiz_submissions')
@@ -514,7 +600,7 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
         percentage,
         passed,
         time_taken_seconds: timeTakenSeconds || 0,
-        answers,
+        answers: proctoredAnswers,
         breakdown
       }
     ])
@@ -524,9 +610,12 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
     console.error('Submission write error:', error);
   }
 
+  // Mark local device attempt completed
+  markDeviceAttemptCompleted(quizId, studentId);
+
   const answeredTotal = answeredCount !== undefined 
     ? answeredCount 
-    : Object.keys(answers || {}).filter(k => answers[k] !== undefined && answers[k] !== null && answers[k] !== '').length;
+    : Object.keys(answers || {}).filter(k => !k.startsWith('_') && answers[k] !== undefined && answers[k] !== null && answers[k] !== '').length;
 
   const isShowScore = fullQuiz?.showScore === true;
   const isShowItemAnalysis = fullQuiz?.showItemAnalysis === true;
@@ -549,6 +638,10 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
     showItemAnalysis: isShowItemAnalysis,
     allowRetake: isAllowRetake,
     showRank: isShowRank,
+    // Integrity metrics
+    tabSwitches: Number(tabSwitches || 0),
+    screenshotAttempts: Number(screenshotAttempts || 0),
+    integrityStatus,
     // Sensitive performance metrics sent ONLY if permitted by instructor:
     score: isShowScore ? totalEarned : null,
     totalPossibleScore: isShowScore ? totalPossible : null,
@@ -558,23 +651,64 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
   };
 }
 
-// 5B. Check if a student USN has already submitted to this quiz session
-export async function checkStudentAlreadySubmitted(quizId, studentId) {
-  if (!quizId || !studentId) return false;
+// 5B. Check if a student USN or device has already submitted to this quiz session (Google Forms style)
+export async function checkStudentOrDeviceAlreadySubmitted(quizId, studentId, deviceUid) {
+  if (!quizId) return { alreadySubmitted: false };
+
+  // 1. Check local device storage first
+  if (isDeviceAttemptCompleted(quizId)) {
+    return {
+      alreadySubmitted: true,
+      reason: 'device',
+      message: 'This device has already submitted this examination. Only 1 attempt per device is permitted.'
+    };
+  }
+
   const adminClient = getSupabaseAdminClient();
   try {
-    const { data } = await adminClient
+    const { data, error } = await adminClient
       .from('quiz_submissions')
-      .select('id')
+      .select('id, student_id, answers')
       .eq('quiz_id', quizId)
-      .eq('student_id', studentId.trim())
-      .neq('student_name', '__QUIZ_DEFINITION__')
-      .limit(1);
-    return Boolean(data && data.length > 0);
+      .neq('student_name', '__QUIZ_DEFINITION__');
+
+    if (error || !data) return { alreadySubmitted: false };
+
+    const targetUsn = (studentId || '').trim().toUpperCase();
+    const targetDev = (deviceUid || '').trim();
+
+    for (const sub of data) {
+      // Check USN (case-insensitive)
+      if (targetUsn && (sub.student_id || '').trim().toUpperCase() === targetUsn) {
+        return {
+          alreadySubmitted: true,
+          reason: 'usn',
+          message: `Candidate USN (${studentId}) has already submitted this examination. Only 1 attempt is permitted.`
+        };
+      }
+
+      // Check deviceUid in answers
+      const subDev = sub.answers?._deviceUid;
+      if (targetDev && subDev && subDev === targetDev) {
+        return {
+          alreadySubmitted: true,
+          reason: 'device',
+          message: 'This device has already submitted this examination. Only 1 attempt per device is permitted.'
+        };
+      }
+    }
+
+    return { alreadySubmitted: false };
   } catch (err) {
-    console.warn('checkStudentAlreadySubmitted note:', err);
-    return false;
+    console.warn('checkStudentOrDeviceAlreadySubmitted error:', err);
+    return { alreadySubmitted: false };
   }
+}
+
+// Legacy fallback helper for backwards compatibility
+export async function checkStudentAlreadySubmitted(quizId, studentId) {
+  const res = await checkStudentOrDeviceAlreadySubmitted(quizId, studentId);
+  return res.alreadySubmitted;
 }
 
 // 6. Verify Instructor Passcode with SHA-256 Hashing
@@ -618,19 +752,32 @@ export async function fetchTeacherSubmissions(quizId, rawPasscode) {
     return { success: false, data: [], error: error.message };
   }
 
-  const formatted = (data || []).map(row => ({
-    id: row.id,
-    studentName: row.student_name,
-    studentId: row.student_id,
-    score: row.score,
-    totalQuestions: row.total_questions,
-    percentage: row.percentage,
-    passed: row.passed,
-    timeTakenSeconds: row.time_taken_seconds,
-    answers: row.answers,
-    breakdown: row.breakdown,
-    submittedAt: row.created_at ? new Date(row.created_at) : new Date()
-  }));
+  const formatted = (data || []).map(row => {
+    const ans = row.answers || {};
+    const tabSwitches = Number(ans._tabSwitches || 0);
+    const screenshotAttempts = Number(ans._screenshotAttempts || 0);
+    const integrityStatus = ans._integrityStatus || ((tabSwitches >= 3 || screenshotAttempts > 0) ? 'Flagged' : (tabSwitches > 0 ? 'Warning' : 'Clean'));
+
+    return {
+      id: row.id,
+      studentName: row.student_name,
+      studentId: row.student_id,
+      score: row.score,
+      totalQuestions: row.total_questions,
+      percentage: row.percentage,
+      passed: row.passed,
+      timeTakenSeconds: row.time_taken_seconds,
+      answers: row.answers,
+      breakdown: row.breakdown,
+      submittedAt: row.created_at ? new Date(row.created_at) : new Date(),
+      // Proctoring & Academic Integrity:
+      deviceUid: ans._deviceUid || '',
+      tabSwitches,
+      screenshotAttempts,
+      violationsLog: ans._violationsLog || [],
+      integrityStatus
+    };
+  });
 
   return { success: true, data: formatted, error: null };
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle2, XCircle, Clock, Award } from 'lucide-react';
+import { X, CheckCircle2, XCircle, Clock, Award, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 export default function StudentDetailModal({ student, onClose }) {
   if (!student) return null;
@@ -12,6 +12,11 @@ export default function StudentDetailModal({ student, onClose }) {
     percentage,
     passed,
     timeTakenSeconds,
+    tabSwitches = 0,
+    screenshotAttempts = 0,
+    violationsLog = [],
+    integrityStatus = 'Clean',
+    deviceUid = '',
     breakdown = []
   } = student;
 
@@ -59,6 +64,41 @@ export default function StudentDetailModal({ student, onClose }) {
           >
             <X className="w-4 h-4 text-[#86868b]" />
           </button>
+        </div>
+
+        {/* Proctoring & Academic Integrity Telemetry Card */}
+        <div className="px-6 py-3.5 bg-white border-b border-[#e5e5ea] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-semibold uppercase text-[#86868b] tracking-wider">Exam Proctoring:</span>
+            {integrityStatus === 'Flagged' || (tabSwitches >= 3 || screenshotAttempts > 0) ? (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                <ShieldAlert className="w-3 h-3 text-[#ff3b30]" />
+                <span>Flagged Violation</span>
+              </span>
+            ) : tabSwitches > 0 ? (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                <ShieldAlert className="w-3 h-3 text-amber-500" />
+                <span>Warning ({tabSwitches} Switch{tabSwitches > 1 ? 'es' : ''})</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <ShieldCheck className="w-3 h-3 text-[#34c759]" />
+                <span>Clean Session</span>
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-4 text-[11px] text-[#6e6e73]">
+            <span>Tab Switches: <strong className="font-mono text-[#1d1d1f]">{tabSwitches}</strong></span>
+            <span>•</span>
+            <span>Screenshots: <strong className="font-mono text-[#1d1d1f]">{screenshotAttempts}</strong></span>
+            {deviceUid && (
+              <>
+                <span>•</span>
+                <span className="font-mono text-[#86868b]">Device: {deviceUid.slice(0, 8)}</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Content list */}

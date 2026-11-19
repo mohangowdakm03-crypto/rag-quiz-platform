@@ -27,7 +27,9 @@ import {
   Link2,
   RotateCcw,
   Edit3,
-  Trash2
+  Trash2,
+  ShieldCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { 
   subscribeToTeacherData, 
@@ -131,6 +133,9 @@ export default function ConductedSessionView({
       'Total Questions',
       'Percentage',
       'Status',
+      'Academic Integrity',
+      'Tab Switches',
+      'Screenshot Attempts',
       'Time Taken (Seconds)',
       'Submitted At'
     ];
@@ -150,6 +155,9 @@ export default function ConductedSessionView({
         sub.totalQuestions || 20,
         `${sub.percentage}%`,
         sub.passed ? 'PASSED' : 'FAILED',
+        `"${sub.integrityStatus || 'Clean'}"`,
+        sub.tabSwitches || 0,
+        sub.screenshotAttempts || 0,
         sub.timeTakenSeconds || 0,
         `"${dateStr}"`
       ].join(',');
@@ -172,7 +180,7 @@ export default function ConductedSessionView({
       return;
     }
 
-    const headers = ['Rank', 'Student Full Name', 'USN / Roll Number', 'Score', 'Total Questions', 'Percentage', 'Status', 'Time Taken', 'Submitted At'];
+    const headers = ['Rank', 'Student Full Name', 'USN / Roll Number', 'Score', 'Total Questions', 'Percentage', 'Status', 'Integrity Status', 'Tab Switches', 'Screenshot Attempts', 'Time Taken', 'Submitted At'];
     const sorted = [...submissions].sort((a, b) => (b.score || 0) - (a.score || 0));
 
     const rows = sorted.map((sub, index) => [
@@ -183,6 +191,9 @@ export default function ConductedSessionView({
       sub.totalQuestions || 20,
       `${sub.percentage}%`,
       sub.passed ? 'PASSED' : 'FAILED',
+      sub.integrityStatus || 'Clean',
+      sub.tabSwitches || 0,
+      sub.screenshotAttempts || 0,
       `${Math.floor((sub.timeTakenSeconds || 0) / 60)}m ${(sub.timeTakenSeconds || 0) % 60}s`,
       sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : ''
     ]);
@@ -660,6 +671,7 @@ export default function ConductedSessionView({
                     <th className="py-3.5 px-4">Score</th>
                     <th className="py-3.5 px-4">Percentage</th>
                     <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4">Integrity</th>
                     <th className="py-3.5 px-4">Time Taken</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
@@ -667,7 +679,7 @@ export default function ConductedSessionView({
                 <tbody className="divide-y divide-[#e5e5ea] font-medium">
                   {filteredSubmissions.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-12 text-center text-[#86868b]">
+                      <td colSpan={9} className="py-12 text-center text-[#86868b]">
                         {totalSubmissions === 0
                           ? `No student submissions yet for Game PIN ${sessionPin}. Share the student link to start.`
                           : 'No candidate matches your search.'}
@@ -707,6 +719,24 @@ export default function ConductedSessionView({
                               {sub.passed ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <XCircle className="w-3 h-3 text-rose-600" />}
                               <span>{sub.passed ? 'PASSED' : 'FAILED'}</span>
                             </span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {sub.integrityStatus === 'Flagged' || (sub.tabSwitches >= 3 || sub.screenshotAttempts > 0) ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                <ShieldAlert className="w-3 h-3 text-[#ff3b30]" />
+                                <span>Flagged ({sub.tabSwitches || 0} Sw)</span>
+                              </span>
+                            ) : (sub.tabSwitches > 0) ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                <ShieldAlert className="w-3 h-3 text-amber-500" />
+                                <span>{sub.tabSwitches} Switch{sub.tabSwitches > 1 ? 'es' : ''}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <ShieldCheck className="w-3 h-3 text-[#34c759]" />
+                                <span>Clean</span>
+                              </span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4 font-mono text-[#86868b]">
                             {timeStr}

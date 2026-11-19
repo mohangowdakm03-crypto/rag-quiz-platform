@@ -1,18 +1,7 @@
-import React, { useState } from 'react';
-import { Share2, Check, Sparkles } from 'lucide-react';
+import React from 'react';
+import { Sparkles } from 'lucide-react';
 
-export default function StudentHeader({ quizId }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyLink = () => {
-    const origin = window.location.origin + window.location.pathname;
-    const shareUrl = `${origin}?pin=${encodeURIComponent(quizId)}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
-  };
-
+export default function StudentHeader() {
   return (
     <header className="apple-glass-nav sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -44,27 +33,6 @@ export default function StudentHeader({ quizId }) {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[11px] tracking-tight font-medium">Cloud Active</span>
           </div>
-
-          {/* Share Quiz ID button (only if quizId is active) */}
-          {quizId && (
-            <button
-              onClick={handleCopyLink}
-              className="apple-btn-secondary flex items-center space-x-2 px-3.5 py-1.5 text-xs font-medium cursor-pointer"
-              title="Copy shareable link for quiz"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-700">Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-3.5 h-3.5 text-[#86868b]" />
-                  <span>PIN: <strong className="text-[#1d1d1f] ml-1 font-mono tracking-wider">{quizId}</strong></span>
-                </>
-              )}
-            </button>
-          )}
         </div>
       </div>
     </header>
