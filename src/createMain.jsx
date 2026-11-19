@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import QuizCreator from './components/QuizCreator';
-import { verifyInstructorPasscode } from './supabase';
-import { Lock, Key, ShieldCheck, AlertTriangle, Sparkles } from 'lucide-react';
+import TeacherAuthModal from './components/TeacherAuthModal';
+import { subscribeToTeacherAuth } from './services/authService';
+import { Sparkles } from 'lucide-react';
 
 function CreatePage() {
+  const [currentTeacher, setCurrentTeacher] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('oxvane_teacher_auth');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [passcode, setPasscode] = useState(() => {
     try {
       return sessionStorage.getItem('rag_instructor_passcode') || '';
@@ -16,104 +26,32 @@ function CreatePage() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
-      return Boolean(sessionStorage.getItem('rag_instructor_passcode'));
+      return Boolean(sessionStorage.getItem('rag_instructor_passcode') || sessionStorage.getItem('oxvane_teacher_auth'));
     } catch {
       return false;
     }
   });
 
-  const [enteredPasscode, setEnteredPasscode] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    setPasscodeError('');
-    setIsVerifying(true);
-
-    const code = enteredPasscode.trim();
-    if (!code) {
-      setPasscodeError('Please enter the instructor passcode.');
-      setIsVerifying(false);
-      return;
-    }
-
-    try {
-      const auth = await verifyInstructorPasscode('master', code);
-      if (auth.valid) {
-        setPasscode(code);
+  useEffect(() => {
+    const unsubscribe = subscribeToTeacherAuth((teacher) => {
+      if (teacher) {
+        setCurrentTeacher(teacher);
         setIsAuthenticated(true);
-        sessionStorage.setItem('rag_instructor_passcode', code);
-        sessionStorage.setItem('rag_instructor_passcode_hash', auth.hash);
-      } else {
-        setPasscodeError('Invalid instructor passcode.');
+        setPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
       }
-    } catch (err) {
-      setPasscodeError('Verification failed. Please try again.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+    });
+    return () => unsubscribe();
+  }, []);
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen apple-bg-ambient flex items-center justify-center p-4">
-        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-xl relative border border-[#d2d2d7]/70">
-          <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3] mb-6 mx-auto shadow-sm">
-            <Lock className="w-6 h-6" />
-          </div>
-
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold tracking-[-0.02em] apple-title-gradient">Instructor Authorization</h2>
-            <p className="text-xs text-[#86868b] mt-2 leading-relaxed tracking-tight">
-              Enter your instructor passcode to create and launch new quiz sessions.
-            </p>
-          </div>
-
-          <form onSubmit={handleVerify} className="space-y-5">
-            {passcodeError && (
-              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{passcodeError}</span>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-[11px] font-semibold text-[#6e6e73] uppercase tracking-[0.14em] mb-2 text-center">
-                Instructor Passcode (SHA-256 Verified)
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••••••"
-                  value={enteredPasscode}
-                  onChange={(e) => setEnteredPasscode(e.target.value)}
-                  className="apple-input w-full px-4 py-3 text-center text-[#1d1d1f] placeholder-[#86868b] text-sm tracking-[0.2em] font-mono"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isVerifying}
-              className="apple-btn-primary w-full py-3.5 px-6 font-medium text-sm flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>{isVerifying ? 'Verifying...' : 'Unlock Quiz Creator'}</span>
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-[#e5e5ea] text-center">
-            <a
-              href="/teacher"
-              className="text-xs text-[#0071e3] hover:underline transition-colors"
-            >
-              ← Go to Sessions Hub
-            </a>
-          </div>
-        </div>
-      </div>
+      <TeacherAuthModal
+        onAuthenticated={(teacher) => {
+          setCurrentTeacher(teacher);
+          setIsAuthenticated(true);
+          setPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+        }}
+      />
     );
   }
 
@@ -138,18 +76,39 @@ function CreatePage() {
             </div>
           </div>
 
-          <a
-            href="/teacher"
-            className="apple-btn-secondary px-4 py-1.5 text-xs font-medium cursor-pointer"
-          >
-            ← View All Sessions
-          </a>
+          <div className="flex items-center space-x-3">
+            {currentTeacher && (
+              <div className="hidden sm:flex items-center space-x-2 pl-1.5 pr-3 py-1 rounded-full bg-white/90 border border-[#d2d2d7]/70 shadow-sm">
+                {currentTeacher.photoURL ? (
+                  <img
+                    src={currentTeacher.photoURL}
+                    alt={currentTeacher.displayName}
+                    className="w-5 h-5 rounded-full object-cover border border-[#d2d2d7]"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-[#0071e3] flex items-center justify-center text-[10px] font-bold">
+                    {currentTeacher.displayName?.charAt(0).toUpperCase() || 'T'}
+                  </div>
+                )}
+                <span className="text-xs font-semibold text-[#1d1d1f] max-w-[120px] truncate">
+                  {currentTeacher.displayName || 'Instructor'}
+                </span>
+              </div>
+            )}
+            <a
+              href="/teacher"
+              className="apple-btn-secondary px-4 py-1.5 text-xs font-medium cursor-pointer"
+            >
+              ← View All Sessions
+            </a>
+          </div>
         </div>
       </header>
 
       <main className="flex-1">
         <QuizCreator
           teacherPasscode={passcode}
+          currentTeacher={currentTeacher}
           onBackToHub={() => {
             window.location.href = '/teacher';
           }}

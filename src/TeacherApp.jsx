@@ -4,6 +4,8 @@ import ConductedSessionView from './components/ConductedSessionView';
 import QuizCreator from './components/QuizCreator';
 import HostProjectorView from './components/HostProjectorView';
 import GoogleSheetsSetupModal from './components/GoogleSheetsSetupModal';
+import TeacherAuthModal from './components/TeacherAuthModal';
+import { subscribeToTeacherAuth, logoutTeacher } from './services/authService';
 import { 
   verifyInstructorPasscode, 
   fetchTeacherSessions, 
@@ -12,9 +14,18 @@ import {
   getQuizDefinition,
   saveQuizDefinition
 } from './supabase';
-import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle, Tv } from 'lucide-react';
+import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle, Tv, LogOut, User } from 'lucide-react';
 
 export default function TeacherApp() {
+  const [currentTeacher, setCurrentTeacher] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('oxvane_teacher_auth');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [teacherPasscode, setTeacherPasscode] = useState(() => {
     try {
       return sessionStorage.getItem('rag_instructor_passcode') || '';
@@ -25,15 +36,30 @@ export default function TeacherApp() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
-      return Boolean(sessionStorage.getItem('rag_instructor_passcode'));
+      return Boolean(sessionStorage.getItem('rag_instructor_passcode') || sessionStorage.getItem('oxvane_teacher_auth'));
     } catch {
       return false;
     }
   });
 
-  const [enteredPasscode, setEnteredPasscode] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
+  // Subscribe to real-time teacher authentication state
+  useEffect(() => {
+    const unsubscribe = subscribeToTeacherAuth((teacher) => {
+      if (teacher) {
+        setCurrentTeacher(teacher);
+        setIsAuthenticated(true);
+        setTeacherPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+      } else {
+        const savedPasscode = sessionStorage.getItem('rag_instructor_passcode');
+        if (!savedPasscode) {
+          setCurrentTeacher(null);
+          setIsAuthenticated(false);
+          setTeacherPasscode('');
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Multi-page navigation state: 'hub' | 'session' | 'create'
   const [view, setView] = useState('hub');
@@ -221,41 +247,11 @@ export default function TeacherApp() {
     navigateToSession(pin);
   };
 
-  // Passcode authentication
-  const handleVerifyPasscode = async (e) => {
-    e.preventDefault();
-    setPasscodeError('');
-    setIsVerifying(true);
-
-    const code = enteredPasscode.trim();
-    if (!code) {
-      setPasscodeError('Please enter the instructor passcode.');
-      setIsVerifying(false);
-      return;
-    }
-
-    try {
-      const auth = await verifyInstructorPasscode('master', code);
-      if (auth.valid) {
-        setTeacherPasscode(code);
-        setIsAuthenticated(true);
-        sessionStorage.setItem('rag_instructor_passcode', code);
-        sessionStorage.setItem('rag_instructor_passcode_hash', auth.hash);
-      } else {
-        setPasscodeError('Invalid instructor passcode. Verification failed.');
-      }
-    } catch (err) {
-      setPasscodeError('Authentication error. Please try again.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleLock = () => {
+  const handleLock = async () => {
+    await logoutTeacher();
+    setCurrentTeacher(null);
     setIsAuthenticated(false);
     setTeacherPasscode('');
-    sessionStorage.removeItem('rag_instructor_passcode');
-    sessionStorage.removeItem('rag_instructor_passcode_hash');
     setView('hub');
   };
 
@@ -276,70 +272,16 @@ export default function TeacherApp() {
     }
   };
 
-  // IF NOT AUTHENTICATED: RENDER SHA-256 PASSCODE GATE (APPLE STYLE)
+  // IF NOT AUTHENTICATED: RENDER APPLE MULTI-PROVIDER AUTH MODAL
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen apple-bg-ambient flex items-center justify-center p-4">
-        <div className="max-w-md w-full apple-glass rounded-[32px] p-8 sm:p-10 shadow-xl relative border border-[#d2d2d7]/70">
-          <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3] mb-6 mx-auto shadow-sm">
-            <Lock className="w-6 h-6" />
-          </div>
-
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold tracking-[-0.02em] apple-title-gradient">Instructor Portal</h2>
-            <p className="text-xs text-[#86868b] mt-2 leading-relaxed">
-              Protected administrative area. Enter your instructor passcode to manage conducted quiz sessions, review live student USNs, and launch new tests.
-            </p>
-          </div>
-
-          <form onSubmit={handleVerifyPasscode} className="space-y-5">
-            {passcodeError && (
-              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{passcodeError}</span>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-[11px] font-semibold text-[#6e6e73] uppercase tracking-[0.14em] mb-2 text-center">
-                Instructor Passcode (SHA-256 Verified)
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••••••"
-                  value={enteredPasscode}
-                  onChange={(e) => setEnteredPasscode(e.target.value)}
-                  className="apple-input w-full px-4 py-3 text-center text-[#1d1d1f] placeholder-[#86868b] text-sm tracking-[0.2em] font-mono"
-                />
-              </div>
-              <p className="text-[11px] text-[#86868b] mt-2 flex items-center justify-center space-x-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0071e3]" />
-                <span>Client-side SHA-256 hashed verification</span>
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isVerifying}
-              className="apple-btn-primary w-full py-3.5 px-6 font-medium text-sm flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>{isVerifying ? 'Verifying...' : 'Unlock Console'}</span>
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-[#e5e5ea] text-center">
-            <a
-              href="/"
-              className="text-xs text-[#0071e3] hover:underline transition-colors duration-200"
-            >
-              ← Return to Student Quiz View
-            </a>
-          </div>
-        </div>
-      </div>
+      <TeacherAuthModal
+        onAuthenticated={(teacher) => {
+          setCurrentTeacher(teacher);
+          setIsAuthenticated(true);
+          setTeacherPasscode(sessionStorage.getItem('rag_instructor_passcode') || 'authenticated_user');
+        }}
+      />
     );
   }
 
@@ -370,12 +312,12 @@ export default function TeacherApp() {
             </div>
           </div>
 
-          {/* Navigation Controls */}
-          <div className="flex items-center space-x-3">
+          {/* Navigation Controls & Educator Profile */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="flex items-center p-1 rounded-full bg-[#e5e5ea] border border-[#d2d2d7]/60">
               <button
                 onClick={navigateToHub}
-                className={`text-xs font-medium px-4 py-1.5 rounded-full transition cursor-pointer ${
+                className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition cursor-pointer ${
                   view === 'hub' ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
@@ -384,7 +326,7 @@ export default function TeacherApp() {
 
               <button
                 onClick={navigateToCreate}
-                className={`text-xs font-medium px-4 py-1.5 rounded-full transition cursor-pointer ${
+                className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition cursor-pointer ${
                   view === 'create' ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
@@ -392,12 +334,37 @@ export default function TeacherApp() {
               </button>
             </div>
 
+            {/* Educator Identity Badge */}
+            {currentTeacher && (
+              <div className="flex items-center space-x-2 pl-1.5 pr-3 py-1 rounded-full bg-white/90 border border-[#d2d2d7]/70 shadow-sm">
+                {currentTeacher.photoURL ? (
+                  <img
+                    src={currentTeacher.photoURL}
+                    alt={currentTeacher.displayName}
+                    className="w-6 h-6 rounded-full object-cover border border-[#d2d2d7]"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-[#0071e3] flex items-center justify-center text-[10px] font-bold">
+                    {currentTeacher.displayName?.charAt(0).toUpperCase() || 'T'}
+                  </div>
+                )}
+                <div className="text-left hidden md:block">
+                  <p className="text-xs font-semibold text-[#1d1d1f] leading-none max-w-[120px] truncate">
+                    {currentTeacher.displayName || 'Instructor'}
+                  </p>
+                  <p className="text-[10px] text-[#86868b] leading-none mt-0.5 max-w-[120px] truncate">
+                    {currentTeacher.email || currentTeacher.phoneNumber || 'Passcode'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={handleLock}
-              className="apple-btn-secondary p-2 rounded-full text-[#6e6e73] hover:text-[#ff3b30] cursor-pointer"
-              title="Lock Console"
+              className="apple-btn-secondary p-2 rounded-full text-[#6e6e73] hover:text-[#ff3b30] cursor-pointer flex items-center justify-center"
+              title="Sign Out / Lock Console"
             >
-              <Lock className="w-4 h-4" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -410,6 +377,7 @@ export default function TeacherApp() {
           <SessionsHub
             sessions={sessions}
             isLoading={isLoadingSessions}
+            currentTeacher={currentTeacher}
             onOpenSession={navigateToSession}
             onCreateNewQuiz={navigateToCreate}
             onEditSession={handleEditSession}
@@ -444,6 +412,7 @@ export default function TeacherApp() {
             onSessionCreated={navigateToSession}
             onSessionUpdated={handleSessionUpdated}
             teacherPasscode={teacherPasscode}
+            currentTeacher={currentTeacher}
             creatorMode={creatorState.mode}
             editingSessionPin={creatorState.pin}
             initialQuizConfig={creatorState.data}

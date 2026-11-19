@@ -246,10 +246,17 @@ export default function SessionsHub({
                     {session.title || 'Untitled Quiz Session'}
                   </h3>
 
-                  {/* Date & Time conducted */}
-                  <div className="flex items-center space-x-1.5 text-xs text-[#86868b] mb-4">
-                    <Calendar className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
-                    <span>Conducted: <strong className="text-[#1d1d1f] font-medium">{dateDisplay}</strong></span>
+                  {/* Date & Time conducted & Instructor */}
+                  <div className="flex items-center justify-between text-xs text-[#86868b] mb-4 gap-2 flex-wrap">
+                    <div className="flex items-center space-x-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
+                      <span>Conducted: <strong className="text-[#1d1d1f] font-medium">{dateDisplay}</strong></span>
+                    </div>
+                    {session.instructorName && (
+                      <span className="text-[11px] text-[#0071e3] bg-blue-50/70 border border-blue-200/60 px-2 py-0.5 rounded-full font-medium truncate max-w-[150px]">
+                        {session.instructorName}
+                      </span>
+                    )}
                   </div>
 
                   {/* 6-Digit Game PIN Banner */}

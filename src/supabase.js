@@ -235,10 +235,11 @@ export async function getStudentQuizDefinition(quizId) {
 export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
+  const isAuthUser = instructorPasscode === 'authenticated_user';
 
   // Check existing quiz to verify passcode
   const existing = await getQuizDefinition(quizId);
-  if (existing && existing.passcodeHash) {
+  if (existing && existing.passcodeHash && !isAuthUser) {
     const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
     const isQuizPass = enteredHash === existing.passcodeHash;
     if (!isMaster && !isQuizPass) {
@@ -283,7 +284,10 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
           maxTabSwitches: Number(quizData.maxTabSwitches || 3),
           shuffleQuestions: quizData.shuffleQuestions === true,
           sheetsWebhookUrl: quizData.sheetsWebhookUrl || '',
-          passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1,
+          instructorId: quizData.instructorId || existing?.instructorId || '',
+          instructorEmail: quizData.instructorEmail || existing?.instructorEmail || '',
+          instructorName: quizData.instructorName || existing?.instructorName || '',
+          passcodeHash: isAuthUser ? (existing?.passcodeHash || 'auth_user') : (enteredHash || MASTER_PASSCODE_HASH_1),
           updatedAt: new Date().toISOString()
         },
         breakdown: quizData.questions
@@ -303,9 +307,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
   const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
+  const isAuthUser = instructorPasscode === 'authenticated_user';
   
-  if (!isMaster) {
-    throw new Error('Unauthorized: Valid Instructor Passcode required to publish a session.');
+  if (!isMaster && !isAuthUser) {
+    throw new Error('Unauthorized: Valid Instructor Passcode or Logged-in Teacher required to publish a session.');
   }
 
   // Generate unique 6-digit PIN (e.g. 582914) or use custom code
@@ -358,7 +363,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
           maxTabSwitches,
           shuffleQuestions,
           sheetsWebhookUrl: options.sheetsWebhookUrl || quizData.sheetsWebhookUrl || '',
-          passcodeHash: enteredHash,
+          instructorId: options.instructorId || quizData.instructorId || '',
+          instructorEmail: options.instructorEmail || quizData.instructorEmail || '',
+          instructorName: options.instructorName || quizData.instructorName || '',
+          passcodeHash: isAuthUser ? 'auth_user' : enteredHash,
           publishedAt: new Date().toISOString()
         },
         breakdown: quizData.questions || []
@@ -446,6 +454,9 @@ export async function fetchTeacherSessions() {
           strictAutoSubmit: ans.strictAutoSubmit !== false,
           maxTabSwitches: Number(ans.maxTabSwitches || 3),
           sheetsWebhookUrl: ans.sheetsWebhookUrl || '',
+          instructorId: ans.instructorId || '',
+          instructorEmail: ans.instructorEmail || '',
+          instructorName: ans.instructorName || '',
           createdAt: row.created_at,
           submissionCount: stat.count,
           classAverage: avg,
@@ -798,7 +809,11 @@ export async function verifyInstructorPasscode(quizId, rawPasscode) {
 
   const enteredHash = await sha256(rawPasscode);
 
-  // Check master hashes first
+  // Check authenticated teacher user or master hashes first
+  if (rawPasscode === 'authenticated_user') {
+    return { valid: true, hash: 'auth_user' };
+  }
+
   if (enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2) {
     return { valid: true, hash: enteredHash };
   }

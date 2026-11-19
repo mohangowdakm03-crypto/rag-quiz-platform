@@ -93,7 +93,8 @@ export default function QuizCreator({
   creatorMode = 'create', // 'create' | 'edit' | 'duplicate'
   editingSessionPin = null,
   initialQuizConfig = null,
-  onOpenProjector = null
+  onOpenProjector = null,
+  currentTeacher = null
 }) {
   const [quizConfig, setQuizConfig] = useState(() => {
     if (initialQuizConfig) {
@@ -350,7 +351,12 @@ export default function QuizCreator({
     try {
       if (creatorMode === 'edit' && editingSessionPin) {
         // Save updates to existing session without generating a new PIN
-        await saveQuizDefinition(editingSessionPin, quizConfig, teacherPasscode);
+        await saveQuizDefinition(editingSessionPin, {
+          ...quizConfig,
+          instructorId: currentTeacher?.uid || quizConfig.instructorId || '',
+          instructorEmail: currentTeacher?.email || currentTeacher?.phoneNumber || quizConfig.instructorEmail || '',
+          instructorName: currentTeacher?.displayName || quizConfig.instructorName || ''
+        }, teacherPasscode);
         if (quizConfig.sheetsWebhookUrl) {
           localStorage.setItem(`sheets_webhook_${editingSessionPin}`, quizConfig.sheetsWebhookUrl);
         }
@@ -374,7 +380,10 @@ export default function QuizCreator({
           strictAutoSubmit: quizConfig.strictAutoSubmit !== false,
           maxTabSwitches: quizConfig.maxTabSwitches || 3,
           shuffleQuestions: quizConfig.shuffleQuestions === true,
-          sheetsWebhookUrl: quizConfig.sheetsWebhookUrl || ''
+          sheetsWebhookUrl: quizConfig.sheetsWebhookUrl || '',
+          instructorId: currentTeacher?.uid || '',
+          instructorEmail: currentTeacher?.email || currentTeacher?.phoneNumber || '',
+          instructorName: currentTeacher?.displayName || ''
         });
 
         const pin = res.sessionPin;
