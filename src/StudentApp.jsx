@@ -5,7 +5,12 @@ import QuizRunner from './components/QuizRunner';
 import QuizResults from './components/QuizResults';
 import OxvaneLogo from './components/OxvaneLogo';
 import AppleSupportModal from './components/AppleSupportModal';
-import { getStudentQuizDefinition } from './supabase';
+import LiveKahootPlayerView from './components/LiveKahootPlayerView';
+import { 
+  getStudentQuizDefinition, 
+  fetchLiveRoomState, 
+  subscribeToLiveGame 
+} from './supabase';
 
 export default function StudentApp() {
   const [quizId, setQuizId] = useState('');
@@ -62,14 +67,22 @@ export default function StudentApp() {
       const cloudQuiz = await getStudentQuizDefinition(targetId);
       if (cloudQuiz && cloudQuiz.questions && cloudQuiz.questions.length > 0) {
         setQuizData(cloudQuiz);
-        setSessionData({
+        const sData = {
           ...data,
           quizId: targetId,
           gameMode: cloudQuiz.gameMode || 'classic',
           perQuestionSeconds: cloudQuiz.perQuestionSeconds || 30
-        });
+        };
+        setSessionData(sData);
         setQuizId(targetId);
-        setQuizState('taking');
+
+        // Check if teacher has initiated a Live Kahoot game round
+        const liveState = await fetchLiveRoomState(targetId);
+        if (liveState && liveState.status === 'live') {
+          setQuizState('live_kahoot');
+        } else {
+          setQuizState('taking');
+        }
       } else {
         alert(`Quiz Session with PIN "${targetId}" not found. Please verify the PIN with your instructor.`);
       }
@@ -80,6 +93,19 @@ export default function StudentApp() {
     }
   };
 
+  // Real-time synchronization: If teacher launches Live Kahoot on the projector, transition student automatically
+  useEffect(() => {
+    if (!sessionData?.quizId) return;
+    const unsubscribe = subscribeToLiveGame(sessionData.quizId, {
+      onGameState: (payload) => {
+        if (payload?.status === 'live') {
+          setQuizState('live_kahoot');
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [sessionData?.quizId]);
+
   const handleCompleteQuiz = (submissionResults) => {
     setResults(submissionResults);
     setQuizState('completed');
@@ -89,6 +115,16 @@ export default function StudentApp() {
     setQuizState('join');
     setResults(null);
   };
+
+  // Render Fullscreen Live Kahoot Mobile Player View
+  if (quizState === 'live_kahoot' && sessionData) {
+    return (
+      <LiveKahootPlayerView
+        sessionData={sessionData}
+        onExit={() => setQuizState('join')}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] flex flex-col selection:bg-[#0071e3] selection:text-white font-sans">

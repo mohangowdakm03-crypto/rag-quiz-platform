@@ -83,7 +83,7 @@ export async function fetchQuizParticipants(quizId) {
       console.warn('fetchQuizParticipants error:', error);
       return [];
     }
-    return (data || []).map(p => ({
+    return (data || []).filter(p => p.student_id !== '__LIVE_STATE__').map(p => ({
       id: p.id,
       studentName: p.student_name,
       studentId: p.student_id,
@@ -1032,4 +1032,124 @@ export async function testGoogleSheetsWebhook(webhookUrl, sessionPin = 'TEST-PIN
   });
 
   return { success: true };
+}
+
+// ==========================================
+// 10. Live Kahoot Multiplayer Realtime Engine
+// ==========================================
+
+const liveGameChannels = {};
+
+export function getOrCreateLiveChannel(sessionPin) {
+  if (liveGameChannels[sessionPin]) {
+    return liveGameChannels[sessionPin];
+  }
+  const client = getSupabaseClient();
+  const channel = client.channel(`live-kahoot-${sessionPin}`, {
+    config: {
+      broadcast: { ack: true, self: false }
+    }
+  });
+
+  channel.subscribe((status) => {
+    // Channel connected
+  });
+
+  liveGameChannels[sessionPin] = channel;
+  return channel;
+}
+
+export function broadcastLiveGameState(sessionPin, gameState) {
+  try {
+    const channel = getOrCreateLiveChannel(sessionPin);
+    channel.send({
+      type: 'broadcast',
+      event: 'game_state',
+      payload: gameState
+    }).catch(() => {});
+  } catch (err) {
+    console.warn('broadcastLiveGameState note:', err);
+  }
+}
+
+export function broadcastLivePlayerAnswer(sessionPin, answerPayload) {
+  try {
+    const channel = getOrCreateLiveChannel(sessionPin);
+    channel.send({
+      type: 'broadcast',
+      event: 'player_answer',
+      payload: answerPayload
+    }).catch(() => {});
+  } catch (err) {
+    console.warn('broadcastLivePlayerAnswer note:', err);
+  }
+}
+
+export function subscribeToLiveGame(sessionPin, { onGameState, onPlayerAnswer }) {
+  const channel = getOrCreateLiveChannel(sessionPin);
+
+  if (onGameState) {
+    channel.on('broadcast', { event: 'game_state' }, ({ payload }) => {
+      onGameState(payload);
+    });
+  }
+
+  if (onPlayerAnswer) {
+    channel.on('broadcast', { event: 'player_answer' }, ({ payload }) => {
+      onPlayerAnswer(payload);
+    });
+  }
+
+  return () => {
+    try {
+      const client = getSupabaseClient();
+      client.removeChannel(channel);
+      delete liveGameChannels[sessionPin];
+    } catch {}
+  };
+}
+
+export async function updateLiveRoomState(sessionPin, state) {
+  const adminClient = getSupabaseAdminClient();
+  try {
+    await adminClient
+      .from('quiz_participants')
+      .upsert([
+        {
+          quiz_id: sessionPin,
+          student_id: '__LIVE_STATE__',
+          student_name: '__HOST_ROOM__',
+          status: JSON.stringify(state)
+        }
+      ], { onConflict: 'quiz_id,student_id' });
+  } catch (err) {
+    console.warn('updateLiveRoomState note:', err);
+  }
+}
+
+export async function fetchLiveRoomState(sessionPin) {
+  const adminClient = getSupabaseAdminClient();
+  try {
+    const { data } = await adminClient
+      .from('quiz_participants')
+      .select('status')
+      .eq('quiz_id', sessionPin)
+      .eq('student_id', '__LIVE_STATE__')
+      .maybeSingle();
+    if (data?.status) {
+      return JSON.parse(data.status);
+    }
+  } catch {}
+  return null;
+}
+
+export async function clearLiveRoomState(sessionPin) {
+  const adminClient = getSupabaseAdminClient();
+  try {
+    await adminClient
+      .from('quiz_participants')
+      .delete()
+      .eq('quiz_id', sessionPin)
+      .eq('student_id', '__LIVE_STATE__');
+  } catch {}
 }

@@ -29,6 +29,7 @@ import {
   subscribeToTeacherData 
 } from '../supabase';
 import { playJoinChime, playStartChime } from '../utils/soundEffects';
+import LiveKahootHostView from './LiveKahootHostView';
 
 export default function HostProjectorView({
   sessionPin,
@@ -199,7 +200,7 @@ export default function HostProjectorView({
           </div>
         </div>
 
-        {/* Center: Mode Switcher (Lobby vs Live Monitor) */}
+        {/* Center: Mode Switcher (Lobby vs Live Kahoot vs Live Monitor) */}
         <div className={`hidden md:flex items-center p-1 rounded-full border ${
           isDark ? 'bg-white/5 border-white/10' : 'bg-[#e5e5ea] border-[#d2d2d7]/60'
         }`}>
@@ -214,6 +215,19 @@ export default function HostProjectorView({
             <Users className="w-3.5 h-3.5" />
             <span>Join Lobby ({participants.length})</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('live_kahoot')}
+            className={`px-4 py-1.5 text-xs font-semibold rounded-full transition cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === 'live_kahoot'
+                ? 'bg-gradient-to-r from-[#ff3b30] to-[#ff9500] text-white shadow-sm font-bold'
+                : 'text-[#ff9500] hover:text-[#ff3b30]'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Live Kahoot Mode</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('monitor')}
             className={`px-4 py-1.5 text-xs font-semibold rounded-full transition cursor-pointer flex items-center space-x-1.5 ${
@@ -301,7 +315,16 @@ export default function HostProjectorView({
 
       {/* Main Big Screen Presentation Canvas */}
       <main className="flex-1 p-6 sm:p-10 flex flex-col justify-center max-w-7xl mx-auto w-full">
-        {activeTab === 'lobby' ? (
+        {activeTab === 'live_kahoot' ? (
+          <LiveKahootHostView
+            quizDef={quizDef}
+            sessionPin={sessionPin}
+            participants={participants}
+            isDark={isDark}
+            soundEnabled={soundEnabled}
+            onExitLiveGame={() => setActiveTab('lobby')}
+          />
+        ) : activeTab === 'lobby' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center flex-1 my-auto">
             
             {/* LEFT / CENTER STAGE: Huge Game PIN & Join Instructions (Col 7) */}
@@ -464,26 +487,39 @@ export default function HostProjectorView({
                 </p>
 
                 {/* QR Download & Action Buttons */}
-                <div className="flex items-center justify-center space-x-2">
-                  <button
-                    onClick={handleDownloadQr}
-                    className="apple-btn-secondary px-3.5 py-1.5 text-xs font-medium flex items-center space-x-1.5 cursor-pointer rounded-xl"
-                    title="Download QR code PNG for slides"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Save QR</span>
-                  </button>
-
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                   <button
                     onClick={() => {
                       playStartChime();
-                      setActiveTab('monitor');
+                      setActiveTab('live_kahoot');
                     }}
-                    className="apple-btn-primary px-4 py-1.5 text-xs font-semibold flex items-center space-x-1.5 cursor-pointer rounded-xl"
+                    className="apple-btn-primary w-full sm:w-auto px-5 py-2.5 text-xs font-bold flex items-center justify-center space-x-2 cursor-pointer rounded-xl bg-gradient-to-r from-[#ff3b30] via-[#ff9500] to-[#0071e3] hover:opacity-95 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all text-white"
                   >
-                    <Play className="w-3.5 h-3.5" />
-                    <span>Live Monitor</span>
+                    <Play className="w-3.5 h-3.5 fill-white" />
+                    <span>Start Live Kahoot Game</span>
                   </button>
+
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <button
+                      onClick={handleDownloadQr}
+                      className="apple-btn-secondary flex-1 sm:flex-none px-3.5 py-2 text-xs font-medium flex items-center justify-center space-x-1.5 cursor-pointer rounded-xl"
+                      title="Download QR code PNG for slides"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Save QR</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        playStartChime();
+                        setActiveTab('monitor');
+                      }}
+                      className="apple-btn-secondary flex-1 sm:flex-none px-3.5 py-2 text-xs font-semibold flex items-center justify-center space-x-1.5 cursor-pointer rounded-xl"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>Live Monitor</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
