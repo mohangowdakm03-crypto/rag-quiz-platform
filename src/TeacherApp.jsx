@@ -126,12 +126,12 @@ export default function TeacherApp() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Load sessions when authenticated
+  // Load sessions when authenticated (re-loads when teacher account switches)
   useEffect(() => {
     if (isAuthenticated) {
       loadSessions();
     }
-  }, [isAuthenticated, loadSessions]);
+  }, [isAuthenticated, currentTeacher?.uid, loadSessions]);
 
   // Navigation helpers
   const navigateToHub = () => {

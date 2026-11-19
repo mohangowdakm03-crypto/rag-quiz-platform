@@ -188,6 +188,9 @@ export async function getQuizDefinition(quizId) {
       maxTabSwitches: Number(answers.maxTabSwitches || 3),
       shuffleQuestions: answers.shuffleQuestions === true,
       sheetsWebhookUrl: answers.sheetsWebhookUrl || '',
+      instructorId: answers.instructorId || '',
+      instructorEmail: answers.instructorEmail || '',
+      instructorName: answers.instructorName || '',
       questions: row.breakdown || []
     };
   } catch (err) {
@@ -236,15 +239,37 @@ export async function getStudentQuizDefinition(quizId) {
 export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
-  const isAuthUser = instructorPasscode === 'authenticated_user' && Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
+  const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
+  const isAuthUser = instructorPasscode === 'authenticated_user';
 
-  // Check existing quiz to verify passcode
+  // Check existing quiz to verify ownership
   const existing = await getQuizDefinition(quizId);
-  if (existing && existing.passcodeHash && !isAuthUser) {
-    const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
-    const isQuizPass = enteredHash === existing.passcodeHash;
-    if (!isMaster && !isQuizPass) {
-      throw new Error('Unauthorized: Incorrect Instructor Passcode Hash');
+  if (existing) {
+    if (isAuthUser) {
+      let uid = auth.currentUser?.uid || '';
+      let email = (auth.currentUser?.email || '').toLowerCase().trim();
+      if (!uid && typeof sessionStorage !== 'undefined') {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem('oxvane_teacher_auth') || '{}');
+          if (saved.uid) uid = saved.uid;
+          if (saved.email && !email) email = (saved.email || '').toLowerCase().trim();
+        } catch {}
+      }
+
+      const ownerUid = existing.instructorId || '';
+      const ownerEmail = (existing.instructorEmail || '').toLowerCase().trim();
+
+      const isOwner = (ownerUid && uid && ownerUid === uid) ||
+                      (ownerEmail && email && ownerEmail === email);
+
+      if (!isOwner && (ownerUid || ownerEmail)) {
+        throw new Error('Forbidden: You do not have permission to edit another instructor’s quiz session.');
+      }
+    } else if (existing.passcodeHash && !isMaster) {
+      const isQuizPass = enteredHash === existing.passcodeHash;
+      if (!isQuizPass) {
+        throw new Error('Unauthorized: Incorrect Instructor Passcode Hash');
+      }
     }
   }
 
@@ -254,6 +279,19 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
     .delete()
     .eq('quiz_id', quizId)
     .eq('student_name', '__QUIZ_DEFINITION__');
+
+  let currentUid = quizData.instructorId || existing?.instructorId || auth.currentUser?.uid || '';
+  let currentEmail = quizData.instructorEmail || existing?.instructorEmail || auth.currentUser?.email || '';
+  let currentName = quizData.instructorName || existing?.instructorName || auth.currentUser?.displayName || '';
+
+  if (!currentUid && typeof sessionStorage !== 'undefined') {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('oxvane_teacher_auth') || '{}');
+      if (saved.uid) currentUid = saved.uid;
+      if (saved.email && !currentEmail) currentEmail = saved.email;
+      if (saved.displayName && !currentName) currentName = saved.displayName;
+    } catch {}
+  }
 
   // Insert updated definition
   const { data, error } = await adminClient
@@ -285,9 +323,9 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
           maxTabSwitches: Number(quizData.maxTabSwitches || 3),
           shuffleQuestions: quizData.shuffleQuestions === true,
           sheetsWebhookUrl: quizData.sheetsWebhookUrl || '',
-          instructorId: quizData.instructorId || existing?.instructorId || '',
-          instructorEmail: quizData.instructorEmail || existing?.instructorEmail || '',
-          instructorName: quizData.instructorName || existing?.instructorName || '',
+          instructorId: currentUid,
+          instructorEmail: currentEmail,
+          instructorName: currentName || (currentEmail ? currentEmail.split('@')[0] : 'Instructor'),
           passcodeHash: isAuthUser ? (existing?.passcodeHash || 'auth_user') : (enteredHash || MASTER_PASSCODE_HASH_1),
           updatedAt: new Date().toISOString()
         },
@@ -308,9 +346,9 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const adminClient = getSupabaseAdminClient();
   const enteredHash = await sha256(instructorPasscode);
   const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
-  const isAuthUser = instructorPasscode === 'authenticated_user' && Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
+  const isAuthUser = instructorPasscode === 'authenticated_user';
   
-  if (!isMaster && !isAuthUser) {
+  if (!isMaster && !isAuthUser && !auth.currentUser) {
     throw new Error('Unauthorized: Valid Instructor Passcode or Verified Teacher Login required to publish a session.');
   }
 
@@ -333,6 +371,26 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const strictAutoSubmit = options.strictAutoSubmit ?? quizData.strictAutoSubmit ?? true;
   const maxTabSwitches = Number(options.maxTabSwitches || quizData.maxTabSwitches || 3);
   const shuffleQuestions = options.shuffleQuestions ?? quizData.shuffleQuestions ?? false;
+
+  // Resolve creating instructor identity
+  let currentUid = options.instructorId || quizData.instructorId || auth.currentUser?.uid || '';
+  let currentEmail = options.instructorEmail || quizData.instructorEmail || auth.currentUser?.email || '';
+  let currentName = options.instructorName || quizData.instructorName || auth.currentUser?.displayName || '';
+
+  if (!currentUid && typeof sessionStorage !== 'undefined') {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('oxvane_teacher_auth') || '{}');
+      if (saved.uid) currentUid = saved.uid;
+      if (saved.email && !currentEmail) currentEmail = saved.email;
+      if (saved.displayName && !currentName) currentName = saved.displayName;
+    } catch {}
+  }
+
+  if (!currentUid && isMaster) {
+    currentUid = 'master_admin';
+    currentName = 'Master Administrator';
+    currentEmail = 'admin@oxvane.local';
+  }
 
   // Insert fresh session definition
   const { data, error } = await adminClient
@@ -364,9 +422,9 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
           maxTabSwitches,
           shuffleQuestions,
           sheetsWebhookUrl: options.sheetsWebhookUrl || quizData.sheetsWebhookUrl || '',
-          instructorId: options.instructorId || quizData.instructorId || '',
-          instructorEmail: options.instructorEmail || quizData.instructorEmail || '',
-          instructorName: options.instructorName || quizData.instructorName || '',
+          instructorId: currentUid,
+          instructorEmail: currentEmail,
+          instructorName: currentName || (currentEmail ? currentEmail.split('@')[0] : 'Instructor'),
           passcodeHash: isAuthUser ? 'auth_user' : enteredHash,
           publishedAt: new Date().toISOString()
         },
@@ -397,7 +455,7 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   };
 }
 
-// 4C. Fetch all available teacher sessions with real-time stats (Strictly Authenticated)
+// 4C. Fetch available teacher sessions with real-time stats (Teacher-Specific Private Isolation)
 export async function fetchTeacherSessions(rawPasscode = '') {
   // Enforce authentication: must have active Firebase User OR valid Master Passcode
   const isFirebaseUser = Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
@@ -414,7 +472,18 @@ export async function fetchTeacherSessions(rawPasscode = '') {
     }
   }
 
-  if (!isFirebaseUser && !isMaster) {
+  // Resolve caller teacher identity for multi-tenant isolation
+  let currentUid = auth.currentUser?.uid || '';
+  let currentEmail = (auth.currentUser?.email || '').toLowerCase().trim();
+  if (!currentUid && typeof sessionStorage !== 'undefined') {
+    try {
+      const savedAuth = JSON.parse(sessionStorage.getItem('oxvane_teacher_auth') || '{}');
+      if (savedAuth.uid) currentUid = savedAuth.uid;
+      if (savedAuth.email && !currentEmail) currentEmail = (savedAuth.email || '').toLowerCase().trim();
+    } catch {}
+  }
+
+  if (!isFirebaseUser && !isMaster && !currentUid) {
     console.warn('Unauthorized attempt to fetch teacher sessions blocked.');
     return [];
   }
@@ -451,6 +520,25 @@ export async function fetchTeacherSessions(rawPasscode = '') {
 
     const sessions = (data || [])
       .filter(row => row.quiz_id !== 'rag-mastery-2025' && row.quiz_id !== '202500')
+      .filter(row => {
+        // Master admin sees all sessions
+        if (isMaster) return true;
+
+        const ans = row.answers || {};
+        const quizInstructorId = ans.instructorId || '';
+        const quizInstructorEmail = (ans.instructorEmail || '').toLowerCase().trim();
+
+        // Match strictly by teacher UID or teacher Email
+        if (currentUid && quizInstructorId && quizInstructorId === currentUid) {
+          return true;
+        }
+        if (currentEmail && quizInstructorEmail && quizInstructorEmail === currentEmail) {
+          return true;
+        }
+
+        // Hide any quizzes created by other teachers
+        return false;
+      })
       .map(row => {
         const ans = row.answers || {};
         const stat = statsMap[row.quiz_id] || { count: 0, totalPct: 0, passedCount: 0 };
@@ -822,27 +910,67 @@ export async function checkStudentAlreadySubmitted(quizId, studentId) {
   return res.alreadySubmitted;
 }
 
-// 6. Verify Instructor Passcode with SHA-256 Hashing & Firebase Authentication
+// 6. Verify Instructor Passcode with SHA-256 Hashing & Multi-Tenant Quiz Ownership
 export async function verifyInstructorPasscode(quizId, rawPasscode) {
   if (!rawPasscode || !rawPasscode.trim()) {
     return { valid: false, error: 'Passcode cannot be empty' };
   }
 
-  // 1. If 'authenticated_user', strictly verify that Firebase Auth has an active non-anonymous user!
-  if (rawPasscode === 'authenticated_user') {
-    if (auth.currentUser && !auth.currentUser.isAnonymous) {
-      return { valid: true, hash: 'auth_user', uid: auth.currentUser.uid };
-    }
-    return { valid: false, error: 'Unauthorized: No active teacher account session' };
-  }
-
+  // 1. Master administrator bypass
   const enteredHash = await sha256(rawPasscode);
-
   if (enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2) {
-    return { valid: true, hash: enteredHash };
+    return { valid: true, hash: enteredHash, role: 'master' };
   }
 
-  // Check custom quiz hash in database
+  const storedHash = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode_hash') : '';
+  if (storedHash === MASTER_PASSCODE_HASH_1 || storedHash === MASTER_PASSCODE_HASH_2) {
+    return { valid: true, hash: storedHash, role: 'master' };
+  }
+
+  // 2. If 'authenticated_user', verify Firebase Auth AND check quiz ownership
+  if (rawPasscode === 'authenticated_user') {
+    let user = auth.currentUser;
+    let uid = user?.uid;
+    let email = (user?.email || '').toLowerCase().trim();
+
+    if (!uid && typeof sessionStorage !== 'undefined') {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem('oxvane_teacher_auth') || '{}');
+        if (saved.uid) {
+          uid = saved.uid;
+          email = (saved.email || '').toLowerCase().trim();
+        }
+      } catch {}
+    }
+
+    if (!uid) {
+      return { valid: false, error: 'Unauthorized: No active teacher account session' };
+    }
+
+    // Check ownership of specific quiz
+    if (quizId && quizId !== 'master') {
+      const quizDef = await getQuizDefinition(quizId);
+      if (quizDef) {
+        const ownerUid = quizDef.instructorId || '';
+        const ownerEmail = (quizDef.instructorEmail || '').toLowerCase().trim();
+
+        // If quiz has an owner and it doesn't match this teacher, deny access!
+        const isOwner = (ownerUid && uid && ownerUid === uid) ||
+                        (ownerEmail && email && ownerEmail === email);
+
+        if (!isOwner && (ownerUid || ownerEmail)) {
+          return {
+            valid: false,
+            error: 'Forbidden: You do not have permission to view or manage another instructor’s quiz session.'
+          };
+        }
+      }
+    }
+
+    return { valid: true, hash: 'auth_user', uid };
+  }
+
+  // 3. Check custom quiz hash in database
   const quizDef = await getQuizDefinition(quizId);
   if (quizDef && quizDef.passcodeHash && enteredHash === quizDef.passcodeHash) {
     return { valid: true, hash: enteredHash };

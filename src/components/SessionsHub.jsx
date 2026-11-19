@@ -33,7 +33,8 @@ export default function SessionsHub({
   onOpenProjector,
   onLock,
   isLoading,
-  rehostingPin
+  rehostingPin,
+  currentTeacher = null
 }) {
   const [copiedPin, setCopiedPin] = useState(null);
   const [copiedLink, setCopiedLink] = useState(null);
@@ -91,15 +92,21 @@ export default function SessionsHub({
         <div>
           <div className="flex items-center space-x-2 text-[11px] font-semibold text-[#86868b] uppercase tracking-[0.18em] mb-2">
             <Layers className="w-3.5 h-3.5 text-[#2997ff]" />
-            <span>Instructor Administration</span>
-            <span>•</span>
-            <span>Multi-Session Storage</span>
+            <span>Instructor Workspace</span>
+            {currentTeacher && (
+              <>
+                <span>•</span>
+                <span className="text-[#0071e3] font-medium lowercase">
+                  {currentTeacher.email || currentTeacher.phoneNumber || currentTeacher.displayName}
+                </span>
+              </>
+            )}
           </div>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] apple-title-gradient mb-2">
-            Conducted Quiz Sessions
+            My Conducted Quizzes
           </h1>
           <p className="text-xs sm:text-sm text-[#86868b] max-w-2xl leading-relaxed tracking-tight">
-            Every conducted quiz session is isolated and archived below. Select any session to view the live winners podium, full candidate USN roster, and item accuracy analytics.
+            Your private quiz workspace. Quizzes you create and conduct are securely isolated to your account.
           </p>
         </div>
 
@@ -182,16 +189,16 @@ export default function SessionsHub({
       ) : filteredSessions.length === 0 ? (
         <div className="apple-glass rounded-[32px] p-12 text-center max-w-lg mx-auto">
           <Sparkles className="w-10 h-10 text-[#0071e3] mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-[#1d1d1f] mb-2 tracking-tight">No Quiz Sessions Found</h3>
+          <h3 className="text-xl font-semibold text-[#1d1d1f] mb-2 tracking-tight">No Quiz Sessions Yet</h3>
           <p className="text-xs text-[#86868b] mb-6 leading-relaxed">
-            Create your first quiz session to generate a 6-digit PIN and invite candidates to participate.
+            Welcome to your private workspace! You have not created any quiz sessions yet on this account ({currentTeacher?.email || currentTeacher?.displayName || 'Instructor'}).
           </p>
           <button
             type="button"
             onClick={onCreateNewQuiz}
             className="apple-btn-primary px-6 py-2.5 text-xs font-medium cursor-pointer"
           >
-            Create New Quiz Now
+            Create Your First Quiz Now
           </button>
         </div>
       ) : (
