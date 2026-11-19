@@ -298,8 +298,8 @@ export default function SessionsHub({
                     </div>
                   </div>
 
-                  {/* Action Buttons: Re-host, Edit, Duplicate */}
-                  <div className="pt-2 pb-1 grid grid-cols-3 gap-2 border-t border-[#e5e5ea] mb-3">
+                  {/* Action Buttons: Re-host, Edit, Duplicate, Delete */}
+                  <div className="pt-2.5 pb-1 grid grid-cols-2 sm:grid-cols-4 gap-1.5 border-t border-[#e5e5ea] mb-3">
                     {/* Re-host (Kahoot-style: fresh 6-digit PIN for new class) */}
                     <button
                       type="button"
@@ -308,7 +308,7 @@ export default function SessionsHub({
                         onRehostSession(session.sessionPin);
                       }}
                       disabled={rehostingPin === session.sessionPin}
-                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1.5 rounded-xl cursor-pointer hover:border-[#0071e3] hover:text-[#0071e3] transition-all disabled:opacity-50"
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1 rounded-xl cursor-pointer hover:border-[#0071e3] hover:text-[#0071e3] transition-all disabled:opacity-50"
                       title="Re-host: Launch a new live session with this quiz and get a fresh 6-digit PIN"
                     >
                       <RotateCcw className={`w-3 h-3 text-[#0071e3] ${rehostingPin === session.sessionPin ? 'animate-spin' : ''}`} />
@@ -322,7 +322,7 @@ export default function SessionsHub({
                         e.stopPropagation();
                         onEditSession(session.sessionPin);
                       }}
-                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1.5 rounded-xl cursor-pointer hover:border-[#1d1d1f] hover:text-[#1d1d1f] transition-all"
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1 rounded-xl cursor-pointer hover:border-[#1d1d1f] hover:text-[#1d1d1f] transition-all"
                       title="Edit: Modify quiz questions, answers, and time settings"
                     >
                       <Edit3 className="w-3 h-3 text-[#1d1d1f]" />
@@ -336,11 +336,25 @@ export default function SessionsHub({
                         e.stopPropagation();
                         onDuplicateSession(session.sessionPin);
                       }}
-                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1.5 rounded-xl cursor-pointer hover:border-[#1d1d1f] hover:text-[#1d1d1f] transition-all"
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1 rounded-xl cursor-pointer hover:border-[#1d1d1f] hover:text-[#1d1d1f] transition-all"
                       title="Duplicate: Clone quiz as a new copy to create variations"
                     >
                       <Copy className="w-3 h-3 text-[#86868b]" />
                       <span>Duplicate</span>
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteSession(session.sessionPin);
+                      }}
+                      className="apple-btn-secondary px-2 py-1.5 text-[11px] font-medium flex items-center justify-center space-x-1 rounded-xl cursor-pointer text-[#86868b] hover:text-[#ff3b30] hover:border-red-300 hover:bg-rose-50/50 transition-all"
+                      title="Delete this quiz session and submissions"
+                    >
+                      <Trash2 className="w-3 h-3 text-[#ff3b30]" />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>

@@ -22,7 +22,6 @@ import {
   Shuffle
 } from 'lucide-react';
 import { publishQuizSession, saveQuizDefinition } from '../supabase';
-import { RAG_QUIZ_DATA } from '../data/ragQuestions';
 import GeminiAiChatDrawer from './GeminiAiChatDrawer';
 
 // Official Apple iOS / macOS Tactile Switch Toggle (Large, Touch-Friendly 56px x 32px)
@@ -37,17 +36,43 @@ function AppleToggle({ checked, onChange, label = '', disabled = false }) {
         e.stopPropagation();
         onChange(!checked);
       }}
-      className={`relative inline-flex h-8 w-14 shrink-0 items-center cursor-pointer rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] ${
-        checked ? 'bg-[#34c759]' : 'bg-[#e5e5ea] border border-[#d2d2d7]/70'
-      } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+      style={{
+        width: '56px',
+        height: '32px',
+        minWidth: '56px',
+        minHeight: '32px',
+        borderRadius: '9999px',
+        padding: '4px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        position: 'relative',
+        backgroundColor: checked ? '#34c759' : '#e5e5ea',
+        border: checked ? '1px solid #30b852' : '1px solid rgba(210, 210, 215, 0.85)',
+        boxShadow: checked ? 'inset 0 1px 2px rgba(0, 0, 0, 0.12)' : 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+        outline: 'none'
+      }}
+      className="shrink-0 focus-visible:ring-2 focus-visible:ring-[#0071e3]"
       title={label}
     >
       <span className="sr-only">{label}</span>
       <span
         aria-hidden="true"
-        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.22),0_1px_1px_rgba(0,0,0,0.06)] ring-0 transition-transform duration-200 ease-in-out ${
-          checked ? 'translate-x-6' : 'translate-x-0'
-        }`}
+        style={{
+          width: '24px',
+          height: '24px',
+          minWidth: '24px',
+          minHeight: '24px',
+          borderRadius: '9999px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 3px 8px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.08)',
+          transform: checked ? 'translateX(24px)' : 'translateX(0px)',
+          transition: 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+          pointerEvents: 'none',
+          display: 'block'
+        }}
       />
     </button>
   );
@@ -169,25 +194,11 @@ export default function QuizCreator({
     setEditingIndex(0);
   };
 
-  // Load 20 RAG Template
-  const handleLoadRAGTemplate = () => {
-    setQuizConfig(prev => ({
-      ...prev,
-      title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
-      description: 'Comprehensive 20-question evaluation covering vector search, chunking, reranking, and paradigms.',
-      timeLimitMinutes: 30,
-      passingScore: 70,
-      questions: RAG_QUIZ_DATA.questions.map(q => ({
-        ...q,
-        type: q.type || 'single',
-        points: q.points || 1000
-      }))
-    }));
-    setEditingIndex(0);
-  };
-
-  // Start with clean blank question
+  // Clear canvas to blank question
   const handleStartBlank = () => {
+    if (quizConfig.questions.length > 1 || quizConfig.questions[0]?.question) {
+      if (!window.confirm('Clear all questions and start fresh with a blank question?')) return;
+    }
     setQuizConfig({
       title: '',
       description: '',
@@ -414,25 +425,15 @@ export default function QuizCreator({
           </button>
 
           {creatorMode !== 'edit' && (
-            <>
-              <button
-                type="button"
-                onClick={handleLoadRAGTemplate}
-                className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-[#2997ff]" />
-                <span>Load 20 RAG Template</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleStartBlank}
-                className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
-              >
-                <FileText className="w-3.5 h-3.5 text-[#86868b]" />
-                <span>Start Blank Canvas</span>
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={handleStartBlank}
+              className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
+              title="Clear all questions and start fresh"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#86868b]" />
+              <span>Clear Canvas</span>
+            </button>
           )}
 
           <button

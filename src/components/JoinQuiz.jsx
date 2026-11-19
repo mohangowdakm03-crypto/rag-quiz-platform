@@ -156,6 +156,13 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
                   setQuizId(numeric);
                   if (error) setError('');
                 }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData?.getData('text') || '';
+                  const numeric = pasted.replace(/\D/g, '').slice(0, 6);
+                  setQuizId(numeric);
+                  if (error) setError('');
+                }}
                 className="w-full text-center text-3xl sm:text-4xl font-mono font-semibold py-3 px-4 rounded-xl bg-white border border-[#d2d2d7] text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/15 transition-all tracking-[0.25em] shadow-sm"
               />
               <p className="text-[11px] text-[#86868b] text-center mt-2.5 tracking-tight">

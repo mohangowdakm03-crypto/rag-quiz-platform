@@ -141,12 +141,6 @@ export default function QuizResults({ results, onRetake, onSwitchToTeacher }) {
             </span>
             <span className="text-[#d2d2d7]">•</span>
             <span>USN: <strong className="text-[#1d1d1f] font-mono">{studentId}</strong></span>
-            {quizId && (
-              <>
-                <span className="text-[#d2d2d7]">•</span>
-                <span>PIN: <strong className="text-[#1d1d1f] font-mono">{quizId}</strong></span>
-              </>
-            )}
           </div>
 
           {/* If showScore is TRUE: Display Big Score Numbers */}

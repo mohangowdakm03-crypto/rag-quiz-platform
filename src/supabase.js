@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { RAG_QUIZ_DATA } from './data/ragQuestions.js';
 
 // Production Supabase project credentials for rag-quiz-platform
 const SUPABASE_URL = "https://zcdauivbacingwrxjsgf.supabase.co";
@@ -87,24 +86,6 @@ export async function getQuizDefinition(quizId) {
       .limit(1);
 
     if (error || !data || data.length === 0) {
-      // If default 6-digit quiz ID or legacy rag-mastery-2025, return default RAG template
-      if (quizId === '202500' || quizId === 'rag-mastery-2025' || quizId === 'default' || !quizId) {
-        return {
-          id: '202500',
-          title: RAG_QUIZ_DATA.title,
-          description: RAG_QUIZ_DATA.description,
-          timeLimitMinutes: RAG_QUIZ_DATA.timeLimitMinutes || 30,
-          passingScore: RAG_QUIZ_DATA.passingScore || 70,
-          passcodeHash: MASTER_PASSCODE_HASH_1,
-          gameMode: 'classic',
-          perQuestionSeconds: 30,
-          questions: RAG_QUIZ_DATA.questions.map(q => ({
-            ...q,
-            type: q.type || 'single',
-            points: q.points || 1000
-          }))
-        };
-      }
       return null;
     }
 
@@ -133,27 +114,6 @@ export async function getQuizDefinition(quizId) {
     };
   } catch (err) {
     console.warn('Quiz definition load error:', err);
-    if (quizId === '202500' || quizId === 'rag-mastery-2025' || !quizId) {
-      return {
-        id: '202500',
-        title: RAG_QUIZ_DATA.title,
-        description: RAG_QUIZ_DATA.description,
-        timeLimitMinutes: 30,
-        passingScore: 70,
-        passcodeHash: MASTER_PASSCODE_HASH_1,
-        gameMode: 'classic',
-        perQuestionSeconds: 30,
-        showScore: false,
-        showItemAnalysis: false,
-        allowRetake: false,
-        showRank: false,
-        oneAttemptPerDevice: true,
-        antiCheatEnabled: true,
-        strictAutoSubmit: true,
-        maxTabSwitches: 3,
-        questions: RAG_QUIZ_DATA.questions.map(q => ({ ...q, type: 'single', points: 1000 }))
-      };
-    }
     return null;
   }
 }

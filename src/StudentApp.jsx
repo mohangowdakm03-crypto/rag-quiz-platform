@@ -4,23 +4,23 @@ import JoinQuiz from './components/JoinQuiz';
 import QuizRunner from './components/QuizRunner';
 import QuizResults from './components/QuizResults';
 import { getStudentQuizDefinition } from './supabase';
-import { STUDENT_QUIZ_DATA } from './data/ragQuestions';
 
 export default function StudentApp() {
   const [quizId, setQuizId] = useState('');
   const [quizState, setQuizState] = useState('join'); // 'join' | 'taking' | 'completed'
   const [sessionData, setSessionData] = useState(null);
   const [results, setResults] = useState(null);
-  const [quizData, setQuizData] = useState(STUDENT_QUIZ_DATA);
+  const [quizData, setQuizData] = useState(null);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
 
-  // Parse URL query params on load (e.g. ?pin=849201 or ?quiz=rag-mastery-2025)
+  // Parse URL query params on load (e.g. ?pin=849201)
   useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const urlPin = urlParams.get('pin') || urlParams.get('quiz');
       if (urlPin) {
-        setQuizId(urlPin.trim());
+        const cleanPin = urlPin.replace(/\D/g, '').slice(0, 6);
+        if (cleanPin) setQuizId(cleanPin);
       }
     } catch (e) {
       console.warn('URL parsing error:', e);

@@ -48,7 +48,6 @@ import {
   deleteTeacherSession,
   sha256
 } from '../supabase';
-import { RAG_QUIZ_DATA } from '../data/ragQuestions.js';
 import StudentDetailModal from './StudentDetailModal';
 
 export default function TeacherDashboard({ 
@@ -64,7 +63,7 @@ export default function TeacherDashboard({
   const [isVerifying, setIsVerifying] = useState(false);
 
   // Active session PIN state
-  const [activeSessionPin, setActiveSessionPin] = useState(initialQuizId || 'rag-mastery-2025');
+  const [activeSessionPin, setActiveSessionPin] = useState(initialQuizId || '');
   const [availableSessions, setAvailableSessions] = useState([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
 
@@ -79,8 +78,8 @@ export default function TeacherDashboard({
   // Quiz Studio Customization State
   const [quizConfig, setQuizConfig] = useState({
     id: activeSessionPin,
-    title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
-    description: 'Comprehensive 20-question evaluation on RAG architecture and paradigms.',
+    title: '',
+    description: '',
     timeLimitMinutes: 30,
     passingScore: 70,
     gameMode: 'classic', // 'classic' | 'assessment'
@@ -102,6 +101,9 @@ export default function TeacherDashboard({
     try {
       const list = await fetchTeacherSessions();
       setAvailableSessions(list);
+      if (!activeSessionPin && list.length > 0) {
+        setActiveSessionPin(list[0].sessionPin);
+      }
     } catch (err) {
       console.error('Error loading sessions:', err);
     } finally {
@@ -209,10 +211,6 @@ export default function TeacherDashboard({
 
   // Delete an old session
   const handleDeleteSession = async (sessionPinToDelete) => {
-    if (sessionPinToDelete === 'rag-mastery-2025') {
-      alert('The default template session cannot be deleted.');
-      return;
-    }
     if (!window.confirm(`Are you sure you want to delete session "${sessionPinToDelete}" and all its student submissions?`)) {
       return;
     }
@@ -220,9 +218,6 @@ export default function TeacherDashboard({
     try {
       await deleteTeacherSession(sessionPinToDelete, teacherPasscode);
       await loadSessionsList();
-      if (activeSessionPin === sessionPinToDelete) {
-        handleSwitchSession('rag-mastery-2025');
-      }
       alert(`Session ${sessionPinToDelete} deleted successfully.`);
     } catch (err) {
       alert(`Delete error: ${err.message}`);
@@ -365,27 +360,6 @@ export default function TeacherDashboard({
       updatedQuestions[editingQuestionIndex] = currentQ;
       return { ...prev, questions: updatedQuestions };
     });
-  };
-
-  const handleResetToRAGTemplate = () => {
-    if (!window.confirm('Reset quiz questions to the standard 20 RAG technical questions template?')) return;
-    setQuizConfig(prev => ({
-      ...prev,
-      title: 'Retrieval-Augmented Generation (RAG) Mastery Quiz',
-      description: 'Comprehensive 20-question technical evaluation covering RAG architecture, vector search, chunking, reranking, and paradigms.',
-      timeLimitMinutes: 30,
-      passingScore: 70,
-      gameMode: prev.gameMode || 'classic',
-      perQuestionSeconds: prev.perQuestionSeconds || 30,
-      questions: RAG_QUIZ_DATA.questions.map(q => ({
-        ...q,
-        type: 'single',
-        points: 1000
-      }))
-    }));
-    setEditingQuestionIndex(0);
-    setSaveSuccessMsg('Loaded 20 RAG Questions Template.');
-    setTimeout(() => setSaveSuccessMsg(''), 4000);
   };
 
   // Save changes to current session
@@ -596,7 +570,7 @@ export default function TeacherDashboard({
               <span>Create New Session</span>
             </button>
 
-            {activeSessionPin !== 'rag-mastery-2025' && (
+            {activeSessionPin && (
               <button
                 type="button"
                 onClick={() => handleDeleteSession(activeSessionPin)}
@@ -905,15 +879,6 @@ export default function TeacherDashboard({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleResetToRAGTemplate}
-                className="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                <span>Load 20 RAG Template</span>
-              </button>
-
               <button
                 type="button"
                 onClick={handleSaveQuizToCloud}

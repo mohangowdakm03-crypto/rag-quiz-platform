@@ -39,7 +39,7 @@ function CreatePage() {
     }
 
     try {
-      const auth = await verifyInstructorPasscode('rag-mastery-2025', code);
+      const auth = await verifyInstructorPasscode('master', code);
       if (auth.valid) {
         setPasscode(code);
         setIsAuthenticated(true);
