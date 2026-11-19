@@ -65,7 +65,19 @@ const KAHOOT_STYLES = [
 
 export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
   const { studentName, studentId, quizId } = sessionData;
-  const { questions = [], timeLimitMinutes = 30 } = quizData;
+  const { timeLimitMinutes = 30 } = quizData;
+
+  // Shuffle questions if enabled by instructor to prevent adjacent screen peeking
+  const [questions] = useState(() => {
+    const list = [...(quizData.questions || [])];
+    if (quizData.shuffleQuestions) {
+      for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+      }
+    }
+    return list;
+  });
 
   const isAssessmentMode = (quizData.gameMode === 'assessment' || sessionData.gameMode === 'assessment');
   const perQuestionSeconds = Number(quizData.perQuestionSeconds || sessionData.perQuestionSeconds || 30);

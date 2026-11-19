@@ -18,10 +18,39 @@ import {
   ShieldAlert,
   Smartphone,
   Lock,
-  Award
+  Award,
+  Shuffle
 } from 'lucide-react';
 import { publishQuizSession, saveQuizDefinition } from '../supabase';
 import { RAG_QUIZ_DATA } from '../data/ragQuestions';
+
+// Official Apple iOS / macOS Tactile Switch Toggle (Large, Touch-Friendly 56px x 32px)
+function AppleToggle({ checked, onChange, label = '', disabled = false }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(!checked);
+      }}
+      className={`relative inline-flex h-8 w-14 shrink-0 items-center cursor-pointer rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] ${
+        checked ? 'bg-[#34c759]' : 'bg-[#e5e5ea] border border-[#d2d2d7]/70'
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+      title={label}
+    >
+      <span className="sr-only">{label}</span>
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.22),0_1px_1px_rgba(0,0,0,0.06)] ring-0 transition-transform duration-200 ease-in-out ${
+          checked ? 'translate-x-6' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
 
 export default function QuizCreator({ 
   onBackToHub, 
@@ -49,6 +78,7 @@ export default function QuizCreator({
         antiCheatEnabled: initialQuizConfig.antiCheatEnabled !== false,
         strictAutoSubmit: initialQuizConfig.strictAutoSubmit !== false,
         maxTabSwitches: initialQuizConfig.maxTabSwitches || 3,
+        shuffleQuestions: initialQuizConfig.shuffleQuestions === true,
         questions: (initialQuizConfig.questions && initialQuizConfig.questions.length > 0)
           ? initialQuizConfig.questions.map((q, idx) => ({
               ...q,
@@ -90,6 +120,7 @@ export default function QuizCreator({
       antiCheatEnabled: true,
       strictAutoSubmit: true,
       maxTabSwitches: 3,
+      shuffleQuestions: false,
       questions: [
         {
           id: 1,
@@ -146,6 +177,7 @@ export default function QuizCreator({
       antiCheatEnabled: true,
       strictAutoSubmit: true,
       maxTabSwitches: 3,
+      shuffleQuestions: false,
       questions: [
         {
           id: 1,
@@ -272,7 +304,8 @@ export default function QuizCreator({
           oneAttemptPerDevice: quizConfig.oneAttemptPerDevice !== false,
           antiCheatEnabled: quizConfig.antiCheatEnabled !== false,
           strictAutoSubmit: quizConfig.strictAutoSubmit !== false,
-          maxTabSwitches: quizConfig.maxTabSwitches || 3
+          maxTabSwitches: quizConfig.maxTabSwitches || 3,
+          shuffleQuestions: quizConfig.shuffleQuestions === true
         });
 
         const pin = res.sessionPin;
@@ -520,245 +553,273 @@ export default function QuizCreator({
           </div>
         </div>
 
-        {/* Post-Exam Visibility & Permissions (Confidential Mode / Retake Controls) */}
+        {/* Session Policies & Exam Configuration (8 Apple-Style Tactile Toggles) */}
         <div className="pt-6 border-t border-[#e5e5ea]">
-          <div className="mb-4">
-            <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-4 h-4 text-[#0071e3]" />
-              <h3 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
-                Post-Exam Visibility & Student Permissions
-              </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+            <div>
+              <div className="flex items-center space-x-2">
+                <Settings className="w-4 h-4 text-[#0071e3]" />
+                <h3 className="text-sm sm:text-base font-semibold text-[#1d1d1f] tracking-tight">
+                  Session Policies & Exam Configuration (8 Controls)
+                </h3>
+              </div>
+              <p className="text-xs text-[#86868b] mt-0.5 tracking-tight">
+                Tap anywhere on any card or toggle bar to adjust settings. Authentic Apple tactile switches (56×32pt).
+              </p>
             </div>
-            <p className="text-xs text-[#86868b] mt-0.5 tracking-tight">
-              Control what candidates see upon submitting. By default, scores, question analysis, and retakes remain strictly confidential to keep competition fair and reveal winners later.
-            </p>
+            <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-white border border-[#d2d2d7]/80 text-[#1d1d1f] font-semibold w-fit flex items-center space-x-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#34c759] animate-pulse"></span>
+              <span>8 Active Policies</span>
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Toggle 1: Show Score & Percentage */}
-            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-0.5">
-                <div className="flex items-center space-x-2">
-                  <Award className="w-4 h-4 text-[#0071e3]" />
-                  <span className="text-xs font-semibold text-[#1d1d1f]">Show Score & Percentage</span>
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, showScore: !prev.showScore }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.showScore 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.showScore ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <Award className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Show Score & Percentage</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.showScore 
-                    ? 'Students will see their score, points & pass status immediately.' 
-                    : 'Confidential: Scores and pass status are kept hidden until you reveal winners.'}
+                    ? 'Students will see their score, points & pass status immediately upon submission.' 
+                    : 'Confidential: Scores remain hidden until you reveal the winners live.'}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={quizConfig.showScore}
-                onClick={() => setQuizConfig(prev => ({ ...prev, showScore: !prev.showScore }))}
-                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                  quizConfig.showScore ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                }`}
-                title="Toggle student score visibility"
-              >
-                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                  quizConfig.showScore ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
+              <AppleToggle
+                checked={quizConfig.showScore}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, showScore: checked }))}
+                label="Toggle student score visibility"
+              />
             </div>
 
             {/* Toggle 2: Show Question Item Analysis */}
-            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-0.5">
-                <div className="flex items-center space-x-2">
-                  <FileText className="w-4 h-4 text-[#0071e3]" />
-                  <span className="text-xs font-semibold text-[#1d1d1f]">Question Item Analysis</span>
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, showItemAnalysis: !prev.showItemAnalysis }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.showItemAnalysis 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.showItemAnalysis ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <FileText className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Question Item Analysis</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.showItemAnalysis 
                     ? 'Students can inspect correct answers, mistakes & technical explanations.' 
-                    : 'Confidential: Correct answers & explanations are hidden to prevent leaking to peers.'}
+                    : 'Confidential: Correct answers & explanations are hidden to prevent peer leaks.'}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={quizConfig.showItemAnalysis}
-                onClick={() => setQuizConfig(prev => ({ ...prev, showItemAnalysis: !prev.showItemAnalysis }))}
-                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                  quizConfig.showItemAnalysis ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                }`}
-                title="Toggle question item analysis visibility"
-              >
-                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                  quizConfig.showItemAnalysis ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
+              <AppleToggle
+                checked={quizConfig.showItemAnalysis}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, showItemAnalysis: checked }))}
+                label="Toggle question item analysis visibility"
+              />
             </div>
 
             {/* Toggle 3: Allow Retake */}
-            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-0.5">
-                <div className="flex items-center space-x-2">
-                  <RotateCcw className="w-4 h-4 text-[#0071e3]" />
-                  <span className="text-xs font-semibold text-[#1d1d1f]">Allow Retake Examination</span>
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, allowRetake: !prev.allowRetake }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.allowRetake 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.allowRetake ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <RotateCcw className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Allow Retake Examination</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.allowRetake 
                     ? 'Students can retake the quiz multiple times.' 
                     : 'Single Attempt: Retake button is disabled and duplicate attempts are blocked.'}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={quizConfig.allowRetake}
-                onClick={() => setQuizConfig(prev => ({ ...prev, allowRetake: !prev.allowRetake }))}
-                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                  quizConfig.allowRetake ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                }`}
-                title="Toggle allow retake examination"
-              >
-                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                  quizConfig.allowRetake ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
+              <AppleToggle
+                checked={quizConfig.allowRetake}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, allowRetake: checked }))}
+                label="Toggle allow retake examination"
+              />
             </div>
 
             {/* Toggle 4: Show Rank / Leaderboard */}
-            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-0.5">
-                <div className="flex items-center space-x-2">
-                  <Sparkles className="w-4 h-4 text-[#0071e3]" />
-                  <span className="text-xs font-semibold text-[#1d1d1f]">Show Rank / Leaderboard</span>
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, showRank: !prev.showRank }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.showRank 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.showRank ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Show Rank / Leaderboard</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.showRank 
-                    ? 'Students can see their live rank/position on completion.' 
-                    : 'Confidential: Final ranks and podium winners are reserved for the instructor.'}
+                    ? 'Students can see their live rank & position on completion.' 
+                    : 'Confidential: Final ranks and podium winners are reserved for instructor reveal.'}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={quizConfig.showRank}
-                onClick={() => setQuizConfig(prev => ({ ...prev, showRank: !prev.showRank }))}
-                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                  quizConfig.showRank ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                }`}
-                title="Toggle student rank visibility"
-              >
-                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                  quizConfig.showRank ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
+              <AppleToggle
+                checked={quizConfig.showRank}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, showRank: checked }))}
+                label="Toggle student rank visibility"
+              />
             </div>
-          </div>
-        </div>
 
-        {/* Academic Integrity & Anti-Cheat Suite (Google Forms Style) */}
-        <div className="pt-6 border-t border-[#e5e5ea]">
-          <div className="mb-4">
-            <div className="flex items-center space-x-2">
-              <ShieldAlert className="w-4 h-4 text-[#0071e3]" />
-              <h3 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
-                Academic Integrity & Anti-Cheat Suite (Google Forms Style)
-              </h3>
-            </div>
-            <p className="text-xs text-[#86868b] mt-0.5 tracking-tight">
-              Enforce single attempt rules per device/candidate and prevent cheating through active browser event monitoring.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Toggle A: One Attempt per Device */}
-            <div className="apple-glass-card p-4 rounded-2xl flex flex-col justify-between gap-3 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Smartphone className="w-4 h-4 text-[#0071e3]" />
-                    <span className="text-xs font-semibold text-[#1d1d1f]">Limit to 1 Response / Device</span>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={quizConfig.oneAttemptPerDevice}
-                    onClick={() => setQuizConfig(prev => ({ ...prev, oneAttemptPerDevice: !prev.oneAttemptPerDevice }))}
-                    className={`w-11 h-6.5 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                      quizConfig.oneAttemptPerDevice ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                    }`}
-                    title="Toggle single response per device"
-                  >
-                    <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                      quizConfig.oneAttemptPerDevice ? 'translate-x-4.5' : 'translate-x-0'
-                    }`} />
-                  </button>
+            {/* Toggle 5: One Attempt per Device (Google Forms Style) */}
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, oneAttemptPerDevice: !prev.oneAttemptPerDevice }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.oneAttemptPerDevice 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.oneAttemptPerDevice ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <Smartphone className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Limit to 1 Response / Device</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.oneAttemptPerDevice 
-                    ? 'Google Forms style: Blocks duplicate submissions from the same device and candidate USN.' 
+                    ? 'Google Forms rule: Locks device UID and candidate USN to block repeat tries.' 
                     : 'Unrestricted: Candidates can submit multiple times from this device.'}
                 </p>
               </div>
+              <AppleToggle
+                checked={quizConfig.oneAttemptPerDevice}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, oneAttemptPerDevice: checked }))}
+                label="Toggle single response per device"
+              />
             </div>
 
-            {/* Toggle B: Anti-Cheat Suite */}
-            <div className="apple-glass-card p-4 rounded-2xl flex flex-col justify-between gap-3 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ShieldCheck className="w-4 h-4 text-[#0071e3]" />
-                    <span className="text-xs font-semibold text-[#1d1d1f]">Proctoring & Anti-Cheat</span>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={quizConfig.antiCheatEnabled}
-                    onClick={() => setQuizConfig(prev => ({ ...prev, antiCheatEnabled: !prev.antiCheatEnabled }))}
-                    className={`w-11 h-6.5 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                      quizConfig.antiCheatEnabled ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                    }`}
-                    title="Toggle proctoring & anti-cheat suite"
-                  >
-                    <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                      quizConfig.antiCheatEnabled ? 'translate-x-4.5' : 'translate-x-0'
-                    }`} />
-                  </button>
+            {/* Toggle 6: Proctoring & Anti-Cheat Suite */}
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, antiCheatEnabled: !prev.antiCheatEnabled }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.antiCheatEnabled 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.antiCheatEnabled ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <ShieldAlert className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Proctoring & Anti-Cheat Suite</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.antiCheatEnabled 
-                    ? 'Monitors tab switches, blocks screenshot shortcuts, and prevents copy-paste & right-click.' 
+                    ? 'Monitors tab switches, window blur, blocks screenshot shortcuts & copy-paste.' 
                     : 'Disabled: No browser event monitoring or screenshot restrictions.'}
                 </p>
               </div>
+              <AppleToggle
+                checked={quizConfig.antiCheatEnabled}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, antiCheatEnabled: checked }))}
+                label="Toggle proctoring & anti-cheat suite"
+              />
             </div>
 
-            {/* Toggle C: Strict Auto-Submit */}
-            <div className="apple-glass-card p-4 rounded-2xl flex flex-col justify-between gap-3 border border-[#d2d2d7]/70 bg-white/70">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Lock className="w-4 h-4 text-[#0071e3]" />
-                    <span className="text-xs font-semibold text-[#1d1d1f]">Auto-Submit on 3 Violations</span>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={quizConfig.strictAutoSubmit}
-                    onClick={() => setQuizConfig(prev => ({ ...prev, strictAutoSubmit: !prev.strictAutoSubmit }))}
-                    className={`w-11 h-6.5 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
-                      quizConfig.strictAutoSubmit ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
-                    }`}
-                    title="Toggle auto-submit on violations"
-                  >
-                    <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                      quizConfig.strictAutoSubmit ? 'translate-x-4.5' : 'translate-x-0'
-                    }`} />
-                  </button>
+            {/* Toggle 7: Strict Auto-Submit on 3 Violations */}
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, strictAutoSubmit: !prev.strictAutoSubmit }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.strictAutoSubmit 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.strictAutoSubmit ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <Lock className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Auto-Submit on 3 Violations</span>
                 </div>
-                <p className="text-[11px] text-[#86868b] leading-snug">
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
                   {quizConfig.strictAutoSubmit 
-                    ? 'Strict fairness: Force-submits the candidate’s assessment if they leave the tab 3 times.' 
+                    ? 'Strict fairness: Force-submits the candidate’s exam if they leave the tab 3 times.' 
                     : 'Log only: Violations are logged to instructor console without forced submission.'}
                 </p>
               </div>
+              <AppleToggle
+                checked={quizConfig.strictAutoSubmit}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, strictAutoSubmit: checked }))}
+                label="Toggle auto-submit on violations"
+              />
+            </div>
+
+            {/* Toggle 8: Shuffle Question Order (Anti-Peeking) */}
+            <div 
+              onClick={() => setQuizConfig(prev => ({ ...prev, shuffleQuestions: !prev.shuffleQuestions }))}
+              className={`apple-glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.99] ${
+                quizConfig.shuffleQuestions 
+                  ? 'border-[#34c759]/50 bg-emerald-50/20 shadow-sm' 
+                  : 'border-[#d2d2d7]/70 bg-white/70 hover:border-[#86868b]/60 hover:bg-white'
+              }`}
+            >
+              <div className="space-y-1 pr-2 flex-1">
+                <div className="flex items-center space-x-2.5">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    quizConfig.shuffleQuestions ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                  }`}>
+                    <Shuffle className="w-4 h-4" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight">Shuffle Question Order</span>
+                </div>
+                <p className="text-[11px] text-[#6e6e73] leading-relaxed pl-10.5">
+                  {quizConfig.shuffleQuestions 
+                    ? 'Anti-peeking: Randomizes question sequence per student to prevent copying in the room.' 
+                    : 'Standard: All candidates receive questions in identical sequential order.'}
+                </p>
+              </div>
+              <AppleToggle
+                checked={quizConfig.shuffleQuestions}
+                onChange={(checked) => setQuizConfig(prev => ({ ...prev, shuffleQuestions: checked }))}
+                label="Toggle shuffle question order"
+              />
             </div>
           </div>
         </div>

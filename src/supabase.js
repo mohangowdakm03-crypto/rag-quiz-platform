@@ -128,6 +128,7 @@ export async function getQuizDefinition(quizId) {
       antiCheatEnabled: answers.antiCheatEnabled !== false,
       strictAutoSubmit: answers.strictAutoSubmit !== false,
       maxTabSwitches: Number(answers.maxTabSwitches || 3),
+      shuffleQuestions: answers.shuffleQuestions === true,
       questions: row.breakdown || []
     };
   } catch (err) {
@@ -179,6 +180,7 @@ export async function getStudentQuizDefinition(quizId) {
     antiCheatEnabled: fullQuiz.antiCheatEnabled !== false,
     strictAutoSubmit: fullQuiz.strictAutoSubmit !== false,
     maxTabSwitches: fullQuiz.maxTabSwitches || 3,
+    shuffleQuestions: fullQuiz.shuffleQuestions === true,
     totalQuestions: fullQuiz.questions.length,
     questions: fullQuiz.questions.map(q => ({
       id: q.id,
@@ -242,6 +244,7 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
           antiCheatEnabled: quizData.antiCheatEnabled !== false,
           strictAutoSubmit: quizData.strictAutoSubmit !== false,
           maxTabSwitches: Number(quizData.maxTabSwitches || 3),
+          shuffleQuestions: quizData.shuffleQuestions === true,
           passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1,
           updatedAt: new Date().toISOString()
         },
@@ -285,6 +288,7 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const antiCheatEnabled = options.antiCheatEnabled ?? quizData.antiCheatEnabled ?? true;
   const strictAutoSubmit = options.strictAutoSubmit ?? quizData.strictAutoSubmit ?? true;
   const maxTabSwitches = Number(options.maxTabSwitches || quizData.maxTabSwitches || 3);
+  const shuffleQuestions = options.shuffleQuestions ?? quizData.shuffleQuestions ?? false;
 
   // Insert fresh session definition
   const { data, error } = await adminClient
@@ -314,6 +318,7 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
           antiCheatEnabled,
           strictAutoSubmit,
           maxTabSwitches,
+          shuffleQuestions,
           passcodeHash: enteredHash,
           publishedAt: new Date().toISOString()
         },
