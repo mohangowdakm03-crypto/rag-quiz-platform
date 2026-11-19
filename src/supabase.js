@@ -73,6 +73,82 @@ export async function updateParticipantProgress(participantId, statusText) {
   }
 }
 
+// 1B. Fetch all joined participants for classroom presentation view
+export async function fetchQuizParticipants(quizId) {
+  const client = getSupabaseAdminClient();
+  try {
+    const { data, error } = await client
+      .from('quiz_participants')
+      .select('id, student_name, student_id, status, created_at')
+      .eq('quiz_id', quizId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.warn('fetchQuizParticipants error:', error);
+      return [];
+    }
+    return (data || []).map(p => ({
+      id: p.id,
+      studentName: p.student_name,
+      studentId: p.student_id,
+      status: p.status,
+      joinedAt: p.created_at ? new Date(p.created_at) : new Date()
+    }));
+  } catch (err) {
+    console.warn('fetchQuizParticipants exception:', err);
+    return [];
+  }
+}
+
+// 1C. Real-time participant join subscription (Supabase Realtime + Polling fallback)
+export function subscribeToParticipants(quizId, onParticipantsChange) {
+  let isSubscribed = true;
+
+  const load = async () => {
+    if (!isSubscribed) return;
+    const participants = await fetchQuizParticipants(quizId);
+    if (isSubscribed && onParticipantsChange) {
+      onParticipantsChange(participants);
+    }
+  };
+
+  // Immediate initial load
+  load();
+
+  // Poll every 2.5 seconds to guarantee 100% reliable updates on projectors
+  const pollTimer = setInterval(load, 2500);
+
+  // Subscribe to Supabase Realtime channel for instant push events
+  let channel = null;
+  try {
+    const client = getSupabaseClient();
+    channel = client
+      .channel(`participants-${quizId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'quiz_participants', filter: `quiz_id=eq.${quizId}` },
+        () => {
+          if (isSubscribed) load();
+        }
+      )
+      .subscribe();
+  } catch (err) {
+    console.warn('Realtime subscription note:', err);
+  }
+
+  return () => {
+    isSubscribed = false;
+    clearInterval(pollTimer);
+    if (channel) {
+      try {
+        const client = getSupabaseClient();
+        client.removeChannel(channel);
+      } catch {
+        // ignore
+      }
+    }
+  };
+}
+
 // 2. Fetch full quiz definition from Supabase (including answer key & settings)
 export async function getQuizDefinition(quizId) {
   const adminClient = getSupabaseAdminClient();
@@ -110,6 +186,7 @@ export async function getQuizDefinition(quizId) {
       strictAutoSubmit: answers.strictAutoSubmit !== false,
       maxTabSwitches: Number(answers.maxTabSwitches || 3),
       shuffleQuestions: answers.shuffleQuestions === true,
+      sheetsWebhookUrl: answers.sheetsWebhookUrl || '',
       questions: row.breakdown || []
     };
   } catch (err) {
@@ -205,6 +282,7 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
           strictAutoSubmit: quizData.strictAutoSubmit !== false,
           maxTabSwitches: Number(quizData.maxTabSwitches || 3),
           shuffleQuestions: quizData.shuffleQuestions === true,
+          sheetsWebhookUrl: quizData.sheetsWebhookUrl || '',
           passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1,
           updatedAt: new Date().toISOString()
         },
@@ -279,6 +357,7 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
           strictAutoSubmit,
           maxTabSwitches,
           shuffleQuestions,
+          sheetsWebhookUrl: options.sheetsWebhookUrl || quizData.sheetsWebhookUrl || '',
           passcodeHash: enteredHash,
           publishedAt: new Date().toISOString()
         },
@@ -304,6 +383,7 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
     antiCheatEnabled,
     strictAutoSubmit,
     maxTabSwitches,
+    sheetsWebhookUrl: options.sheetsWebhookUrl || quizData.sheetsWebhookUrl || '',
     id: data?.[0]?.id
   };
 }
@@ -365,6 +445,7 @@ export async function fetchTeacherSessions() {
           antiCheatEnabled: ans.antiCheatEnabled !== false,
           strictAutoSubmit: ans.strictAutoSubmit !== false,
           maxTabSwitches: Number(ans.maxTabSwitches || 3),
+          sheetsWebhookUrl: ans.sheetsWebhookUrl || '',
           createdAt: row.created_at,
           submissionCount: stat.count,
           classAverage: avg,
@@ -578,6 +659,39 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
   // Mark local device attempt completed
   markDeviceAttemptCompleted(quizId, studentId);
 
+  // Automated Direct Google Sheets Live Webhook Sync (Zero-click row append on submit)
+  const webhookUrl = fullQuiz?.sheetsWebhookUrl || 
+    (typeof localStorage !== 'undefined' ? (localStorage.getItem(`sheets_webhook_${quizId}`) || localStorage.getItem('oxvane_global_sheets_webhook')) : '');
+
+  if (webhookUrl && typeof webhookUrl === 'string' && webhookUrl.trim().startsWith('http')) {
+    try {
+      fetch(webhookUrl.trim(), {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          sessionPin: quizId,
+          sessionTitle: fullQuiz?.title || 'Quiz Session',
+          studentName: studentName.trim(),
+          studentId: studentId?.trim() || 'N/A',
+          score: totalEarned,
+          totalPossible: totalPossible,
+          percentage,
+          passed,
+          timeTakenSeconds: timeTakenSeconds || 0,
+          integrityStatus,
+          tabSwitches: Number(tabSwitches || 0),
+          screenshotAttempts: Number(screenshotAttempts || 0),
+          submittedAt: new Date().toISOString()
+        })
+      }).catch(sheetErr => {
+        console.warn('Google Sheets live row append note:', sheetErr);
+      });
+    } catch (sheetSyncErr) {
+      console.warn('Google Sheets live sync error:', sheetSyncErr);
+    }
+  }
+
   const answeredTotal = answeredCount !== undefined 
     ? answeredCount 
     : Object.keys(answers || {}).filter(k => !k.startsWith('_') && answers[k] !== undefined && answers[k] !== null && answers[k] !== '').length;
@@ -769,4 +883,37 @@ export function subscribeToTeacherData(quizId, rawPasscode, onSubmissions) {
     isSubscribed = false;
     clearInterval(timerId);
   };
+}
+
+// 9. Diagnostic Ping to verify Google Sheets Webhook Connectivity
+export async function testGoogleSheetsWebhook(webhookUrl, sessionPin = 'TEST-PIN', sessionTitle = 'Diagnostic Test') {
+  if (!webhookUrl || !webhookUrl.trim().startsWith('http')) {
+    throw new Error('Please enter a valid Google Apps Script Web App URL starting with https://');
+  }
+
+  const payload = {
+    sessionPin,
+    sessionTitle,
+    studentName: 'Diagnostic Ping (Oxvane)',
+    studentId: 'TEST-001',
+    score: 1000,
+    totalPossible: 1000,
+    percentage: 100,
+    passed: true,
+    timeTakenSeconds: 42,
+    integrityStatus: 'Clean',
+    tabSwitches: 0,
+    screenshotAttempts: 0,
+    submittedAt: new Date().toISOString(),
+    isTest: true
+  };
+
+  await fetch(webhookUrl.trim(), {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+
+  return { success: true };
 }

@@ -29,14 +29,18 @@ import {
   Edit3,
   Trash2,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  Tv,
+  FileSpreadsheet
 } from 'lucide-react';
 import { 
   subscribeToTeacherData, 
   fetchTeacherSubmissions, 
-  getQuizDefinition 
+  getQuizDefinition,
+  saveQuizDefinition 
 } from '../supabase';
 import StudentDetailModal from './StudentDetailModal';
+import GoogleSheetsSetupModal from './GoogleSheetsSetupModal';
 
 export default function ConductedSessionView({ 
   sessionPin, 
@@ -46,6 +50,7 @@ export default function ConductedSessionView({
   onDuplicateSession,
   onRehostSession,
   onDeleteSession,
+  onOpenProjector,
   onLock
 }) {
   const [sessionDef, setSessionDef] = useState(null);
@@ -75,7 +80,12 @@ export default function ConductedSessionView({
       setIsLoading(true);
       try {
         const def = await getQuizDefinition(sessionPin);
-        if (def) setSessionDef(def);
+        if (def) {
+          setSessionDef(def);
+          if (def.sheetsWebhookUrl) {
+            setSheetsWebhookUrl(def.sheetsWebhookUrl);
+          }
+        }
 
         const res = await fetchTeacherSubmissions(sessionPin, teacherPasscode);
         if (res.success) {
@@ -402,8 +412,20 @@ export default function ConductedSessionView({
           </p>
         </div>
 
-        {/* Action Controls with Google Sheets Integration */}
+        {/* Action Controls with Google Sheets & Projector Integration */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Projector Presentation View Button */}
+          {onOpenProjector && (
+            <button
+              onClick={() => onOpenProjector(sessionPin)}
+              className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-[#0071e3] border-[#0071e3]/40 hover:border-[#0071e3] hover:bg-blue-50/50 cursor-pointer shadow-sm"
+              title="Classroom Projector View with Instant QR Code & Live Join Counter"
+            >
+              <Tv className="w-3.5 h-3.5 text-[#0071e3]" />
+              <span>📽️ Projector Mode (QR Code)</span>
+            </button>
+          )}
+
           <button
             onClick={handleCopyLink}
             className="apple-btn-primary flex items-center space-x-1.5 px-4 py-2 text-xs font-medium cursor-pointer"
@@ -419,16 +441,19 @@ export default function ConductedSessionView({
             title="Copy sorted table to paste directly into Google Sheets"
           >
             {copiedSheets ? <Check className="w-3.5 h-3.5 text-[#34c759]" /> : <Table className="w-3.5 h-3.5 text-[#0071e3]" />}
-            <span>{copiedSheets ? 'Copied for Sheets!' : 'Copy for Google Sheets'}</span>
+            <span>{copiedSheets ? 'Copied Table!' : 'Copy Table'}</span>
           </button>
 
-          {/* Google Sheets Sync Settings Modal */}
+          {/* Automated Direct Google Sheets Live Webhook Sync */}
           <button
             onClick={() => setShowSheetsModal(true)}
-            className="apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer"
+            className={`apple-btn-secondary flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium cursor-pointer ${
+              sheetsWebhookUrl ? 'border-emerald-300 bg-emerald-50/50 text-emerald-800' : ''
+            }`}
+            title="Automated Direct Google Sheets Live Sync (Zero-click row append on submit)"
           >
-            <Link2 className="w-3.5 h-3.5 text-[#0071e3]" />
-            <span>Sheets Webhook</span>
+            <FileSpreadsheet className={`w-3.5 h-3.5 ${sheetsWebhookUrl ? 'text-[#34c759]' : 'text-[#0071e3]'}`} />
+            <span>{sheetsWebhookUrl ? 'Sheets Live Active' : 'Sheets Live Webhook'}</span>
           </button>
 
           {/* Export CSV */}
@@ -853,99 +878,28 @@ export default function ConductedSessionView({
         </div>
       )}
 
-      {/* GOOGLE SHEETS SYNC MODAL (APPLE MAC DIALOG) */}
-      {showSheetsModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="apple-glass rounded-[28px] max-w-xl w-full p-8 shadow-2xl relative border border-[#d2d2d7]">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0071e3]">
-                  <Table className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-[#1d1d1f] tracking-tight">Google Sheets Integration</h3>
-                  <p className="text-xs text-[#86868b]">Sync candidate USN roster and scores.</p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowSheetsModal(false)}
-                className="apple-btn-secondary px-3 py-1 text-xs cursor-pointer"
-              >
-                ✕ Close
-              </button>
-            </div>
-
-            {/* Quick Option 1: 1-Click Copy */}
-            <div className="bg-[#fbfbfd] border border-[#d2d2d7] rounded-2xl p-5 mb-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <strong className="text-[#1d1d1f] text-xs block font-semibold">Option A: Instant Paste into Google Sheets</strong>
-                  <span className="text-[11px] text-[#86868b]">Copies clean tab-separated table with Rank, Name, USN, and Score.</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyForGoogleSheets}
-                  className="apple-btn-primary px-4 py-2 text-xs font-medium cursor-pointer"
-                >
-                  {copiedSheets ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedSheets ? 'Copied Table!' : 'Copy Table'}</span>
-                </button>
-              </div>
-
-              <div className="pt-2.5 border-t border-[#e5e5ea] flex items-center justify-between text-[11px] text-[#86868b]">
-                <span>Then paste into your sheet with <strong>Cmd+V / Ctrl+V</strong>.</span>
-                <a
-                  href="https://sheets.new"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#0071e3] hover:underline flex items-center space-x-1"
-                >
-                  <span>Open sheets.new</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-
-            {/* Quick Option 2: Live Webhook */}
-            <div className="bg-[#fbfbfd] border border-[#d2d2d7] rounded-2xl p-5 space-y-3">
-              <div>
-                <strong className="text-[#1d1d1f] text-xs block font-semibold">Option B: Real-Time Webhook to Google Sheets</strong>
-                <span className="text-[11px] text-[#86868b]">Automatically push all student entries to your Google Apps Script URL.</span>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-[#6e6e73] mb-1">
-                  Google Apps Script Web App URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://script.google.com/macros/s/.../exec"
-                  value={sheetsWebhookUrl}
-                  onChange={(e) => setSheetsWebhookUrl(e.target.value)}
-                  className="apple-input w-full px-3 py-2 text-xs font-mono"
-                />
-              </div>
-
-              {syncSheetsMsg && (
-                <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-medium">
-                  {syncSheetsMsg}
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleSyncToGoogleSheets}
-                disabled={isSyncingSheets}
-                className="apple-btn-secondary w-full py-2.5 px-4 text-xs font-medium cursor-pointer"
-              >
-                <span>{isSyncingSheets ? 'Syncing...' : 'Sync Submissions to Google Sheet Now'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* AUTOMATED GOOGLE SHEETS SETUP MODAL */}
+      <GoogleSheetsSetupModal
+        isOpen={showSheetsModal}
+        onClose={() => setShowSheetsModal(false)}
+        initialUrl={sheetsWebhookUrl}
+        sessionPin={sessionPin}
+        sessionTitle={sessionDef?.title || 'Quiz Session'}
+        onSaveUrl={(url) => {
+          setSheetsWebhookUrl(url);
+          try {
+            localStorage.setItem(`sheets_webhook_${sessionPin}`, url);
+            if (sessionDef) {
+              saveQuizDefinition(sessionPin, {
+                ...sessionDef,
+                sheetsWebhookUrl: url
+              }, teacherPasscode);
+            }
+          } catch (e) {
+            console.warn('Save webhook error:', e);
+          }
+        }}
+      />
 
       {/* Student Detail Modal */}
       {selectedStudent && (

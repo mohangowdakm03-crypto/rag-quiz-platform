@@ -18,7 +18,8 @@ import {
   Lock,
   Search,
   RotateCcw,
-  Edit3
+  Edit3,
+  Tv
 } from 'lucide-react';
 
 export default function SessionsHub({ 
@@ -29,6 +30,7 @@ export default function SessionsHub({
   onDuplicateSession,
   onRehostSession,
   onDeleteSession,
+  onOpenProjector,
   onLock,
   isLoading,
   rehostingPin
@@ -259,11 +261,26 @@ export default function SessionsHub({
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5">
+                    <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+                      {onOpenProjector && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenProjector(session.sessionPin);
+                          }}
+                          className="apple-btn-secondary px-2.5 py-1.5 text-[11px] font-semibold flex items-center space-x-1 cursor-pointer text-[#0071e3] border-[#0071e3]/40 hover:border-[#0071e3] hover:bg-blue-50/50"
+                          title="Open Classroom Projector View with QR Code"
+                        >
+                          <Tv className="w-3.5 h-3.5 text-[#0071e3]" />
+                          <span>Projector</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={(e) => handleCopyPin(session.sessionPin, e)}
-                        className="apple-btn-secondary px-3 py-1.5 text-[11px] font-mono flex items-center space-x-1 cursor-pointer"
+                        className="apple-btn-secondary px-2.5 py-1.5 text-[11px] font-mono flex items-center space-x-1 cursor-pointer"
                         title="Copy PIN only"
                       >
                         {copiedPin === session.sessionPin ? <Check className="w-3.5 h-3.5 text-[#34c759]" /> : <Copy className="w-3.5 h-3.5" />}
@@ -273,10 +290,10 @@ export default function SessionsHub({
                       <button
                         type="button"
                         onClick={(e) => handleCopyLink(session.sessionPin, e)}
-                        className="apple-btn-primary px-3 py-1.5 text-[11px] font-medium flex items-center space-x-1 cursor-pointer"
+                        className="apple-btn-primary px-2.5 py-1.5 text-[11px] font-medium flex items-center space-x-1 cursor-pointer"
                         title="Copy student invite link"
                       >
-                        {copiedLink === session.sessionPin ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                        {copiedLink === session.sessionPin ? <Check className="w-3.5 h-3.5 text-white" /> : <Share2 className="w-3.5 h-3.5 text-white" />}
                         <span>{copiedLink === session.sessionPin ? 'Copied' : 'Link'}</span>
                       </button>
                     </div>

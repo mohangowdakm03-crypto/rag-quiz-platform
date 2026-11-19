@@ -19,10 +19,17 @@ import {
   Smartphone,
   Lock,
   Award,
-  Shuffle
+  Shuffle,
+  Tv,
+  FileSpreadsheet
 } from 'lucide-react';
-import { publishQuizSession, saveQuizDefinition } from '../supabase';
+import { 
+  publishQuizSession, 
+  saveQuizDefinition, 
+  testGoogleSheetsWebhook 
+} from '../supabase';
 import GeminiAiChatDrawer from './GeminiAiChatDrawer';
+import GoogleSheetsSetupModal from './GoogleSheetsSetupModal';
 
 // Official Apple iOS / macOS Tactile Switch Toggle (Large, Touch-Friendly 56px x 32px)
 function AppleToggle({ checked, onChange, label = '', disabled = false }) {
@@ -85,7 +92,8 @@ export default function QuizCreator({
   teacherPasscode,
   creatorMode = 'create', // 'create' | 'edit' | 'duplicate'
   editingSessionPin = null,
-  initialQuizConfig = null
+  initialQuizConfig = null,
+  onOpenProjector = null
 }) {
   const [quizConfig, setQuizConfig] = useState(() => {
     if (initialQuizConfig) {
@@ -105,6 +113,7 @@ export default function QuizCreator({
         strictAutoSubmit: initialQuizConfig.strictAutoSubmit !== false,
         maxTabSwitches: initialQuizConfig.maxTabSwitches || 3,
         shuffleQuestions: initialQuizConfig.shuffleQuestions === true,
+        sheetsWebhookUrl: initialQuizConfig.sheetsWebhookUrl || (editingSessionPin && typeof localStorage !== 'undefined' ? localStorage.getItem(`sheets_webhook_${editingSessionPin}`) : '') || '',
         questions: (initialQuizConfig.questions && initialQuizConfig.questions.length > 0)
           ? initialQuizConfig.questions.map((q, idx) => ({
               ...q,
@@ -147,6 +156,7 @@ export default function QuizCreator({
       strictAutoSubmit: true,
       maxTabSwitches: 3,
       shuffleQuestions: false,
+      sheetsWebhookUrl: (typeof localStorage !== 'undefined' ? localStorage.getItem('oxvane_global_sheets_webhook') : '') || '',
       questions: [
         {
           id: 1,
@@ -169,6 +179,24 @@ export default function QuizCreator({
   const [launchModal, setLaunchModal] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showAiDrawer, setShowAiDrawer] = useState(false);
+  const [showSheetsModal, setShowSheetsModal] = useState(false);
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+  const [webhookTestStatus, setWebhookTestStatus] = useState(null);
+
+  const handleTestSheetsWebhook = async () => {
+    const url = quizConfig.sheetsWebhookUrl?.trim();
+    if (!url) return;
+    setIsTestingWebhook(true);
+    setWebhookTestStatus(null);
+    try {
+      await testGoogleSheetsWebhook(url, editingSessionPin || 'STUDIO-TEST', quizConfig.title || 'Studio Quiz');
+      setWebhookTestStatus({ success: true, message: '✓ Test ping sent! Check your Google Sheet to confirm.' });
+    } catch (err) {
+      setWebhookTestStatus({ success: false, message: `Ping failed: ${err.message}` });
+    } finally {
+      setIsTestingWebhook(false);
+    }
+  };
 
   // Apply AI Generated Questions (from Gemini AI Studio)
   const handleApplyAiQuestions = (newQuestions, newTitle, newDescription, mode = 'replace') => {
@@ -323,6 +351,9 @@ export default function QuizCreator({
       if (creatorMode === 'edit' && editingSessionPin) {
         // Save updates to existing session without generating a new PIN
         await saveQuizDefinition(editingSessionPin, quizConfig, teacherPasscode);
+        if (quizConfig.sheetsWebhookUrl) {
+          localStorage.setItem(`sheets_webhook_${editingSessionPin}`, quizConfig.sheetsWebhookUrl);
+        }
         alert(`Session ${editingSessionPin} updated successfully!`);
         if (onSessionUpdated) {
           onSessionUpdated(editingSessionPin);
@@ -342,12 +373,18 @@ export default function QuizCreator({
           antiCheatEnabled: quizConfig.antiCheatEnabled !== false,
           strictAutoSubmit: quizConfig.strictAutoSubmit !== false,
           maxTabSwitches: quizConfig.maxTabSwitches || 3,
-          shuffleQuestions: quizConfig.shuffleQuestions === true
+          shuffleQuestions: quizConfig.shuffleQuestions === true,
+          sheetsWebhookUrl: quizConfig.sheetsWebhookUrl || ''
         });
 
         const pin = res.sessionPin;
         const origin = window.location.origin;
         const studentLink = `${origin}/?pin=${pin}`;
+
+        if (quizConfig.sheetsWebhookUrl) {
+          localStorage.setItem(`sheets_webhook_${pin}`, quizConfig.sheetsWebhookUrl);
+          localStorage.setItem('oxvane_global_sheets_webhook', quizConfig.sheetsWebhookUrl);
+        }
 
         setLaunchModal({
           sessionPin: pin,
@@ -863,6 +900,70 @@ export default function QuizCreator({
             </div>
           </div>
         </div>
+
+        {/* Automated Direct Google Sheets Live Webhook Sync (Zero-Click Row Append) */}
+        <div className="pt-6 border-t border-[#e5e5ea]">
+          <div className="p-5 rounded-2xl border border-[#d2d2d7]/80 bg-white/70 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-2.5">
+                <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  quizConfig.sheetsWebhookUrl ? 'bg-emerald-100 text-[#34c759]' : 'bg-[#f5f5f7] text-[#6e6e73]'
+                }`}>
+                  <FileSpreadsheet className="w-4 h-4" />
+                </span>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-semibold text-[#1d1d1f] tracking-tight flex items-center space-x-2">
+                    <span>Automated Direct Google Sheets Live Sync</span>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      quizConfig.sheetsWebhookUrl 
+                        ? 'bg-emerald-50 text-[#34c759] border border-emerald-200' 
+                        : 'bg-[#f5f5f7] text-[#86868b] border border-[#d2d2d7]'
+                    }`}>
+                      {quizConfig.sheetsWebhookUrl ? '✓ Live Append Active' : 'Optional'}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[#6e6e73] leading-snug">
+                    Zero-click row append: Submissions automatically append to your private Google Sheet the instant each candidate submits.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowSheetsModal(true)}
+                className="apple-btn-secondary px-3.5 py-1.5 text-xs font-medium cursor-pointer shrink-0"
+              >
+                Setup Guide & 1-Click Code
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+              <input
+                type="url"
+                placeholder="https://script.google.com/macros/s/AKfycb.../exec (Paste Web App URL)"
+                value={quizConfig.sheetsWebhookUrl || ''}
+                onChange={(e) => setQuizConfig(prev => ({ ...prev, sheetsWebhookUrl: e.target.value.trim() }))}
+                className="apple-input flex-1 px-3.5 py-2 text-xs font-mono w-full"
+              />
+              <button
+                type="button"
+                onClick={handleTestSheetsWebhook}
+                disabled={isTestingWebhook || !quizConfig.sheetsWebhookUrl}
+                className="apple-btn-secondary px-4 py-2 text-xs font-medium cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                {isTestingWebhook ? 'Testing...' : 'Test Connection'}
+              </button>
+            </div>
+
+            {webhookTestStatus && (
+              <p className={`text-[11px] font-medium leading-snug ${
+                webhookTestStatus.success ? 'text-emerald-700' : 'text-rose-600'
+              }`}>
+                {webhookTestStatus.message}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 2. QUESTIONS LIST & SINGLE QUESTION EDITOR */}
@@ -1184,6 +1285,22 @@ export default function QuizCreator({
               </div>
             </div>
 
+            {/* Projector Presentation View Button */}
+            {onOpenProjector && (
+              <button
+                type="button"
+                onClick={() => {
+                  const pin = launchModal.sessionPin;
+                  setLaunchModal(null);
+                  onOpenProjector(pin);
+                }}
+                className="w-full mb-3 apple-btn-secondary py-3 px-4 text-xs font-semibold flex items-center justify-center space-x-2 text-[#0071e3] border-[#0071e3]/40 hover:border-[#0071e3] hover:bg-blue-50/50 cursor-pointer shadow-sm rounded-2xl"
+              >
+                <Tv className="w-4 h-4 text-[#0071e3]" />
+                <span>📽️ Open Classroom Projector Mode (Instant QR & Live Count)</span>
+              </button>
+            )}
+
             {/* Actions */}
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -1212,6 +1329,22 @@ export default function QuizCreator({
         isOpen={showAiDrawer}
         onClose={() => setShowAiDrawer(false)}
         onApplyQuestions={handleApplyAiQuestions}
+      />
+
+      {/* Automated Google Sheets Setup Modal */}
+      <GoogleSheetsSetupModal
+        isOpen={showSheetsModal}
+        onClose={() => setShowSheetsModal(false)}
+        initialUrl={quizConfig.sheetsWebhookUrl || ''}
+        sessionPin={editingSessionPin || 'LIVE-SYNC'}
+        sessionTitle={quizConfig.title || 'Studio Quiz'}
+        onSaveUrl={(url) => {
+          setQuizConfig(prev => ({ ...prev, sheetsWebhookUrl: url }));
+          if (editingSessionPin) {
+            localStorage.setItem(`sheets_webhook_${editingSessionPin}`, url);
+          }
+          localStorage.setItem('oxvane_global_sheets_webhook', url);
+        }}
       />
     </div>
   );

@@ -2,14 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import SessionsHub from './components/SessionsHub';
 import ConductedSessionView from './components/ConductedSessionView';
 import QuizCreator from './components/QuizCreator';
+import HostProjectorView from './components/HostProjectorView';
+import GoogleSheetsSetupModal from './components/GoogleSheetsSetupModal';
 import { 
   verifyInstructorPasscode, 
   fetchTeacherSessions, 
   deleteTeacherSession,
   rehostQuizSession,
-  getQuizDefinition
+  getQuizDefinition,
+  saveQuizDefinition
 } from './supabase';
-import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle, Tv } from 'lucide-react';
 
 export default function TeacherApp() {
   const [teacherPasscode, setTeacherPasscode] = useState(() => {
@@ -39,6 +42,10 @@ export default function TeacherApp() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [rehostingPin, setRehostingPin] = useState(null);
 
+  // Classroom Projector & Google Sheets Live Modal State
+  const [projectorSessionPin, setProjectorSessionPin] = useState(null);
+  const [sheetsModalData, setSheetsModalData] = useState(null); // { sessionPin, sessionTitle, initialUrl }
+
   // Quiz Creator configuration state
   const [creatorState, setCreatorState] = useState({
     mode: 'create', // 'create' | 'edit' | 'duplicate'
@@ -65,6 +72,11 @@ export default function TeacherApp() {
       const params = new URLSearchParams(window.location.search);
       const sessionParam = params.get('session') || params.get('quiz');
       const actionParam = params.get('action');
+      const projectorParam = params.get('projector');
+
+      if (projectorParam) {
+        setProjectorSessionPin(projectorParam);
+      }
 
       if (sessionParam) {
         setSelectedSessionPin(sessionParam);
@@ -404,6 +416,7 @@ export default function TeacherApp() {
             onDuplicateSession={handleDuplicateSession}
             onRehostSession={handleRehostSession}
             onDeleteSession={handleDeleteSession}
+            onOpenProjector={(pin) => setProjectorSessionPin(pin)}
             onLock={handleLock}
             rehostingPin={rehostingPin}
           />
@@ -419,6 +432,7 @@ export default function TeacherApp() {
             onDuplicateSession={handleDuplicateSession}
             onRehostSession={handleRehostSession}
             onDeleteSession={handleDeleteSession}
+            onOpenProjector={(pin) => setProjectorSessionPin(pin)}
             onLock={handleLock}
           />
         )}
@@ -433,9 +447,42 @@ export default function TeacherApp() {
             creatorMode={creatorState.mode}
             editingSessionPin={creatorState.pin}
             initialQuizConfig={creatorState.data}
+            onOpenProjector={(pin) => setProjectorSessionPin(pin)}
           />
         )}
       </main>
+
+      {/* BIG SCREEN HOST PRESENTATION VIEW (CLASSROOM PROJECTOR WITH QR & LIVE COUNT) */}
+      {projectorSessionPin && (
+        <HostProjectorView
+          sessionPin={projectorSessionPin}
+          teacherPasscode={teacherPasscode}
+          onClose={() => setProjectorSessionPin(null)}
+          onOpenSheetsModal={() => {
+            setSheetsModalData({
+              sessionPin: projectorSessionPin,
+              sessionTitle: 'Quiz Session',
+              initialUrl: localStorage.getItem(`sheets_webhook_${projectorSessionPin}`) || ''
+            });
+          }}
+        />
+      )}
+
+      {/* AUTOMATED GOOGLE SHEETS SETUP MODAL */}
+      {sheetsModalData && (
+        <GoogleSheetsSetupModal
+          isOpen={true}
+          onClose={() => setSheetsModalData(null)}
+          initialUrl={sheetsModalData.initialUrl}
+          sessionPin={sheetsModalData.sessionPin}
+          sessionTitle={sheetsModalData.sessionTitle}
+          onSaveUrl={(url) => {
+            localStorage.setItem(`sheets_webhook_${sheetsModalData.sessionPin}`, url);
+            setSheetsModalData(null);
+            loadSessions();
+          }}
+        />
+      )}
 
       <footer className="border-t border-[#d2d2d7]/60 bg-white/80 py-5 text-center text-xs text-[#86868b]">
         Oxvane Platform • Multi-Session Architecture • Supabase Cloud PG
