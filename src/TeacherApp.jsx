@@ -5,6 +5,7 @@ import QuizCreator from './components/QuizCreator';
 import HostProjectorView from './components/HostProjectorView';
 import GoogleSheetsSetupModal from './components/GoogleSheetsSetupModal';
 import TeacherAuthModal from './components/TeacherAuthModal';
+import OxvaneLogo from './components/OxvaneLogo';
 import { subscribeToTeacherAuth, logoutTeacher } from './services/authService';
 import { 
   verifyInstructorPasscode, 
@@ -292,9 +293,7 @@ export default function TeacherApp() {
             onClick={navigateToHub}
             className="flex items-center space-x-3.5 cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-2xl bg-[#0071e3] flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
+            <OxvaneLogo size="md" className="group-hover:scale-105 transition-transform duration-200" />
             <div>
               <div className="flex items-center space-x-2.5">
                 <span className="font-semibold text-lg tracking-tight text-[#1d1d1f]">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import OxvaneLogo from './OxvaneLogo';
 
 export default function StudentHeader() {
   return (
@@ -7,9 +7,7 @@ export default function StudentHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center space-x-3.5">
-          <div className="w-9 h-9 rounded-2xl bg-[#0071e3] flex items-center justify-center shadow-md shadow-[#0071e3]/20">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
+          <OxvaneLogo size="md" />
           <div>
             <div className="flex items-center space-x-2.5">
               <span className="font-semibold text-lg tracking-tight apple-title-gradient">

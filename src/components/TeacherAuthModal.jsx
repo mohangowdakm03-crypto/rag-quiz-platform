@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import OxvaneLogo from './OxvaneLogo';
 import { 
   Lock, 
   Mail, 
@@ -219,9 +220,7 @@ export default function TeacherAuthModal({ onAuthenticated }) {
           
           {/* Header Brand */}
           <div className="text-center mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#0071e3] flex items-center justify-center text-white mx-auto mb-3.5 shadow-lg shadow-blue-500/25">
-              <Sparkles className="w-6 h-6" />
-            </div>
+            <OxvaneLogo size="xl" className="mx-auto mb-3.5" />
 
             <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0071e3] text-xs font-semibold mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />

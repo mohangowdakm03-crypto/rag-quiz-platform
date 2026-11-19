@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import QuizCreator from './components/QuizCreator';
 import TeacherAuthModal from './components/TeacherAuthModal';
+import OxvaneLogo from './components/OxvaneLogo';
 import { subscribeToTeacherAuth } from './services/authService';
 import { Sparkles } from 'lucide-react';
 
@@ -63,9 +64,7 @@ function CreatePage() {
       <header className="apple-glass-nav sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#0071e3] flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
+            <OxvaneLogo size="md" />
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-semibold text-lg tracking-tight text-[#1d1d1f]">
