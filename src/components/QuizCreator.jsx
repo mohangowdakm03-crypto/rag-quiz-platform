@@ -14,7 +14,8 @@ import {
   FileText,
   Copy,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Award
 } from 'lucide-react';
 import { publishQuizSession, saveQuizDefinition } from '../supabase';
 import { RAG_QUIZ_DATA } from '../data/ragQuestions';
@@ -37,6 +38,10 @@ export default function QuizCreator({
         passingScore: initialQuizConfig.passingScore || 70,
         gameMode: initialQuizConfig.gameMode || 'classic',
         perQuestionSeconds: initialQuizConfig.perQuestionSeconds || 30,
+        showScore: initialQuizConfig.showScore === true,
+        showItemAnalysis: initialQuizConfig.showItemAnalysis === true,
+        allowRetake: initialQuizConfig.allowRetake === true,
+        showRank: initialQuizConfig.showRank === true,
         questions: (initialQuizConfig.questions && initialQuizConfig.questions.length > 0)
           ? initialQuizConfig.questions.map((q, idx) => ({
               ...q,
@@ -70,6 +75,10 @@ export default function QuizCreator({
       passingScore: 70,
       gameMode: 'classic',
       perQuestionSeconds: 30,
+      showScore: false,
+      showItemAnalysis: false,
+      allowRetake: false,
+      showRank: false,
       questions: [
         {
           id: 1,
@@ -118,6 +127,10 @@ export default function QuizCreator({
       passingScore: 70,
       gameMode: 'classic',
       perQuestionSeconds: 30,
+      showScore: false,
+      showItemAnalysis: false,
+      allowRetake: false,
+      showRank: false,
       questions: [
         {
           id: 1,
@@ -236,7 +249,11 @@ export default function QuizCreator({
         // Create brand-new session or duplicate
         const res = await publishQuizSession(quizConfig, teacherPasscode, {
           gameMode: quizConfig.gameMode || 'classic',
-          perQuestionSeconds: quizConfig.perQuestionSeconds || 30
+          perQuestionSeconds: quizConfig.perQuestionSeconds || 30,
+          showScore: quizConfig.showScore,
+          showItemAnalysis: quizConfig.showItemAnalysis,
+          allowRetake: quizConfig.allowRetake,
+          showRank: quizConfig.showRank
         });
 
         const pin = res.sessionPin;
@@ -480,6 +497,139 @@ export default function QuizCreator({
                   <option value={120}>120 Seconds (2 Min)</option>
                 </select>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Post-Exam Visibility & Permissions (Confidential Mode / Retake Controls) */}
+        <div className="pt-6 border-t border-[#e5e5ea]">
+          <div className="mb-4">
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-[#0071e3]" />
+              <h3 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
+                Post-Exam Visibility & Student Permissions
+              </h3>
+            </div>
+            <p className="text-xs text-[#86868b] mt-0.5 tracking-tight">
+              Control what candidates see upon submitting. By default, scores, question analysis, and retakes remain strictly confidential to keep competition fair and reveal winners later.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Toggle 1: Show Score & Percentage */}
+            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <Award className="w-4 h-4 text-[#0071e3]" />
+                  <span className="text-xs font-semibold text-[#1d1d1f]">Show Score & Percentage</span>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.showScore 
+                    ? 'Students will see their score, points & pass status immediately.' 
+                    : 'Confidential: Scores and pass status are kept hidden until you reveal winners.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={quizConfig.showScore}
+                onClick={() => setQuizConfig(prev => ({ ...prev, showScore: !prev.showScore }))}
+                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                  quizConfig.showScore ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                }`}
+                title="Toggle student score visibility"
+              >
+                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                  quizConfig.showScore ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
+            {/* Toggle 2: Show Question Item Analysis */}
+            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-[#0071e3]" />
+                  <span className="text-xs font-semibold text-[#1d1d1f]">Question Item Analysis</span>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.showItemAnalysis 
+                    ? 'Students can inspect correct answers, mistakes & technical explanations.' 
+                    : 'Confidential: Correct answers & explanations are hidden to prevent leaking to peers.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={quizConfig.showItemAnalysis}
+                onClick={() => setQuizConfig(prev => ({ ...prev, showItemAnalysis: !prev.showItemAnalysis }))}
+                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                  quizConfig.showItemAnalysis ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                }`}
+                title="Toggle question item analysis visibility"
+              >
+                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                  quizConfig.showItemAnalysis ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
+            {/* Toggle 3: Allow Retake */}
+            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <RotateCcw className="w-4 h-4 text-[#0071e3]" />
+                  <span className="text-xs font-semibold text-[#1d1d1f]">Allow Retake Examination</span>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.allowRetake 
+                    ? 'Students can retake the quiz multiple times.' 
+                    : 'Single Attempt: Retake button is disabled and duplicate attempts are blocked.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={quizConfig.allowRetake}
+                onClick={() => setQuizConfig(prev => ({ ...prev, allowRetake: !prev.allowRetake }))}
+                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                  quizConfig.allowRetake ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                }`}
+                title="Toggle allow retake examination"
+              >
+                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                  quizConfig.allowRetake ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
+            {/* Toggle 4: Show Rank / Leaderboard */}
+            <div className="apple-glass-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#d2d2d7]/70 bg-white/70">
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-[#0071e3]" />
+                  <span className="text-xs font-semibold text-[#1d1d1f]">Show Rank / Leaderboard</span>
+                </div>
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  {quizConfig.showRank 
+                    ? 'Students can see their live rank/position on completion.' 
+                    : 'Confidential: Final ranks and podium winners are reserved for the instructor.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={quizConfig.showRank}
+                onClick={() => setQuizConfig(prev => ({ ...prev, showRank: !prev.showRank }))}
+                className={`w-12 h-7 flex shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ease-in-out ${
+                  quizConfig.showRank ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+                }`}
+                title="Toggle student rank visibility"
+              >
+                <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                  quizConfig.showRank ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
             </div>
           </div>
         </div>

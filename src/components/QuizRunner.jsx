@@ -152,13 +152,20 @@ export default function QuizRunner({ sessionData, quizData, onCompleteQuiz }) {
     setSubmitError('');
 
     const timeTakenSeconds = (timeLimitMinutes * 60) - overallTimeLeft;
+    const answeredCount = Object.keys(selectedAnswers).filter(k => 
+      selectedAnswers[k] !== undefined && selectedAnswers[k] !== null && selectedAnswers[k] !== ''
+    ).length;
+    const flaggedCount = Object.values(flaggedQuestions).filter(Boolean).length;
 
     try {
       const results = await submitStudentQuizUniversal(quizId, {
         studentName,
         studentId: studentId || 'N/A',
         timeTakenSeconds: Math.max(1, timeTakenSeconds),
-        answers: selectedAnswers
+        answers: selectedAnswers,
+        answeredCount,
+        flaggedCount,
+        totalQuestions: questions.length
       });
 
       try {

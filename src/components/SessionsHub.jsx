@@ -207,14 +207,23 @@ export default function SessionsHub({
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                      isAssessment 
-                        ? 'bg-amber-50 border border-amber-200 text-amber-700' 
-                        : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
-                    }`}>
-                      {isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
-                      <span>{isAssessment ? `Assessment (${session.perQuestionSeconds || 30}s/Q)` : `Standard (${session.timeLimitMinutes || 30}m)`}</span>
-                    </span>
+                    <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+                      <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                        isAssessment 
+                          ? 'bg-amber-50 border border-amber-200 text-amber-700' 
+                          : 'bg-[#f5f5f7] border border-[#d2d2d7]/70 text-[#1d1d1f]'
+                      }`}>
+                        {isAssessment ? <Zap className="w-3 h-3 text-amber-500" /> : <Clock className="w-3 h-3 text-[#0071e3]" />}
+                        <span>{isAssessment ? `Assessment (${session.perQuestionSeconds || 30}s/Q)` : `Standard (${session.timeLimitMinutes || 30}m)`}</span>
+                      </span>
+
+                      {!session.showScore && (
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-blue-50 border border-blue-200 text-[#0071e3]">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>Confidential</span>
+                        </span>
+                      )}
+                    </div>
 
                     {/* Delete button */}
                     <button

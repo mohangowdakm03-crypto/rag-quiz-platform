@@ -120,6 +120,10 @@ export async function getQuizDefinition(quizId) {
       gameMode: answers.gameMode || 'classic',
       perQuestionSeconds: answers.perQuestionSeconds || 30,
       sessionPin: answers.sessionPin || row.quiz_id,
+      showScore: answers.showScore === true,
+      showItemAnalysis: answers.showItemAnalysis === true,
+      allowRetake: answers.allowRetake === true,
+      showRank: answers.showRank === true,
       questions: row.breakdown || []
     };
   } catch (err) {
@@ -134,6 +138,10 @@ export async function getQuizDefinition(quizId) {
         passcodeHash: MASTER_PASSCODE_HASH_1,
         gameMode: 'classic',
         perQuestionSeconds: 30,
+        showScore: false,
+        showItemAnalysis: false,
+        allowRetake: false,
+        showRank: false,
         questions: RAG_QUIZ_DATA.questions.map(q => ({ ...q, type: 'single', points: 1000 }))
       };
     }
@@ -155,6 +163,10 @@ export async function getStudentQuizDefinition(quizId) {
     gameMode: fullQuiz.gameMode || 'classic',
     perQuestionSeconds: fullQuiz.perQuestionSeconds || 30,
     sessionPin: fullQuiz.sessionPin || fullQuiz.id,
+    showScore: fullQuiz.showScore === true,
+    showItemAnalysis: fullQuiz.showItemAnalysis === true,
+    allowRetake: fullQuiz.allowRetake === true,
+    showRank: fullQuiz.showRank === true,
     totalQuestions: fullQuiz.questions.length,
     questions: fullQuiz.questions.map(q => ({
       id: q.id,
@@ -210,6 +222,10 @@ export async function saveQuizDefinition(quizId, quizData, instructorPasscode) {
           passingScore: quizData.passingScore || 70,
           gameMode: quizData.gameMode || 'classic',
           perQuestionSeconds: quizData.perQuestionSeconds || 30,
+          showScore: quizData.showScore === true,
+          showItemAnalysis: quizData.showItemAnalysis === true,
+          allowRetake: quizData.allowRetake === true,
+          showRank: quizData.showRank === true,
           passcodeHash: enteredHash || MASTER_PASSCODE_HASH_1,
           updatedAt: new Date().toISOString()
         },
@@ -245,6 +261,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
   const perQuestionSeconds = Number(options.perQuestionSeconds || quizData.perQuestionSeconds || 30);
   const timeLimitMinutes = Number(quizData.timeLimitMinutes || 30);
   const passingScore = Number(quizData.passingScore || 70);
+  const showScore = options.showScore ?? quizData.showScore ?? false;
+  const showItemAnalysis = options.showItemAnalysis ?? quizData.showItemAnalysis ?? false;
+  const allowRetake = options.allowRetake ?? quizData.allowRetake ?? false;
+  const showRank = options.showRank ?? quizData.showRank ?? false;
 
   // Insert fresh session definition
   const { data, error } = await adminClient
@@ -266,6 +286,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
           passingScore,
           gameMode,
           perQuestionSeconds,
+          showScore,
+          showItemAnalysis,
+          allowRetake,
+          showRank,
           passcodeHash: enteredHash,
           publishedAt: new Date().toISOString()
         },
@@ -283,6 +307,10 @@ export async function publishQuizSession(quizData, instructorPasscode, options =
     sessionPin,
     gameMode,
     perQuestionSeconds,
+    showScore,
+    showItemAnalysis,
+    allowRetake,
+    showRank,
     id: data?.[0]?.id
   };
 }
@@ -336,6 +364,10 @@ export async function fetchTeacherSessions() {
           totalQuestions: row.breakdown?.length || row.total_questions || 20,
           passingScore: ans.passingScore || 70,
           timeLimitMinutes: ans.timeLimitMinutes || 30,
+          showScore: ans.showScore === true,
+          showItemAnalysis: ans.showItemAnalysis === true,
+          allowRetake: ans.allowRetake === true,
+          showRank: ans.showRank === true,
           createdAt: row.created_at,
           submissionCount: stat.count,
           classAverage: avg,
@@ -394,6 +426,10 @@ export async function rehostQuizSession(sourcePin, rawPasscode) {
     passingScore: def.passingScore,
     gameMode: def.gameMode,
     perQuestionSeconds: def.perQuestionSeconds,
+    showScore: def.showScore,
+    showItemAnalysis: def.showItemAnalysis,
+    allowRetake: def.allowRetake,
+    showRank: def.showRank,
     questions: def.questions
   }, rawPasscode);
 }
@@ -401,11 +437,19 @@ export async function rehostQuizSession(sourcePin, rawPasscode) {
 // 5. Submit student quiz securely (Universal grading across any question type and points)
 export async function submitStudentQuizUniversal(quizId, submissionData) {
   const adminClient = getSupabaseAdminClient();
-  const { studentName, studentId, timeTakenSeconds, answers } = submissionData;
+  const { 
+    studentName, 
+    studentId, 
+    timeTakenSeconds, 
+    answers,
+    flaggedCount = 0,
+    answeredCount,
+    totalQuestions: clientTotalQuestions 
+  } = submissionData;
 
   // Retrieve official quiz definition from database
   const fullQuiz = await getQuizDefinition(quizId);
-  const questions = fullQuiz.questions || [];
+  const questions = fullQuiz?.questions || [];
 
   let totalEarned = 0;
   let totalPossible = 0;
@@ -455,7 +499,7 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
   });
 
   const percentage = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
-  const passed = percentage >= (fullQuiz.passingScore || 70);
+  const passed = percentage >= (fullQuiz?.passingScore || 70);
 
   // Write verified record into database
   const { data, error } = await adminClient
@@ -480,19 +524,57 @@ export async function submitStudentQuizUniversal(quizId, submissionData) {
     console.error('Submission write error:', error);
   }
 
+  const answeredTotal = answeredCount !== undefined 
+    ? answeredCount 
+    : Object.keys(answers || {}).filter(k => answers[k] !== undefined && answers[k] !== null && answers[k] !== '').length;
+
+  const isShowScore = fullQuiz?.showScore === true;
+  const isShowItemAnalysis = fullQuiz?.showItemAnalysis === true;
+  const isAllowRetake = fullQuiz?.allowRetake === true;
+  const isShowRank = fullQuiz?.showRank === true;
+
   return {
     id: data?.[0]?.id,
-    score: totalEarned,
-    totalPossibleScore: totalPossible,
+    studentName: studentName.trim(),
+    studentId: studentId?.trim() || 'N/A',
+    quizId,
     totalQuestions: questions.length,
-    percentage,
-    passed,
-    timeTakenSeconds,
-    breakdown,
-    studentName,
-    studentId,
-    quizId
+    answeredCount: answeredTotal,
+    unansweredCount: Math.max(0, questions.length - answeredTotal),
+    flaggedCount: flaggedCount || 0,
+    timeTakenSeconds: timeTakenSeconds || 0,
+    submittedAt: new Date().toISOString(),
+    // Teacher post-exam permissions:
+    showScore: isShowScore,
+    showItemAnalysis: isShowItemAnalysis,
+    allowRetake: isAllowRetake,
+    showRank: isShowRank,
+    // Sensitive performance metrics sent ONLY if permitted by instructor:
+    score: isShowScore ? totalEarned : null,
+    totalPossibleScore: isShowScore ? totalPossible : null,
+    percentage: isShowScore ? percentage : null,
+    passed: isShowScore ? passed : null,
+    breakdown: isShowItemAnalysis ? breakdown : []
   };
+}
+
+// 5B. Check if a student USN has already submitted to this quiz session
+export async function checkStudentAlreadySubmitted(quizId, studentId) {
+  if (!quizId || !studentId) return false;
+  const adminClient = getSupabaseAdminClient();
+  try {
+    const { data } = await adminClient
+      .from('quiz_submissions')
+      .select('id')
+      .eq('quiz_id', quizId)
+      .eq('student_id', studentId.trim())
+      .neq('student_name', '__QUIZ_DEFINITION__')
+      .limit(1);
+    return Boolean(data && data.length > 0);
+  } catch (err) {
+    console.warn('checkStudentAlreadySubmitted note:', err);
+    return false;
+  }
 }
 
 // 6. Verify Instructor Passcode with SHA-256 Hashing

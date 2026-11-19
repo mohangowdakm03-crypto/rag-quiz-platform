@@ -360,6 +360,22 @@ export default function ConductedSessionView({
               <span>{isAssessment ? `Assessment (${sessionDef?.perQuestionSeconds || 30}s/Q)` : `Standard (${sessionDef?.timeLimitMinutes || 30}m)`}</span>
             </span>
 
+            <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+              sessionDef?.showScore 
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' 
+                : 'bg-blue-50 border border-blue-200 text-[#0071e3]'
+            }`}>
+              {sessionDef?.showScore ? <Eye className="w-3 h-3 text-emerald-600" /> : <Lock className="w-3 h-3 text-[#0071e3]" />}
+              <span>{sessionDef?.showScore ? 'Scores Visible' : 'Confidential Mode'}</span>
+            </span>
+
+            {!sessionDef?.allowRetake && (
+              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 border border-slate-200 text-slate-700">
+                <Lock className="w-3 h-3 text-slate-500" />
+                <span>Single Attempt</span>
+              </span>
+            )}
+
             <span className="inline-flex items-center space-x-1 text-xs text-[#86868b] font-medium">
               <Radio className="w-3 h-3 text-[#34c759] animate-pulse" />
               <span>Live Cloud Sync</span>

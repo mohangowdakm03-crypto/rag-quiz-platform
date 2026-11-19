@@ -13,7 +13,7 @@ import {
   IdCard,
   User
 } from 'lucide-react';
-import { joinQuizRoom, getStudentQuizDefinition } from '../supabase';
+import { joinQuizRoom, getStudentQuizDefinition, checkStudentAlreadySubmitted } from '../supabase';
 
 export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher }) {
   const [studentName, setStudentName] = useState('');
@@ -67,6 +67,16 @@ export default function JoinQuiz({ defaultQuizId, onStartQuiz, onSwitchToTeacher
         setError(`Invalid Game PIN "${trimmedPin}". No active quiz session was found.`);
         setIsLoading(false);
         return;
+      }
+
+      // Check retake permission if this candidate already completed the exam
+      if (cloudQuiz.allowRetake === false) {
+        const alreadySubmitted = await checkStudentAlreadySubmitted(trimmedPin, trimmedUsn);
+        if (alreadySubmitted) {
+          setError(`Candidate USN "${trimmedUsn}" has already submitted this examination. Retakes are disabled for this session.`);
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Register presence in Supabase
