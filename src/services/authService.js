@@ -10,7 +10,6 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
-import { sha256, MASTER_PASSCODE_HASH_1, MASTER_PASSCODE_HASH_2 } from '../supabase';
 
 /**
  * Format raw Firebase User into standardized Instructor Profile
@@ -132,19 +131,22 @@ export async function sendPasswordRecoveryLink(email) {
  */
 export function initPhoneRecaptcha(containerId = 'recaptcha-container') {
   try {
-    if (window.phoneRecaptchaVerifier) {
-      window.phoneRecaptchaVerifier.clear();
-    }
-    window.phoneRecaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: 'invisible',
-      callback: () => {
-        // reCAPTCHA solved
-      },
-      'expired-callback': () => {
-        console.warn('reCAPTCHA expired');
+    if (typeof window !== 'undefined') {
+      if (window.phoneRecaptchaVerifier) {
+        window.phoneRecaptchaVerifier.clear();
       }
-    });
-    return window.phoneRecaptchaVerifier;
+      window.phoneRecaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved
+        },
+        'expired-callback': () => {
+          console.warn('reCAPTCHA expired');
+        }
+      });
+      return window.phoneRecaptchaVerifier;
+    }
+    return null;
   } catch (err) {
     console.error('Recaptcha init error:', err);
     return null;
@@ -158,7 +160,7 @@ export async function sendPhoneVerificationOtp(phoneNumber) {
   try {
     const verifier = initPhoneRecaptcha('recaptcha-container');
     if (!verifier) {
-      throw new Error('Could not initialize reCAPTCHA verifier. Please refresh the page.');
+      throw new Error('Could not initialize verification engine. Please refresh the page.');
     }
     const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber.trim(), verifier);
     return { success: true, confirmationResult };
@@ -168,7 +170,7 @@ export async function sendPhoneVerificationOtp(phoneNumber) {
     if (error.code === 'auth/invalid-phone-number') {
       msg = 'Invalid phone number format. Include country code (e.g. +91 9876543210).';
     } else if (error.code === 'auth/quota-exceeded') {
-      msg = 'SMS quota exceeded for today. Please use Google Sign-In or Email instead.';
+      msg = 'SMS quota temporarily exceeded. Please use Google Sign-In or Email.';
     }
     return { success: false, error: msg };
   }
@@ -213,7 +215,7 @@ export async function logoutTeacher() {
 }
 
 /**
- * 9. Real-time Auth State Subscription with Strict Cryptographic Verification
+ * 9. Real-time Auth State Subscription (100% Genuine Firebase Auth)
  */
 export function subscribeToTeacherAuth(onTeacherChanged) {
   return onAuthStateChanged(auth, async (user) => {
@@ -225,47 +227,12 @@ export function subscribeToTeacherAuth(onTeacherChanged) {
       }
       onTeacherChanged(teacher);
     } else {
-      // Check if logged in via strictly verified master passcode in session
-      const savedHash = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode_hash') : '';
-      const savedPasscode = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode') : '';
-
-      if (savedHash && (savedHash === MASTER_PASSCODE_HASH_1 || savedHash === MASTER_PASSCODE_HASH_2)) {
-        onTeacherChanged({
-          uid: 'master_admin',
-          displayName: 'Master Administrator',
-          email: 'admin@oxvane.local',
-          provider: 'passcode'
-        });
-      } else if (savedPasscode && savedPasscode !== 'authenticated_user') {
-        try {
-          const computedHash = await sha256(savedPasscode);
-          if (computedHash === MASTER_PASSCODE_HASH_1 || computedHash === MASTER_PASSCODE_HASH_2) {
-            sessionStorage.setItem('rag_instructor_passcode_hash', computedHash);
-            onTeacherChanged({
-              uid: 'master_admin',
-              displayName: 'Master Administrator',
-              email: 'admin@oxvane.local',
-              provider: 'passcode'
-            });
-          } else {
-            // Tampered or invalid passcode: purge and lock!
-            sessionStorage.removeItem('rag_instructor_passcode');
-            sessionStorage.removeItem('rag_instructor_passcode_hash');
-            sessionStorage.removeItem('oxvane_teacher_auth');
-            onTeacherChanged(null);
-          }
-        } catch {
-          onTeacherChanged(null);
-        }
-      } else {
-        // Purge any forged tokens
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem('oxvane_teacher_auth');
-          sessionStorage.removeItem('rag_instructor_passcode');
-          sessionStorage.removeItem('rag_instructor_passcode_hash');
-        }
-        onTeacherChanged(null);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('oxvane_teacher_auth');
+        sessionStorage.removeItem('rag_instructor_passcode');
+        sessionStorage.removeItem('rag_instructor_passcode_hash');
       }
+      onTeacherChanged(null);
     }
   });
 }
@@ -277,55 +244,5 @@ export async function isTeacherAuthorized() {
   if (auth.currentUser && !auth.currentUser.isAnonymous) {
     return { authorized: true, user: formatTeacherUser(auth.currentUser) };
   }
-  const savedHash = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode_hash') : '';
-  if (savedHash === MASTER_PASSCODE_HASH_1 || savedHash === MASTER_PASSCODE_HASH_2) {
-    return {
-      authorized: true,
-      user: {
-        uid: 'master_admin',
-        displayName: 'Master Administrator',
-        email: 'admin@oxvane.local',
-        provider: 'passcode'
-      }
-    };
-  }
-  const savedPasscode = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rag_instructor_passcode') : '';
-  if (savedPasscode && savedPasscode !== 'authenticated_user') {
-    const computedHash = await sha256(savedPasscode);
-    if (computedHash === MASTER_PASSCODE_HASH_1 || computedHash === MASTER_PASSCODE_HASH_2) {
-      return {
-        authorized: true,
-        user: {
-          uid: 'master_admin',
-          displayName: 'Master Administrator',
-          email: 'admin@oxvane.local',
-          provider: 'passcode'
-        }
-      };
-    }
-  }
   return { authorized: false, user: null };
-}
-
-/**
- * 11. Direct Master Passcode Verification (Fallback for offline/admin mode)
- */
-export async function verifyAdminPasscode(code) {
-  const enteredHash = await sha256(code.trim());
-  const isMaster = enteredHash === MASTER_PASSCODE_HASH_1 || enteredHash === MASTER_PASSCODE_HASH_2;
-  if (isMaster) {
-    const adminUser = {
-      uid: 'master_admin',
-      displayName: 'Master Administrator',
-      email: 'admin@oxvane.local',
-      provider: 'passcode'
-    };
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('rag_instructor_passcode', code.trim());
-      sessionStorage.setItem('rag_instructor_passcode_hash', enteredHash);
-      sessionStorage.setItem('oxvane_teacher_auth', JSON.stringify(adminUser));
-    }
-    return { valid: true, user: adminUser };
-  }
-  return { valid: false, error: 'Invalid Administrator Passcode' };
 }

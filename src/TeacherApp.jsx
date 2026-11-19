@@ -6,6 +6,7 @@ import HostProjectorView from './components/HostProjectorView';
 import GoogleSheetsSetupModal from './components/GoogleSheetsSetupModal';
 import TeacherAuthModal from './components/TeacherAuthModal';
 import OxvaneLogo from './components/OxvaneLogo';
+import AppleSupportModal from './components/AppleSupportModal';
 import { subscribeToTeacherAuth, logoutTeacher } from './services/authService';
 import { 
   verifyInstructorPasscode, 
@@ -19,9 +20,15 @@ import { ShieldCheck, Sparkles, Lock, Key, AlertTriangle, Tv, LogOut, User } fro
 
 export default function TeacherApp() {
   const [currentTeacher, setCurrentTeacher] = useState(null);
-  const [teacherPasscode, setTeacherPasscode] = useState('');
+  const [teacherPasscode, setTeacherPasscode] = useState('authenticated_user');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Apple Support Modal State
+  const [supportModal, setSupportModal] = useState({
+    isOpen: false,
+    category: 'support'
+  });
 
   // Subscribe to real-time teacher authentication state with strict cryptographic verification
   useEffect(() => {
@@ -29,10 +36,7 @@ export default function TeacherApp() {
       if (teacher) {
         setCurrentTeacher(teacher);
         setIsAuthenticated(true);
-        const code = teacher.provider === 'passcode'
-          ? (sessionStorage.getItem('rag_instructor_passcode') || '')
-          : 'authenticated_user';
-        setTeacherPasscode(code);
+        setTeacherPasscode('authenticated_user');
       } else {
         sessionStorage.removeItem('oxvane_teacher_auth');
         sessionStorage.removeItem('rag_instructor_passcode');
@@ -449,9 +453,56 @@ export default function TeacherApp() {
         />
       )}
 
-      <footer className="border-t border-[#d2d2d7]/60 bg-white/80 py-5 text-center text-xs text-[#86868b]">
-        Oxvane Platform • Multi-Session Architecture • Supabase Cloud PG
+      {/* Apple-Grade Support & Compliance Footer */}
+      <footer className="border-t border-[#d2d2d7]/60 bg-white/80 backdrop-blur-md py-6 text-xs text-[#86868b]">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <OxvaneLogo size="sm" />
+            <span className="text-[#1d1d1f] font-medium">Oxvane</span>
+            <span className="text-[#86868b]">• Copyright © 2026 Oxvane Inc. All rights reserved.</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-[#6e6e73]">
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'privacy' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Privacy Policy
+            </button>
+            <span className="text-[#d2d2d7]">|</span>
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'terms' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Terms of Use
+            </button>
+            <span className="text-[#d2d2d7]">|</span>
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'issue' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Report an Issue
+            </button>
+            <span className="text-[#d2d2d7]">|</span>
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'support' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Contact Support
+            </button>
+          </div>
+        </div>
       </footer>
+
+      {/* Support & Incident Reporting Modal */}
+      <AppleSupportModal
+        isOpen={supportModal.isOpen}
+        onClose={() => setSupportModal({ ...supportModal, isOpen: false })}
+        defaultCategory={supportModal.category}
+      />
     </div>
   );
 }

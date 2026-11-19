@@ -3,6 +3,8 @@ import StudentHeader from './components/StudentHeader';
 import JoinQuiz from './components/JoinQuiz';
 import QuizRunner from './components/QuizRunner';
 import QuizResults from './components/QuizResults';
+import OxvaneLogo from './components/OxvaneLogo';
+import AppleSupportModal from './components/AppleSupportModal';
 import { getStudentQuizDefinition } from './supabase';
 
 export default function StudentApp() {
@@ -12,6 +14,12 @@ export default function StudentApp() {
   const [results, setResults] = useState(null);
   const [quizData, setQuizData] = useState(null);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
+
+  // Apple Support Modal State
+  const [supportModal, setSupportModal] = useState({
+    isOpen: false,
+    category: 'support'
+  });
 
   // Parse URL query params on load (e.g. ?pin=849201)
   useEffect(() => {
@@ -112,18 +120,56 @@ export default function StudentApp() {
         )}
       </main>
 
-      {/* Student Apple-Style Light Footer */}
-      <footer className="border-t border-[#d2d2d7]/60 bg-white/80 py-6 text-center text-xs text-[#86868b]">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="tracking-tight">
-            Oxvane Assessment Platform • High-Concurrency Real-Time Sync
+      {/* Student Apple-Style Light Footer with Support & Reporting */}
+      <footer className="border-t border-[#d2d2d7]/60 bg-white/80 py-6 text-xs text-[#86868b]">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <OxvaneLogo size="sm" />
+            <span className="text-[#1d1d1f] font-medium">Oxvane</span>
+            <span className="text-[#86868b]">• Copyright © 2026 Oxvane Inc. All rights reserved.</span>
           </div>
-          <div className="font-mono text-[#86868b] text-[11px] flex items-center space-x-1.5">
-            <span>Engine</span>
-            <span className="text-[#1d1d1f] font-medium">Supabase Realtime PostgreSQL</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-[#6e6e73]">
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'privacy' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Privacy Policy
+            </button>
+            <span className="text-[#d2d2d7]">|</span>
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'terms' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Terms of Use
+            </button>
+            <span className="text-[#d2d2d7]">|</span>
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'issue' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Report an Issue
+            </button>
+            <span className="text-[#d2d2d7]">|</span>
+            <button
+              type="button"
+              onClick={() => setSupportModal({ isOpen: true, category: 'support' })}
+              className="hover:text-[#1d1d1f] hover:underline cursor-pointer transition"
+            >
+              Contact Support
+            </button>
           </div>
         </div>
       </footer>
+
+      {/* Support & Incident Reporting Modal */}
+      <AppleSupportModal
+        isOpen={supportModal.isOpen}
+        onClose={() => setSupportModal({ ...supportModal, isOpen: false })}
+        defaultCategory={supportModal.category}
+      />
     </div>
   );
 }
