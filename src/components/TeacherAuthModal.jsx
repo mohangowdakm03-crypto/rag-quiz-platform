@@ -220,12 +220,7 @@ export default function TeacherAuthModal({ onAuthenticated }) {
           
           {/* Header Brand */}
           <div className="text-center mb-6">
-            <OxvaneLogo size="xl" className="mx-auto mb-3.5" />
-
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0071e3] text-xs font-semibold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Educator & Instructor Portal</span>
-            </div>
+            <OxvaneLogo size="xl" className="mx-auto mb-4" />
 
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] apple-title-gradient">
               {authMode === 'forgot_password' 
@@ -234,7 +229,7 @@ export default function TeacherAuthModal({ onAuthenticated }) {
                   ? 'Create Instructor Account' 
                   : 'Sign in to Oxvane'}
             </h1>
-            <p className="text-xs text-[#86868b] mt-1 tracking-tight">
+            <p className="text-xs text-[#86868b] mt-1.5 tracking-tight">
               {authMode === 'forgot_password' 
                 ? 'We will send a password recovery link to your email.'
                 : 'Manage quiz sessions, examine real-time telemetry, and grade submissions.'}

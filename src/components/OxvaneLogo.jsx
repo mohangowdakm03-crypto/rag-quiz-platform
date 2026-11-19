@@ -12,26 +12,22 @@ export default function OxvaneLogo({
   subtitle = '' 
 }) {
   const sizeMap = {
-    xs: 'w-6 h-6 rounded-[6px]',
-    sm: 'w-8 h-8 rounded-[8px]',
-    md: 'w-9 h-9 rounded-[10px]',
-    lg: 'w-11 h-11 rounded-[12px]',
-    xl: 'w-14 h-14 rounded-[16px]',
-    '2xl': 'w-16 h-16 rounded-[18px]'
+    xs: 'w-6 h-6',
+    sm: 'w-8 h-8',
+    md: 'w-9 h-9',
+    lg: 'w-11 h-11',
+    xl: 'w-16 h-16',
+    '2xl': 'w-20 h-20'
   };
 
   const currentSizeClass = sizeMap[size] || sizeMap.md;
 
   const logoNode = (
-    <div 
-      className={`relative inline-flex items-center justify-center overflow-hidden shrink-0 shadow-md shadow-blue-600/20 ring-1 ring-black/5 ${currentSizeClass} ${className}`}
-    >
-      <img 
-        src={logoImg} 
-        alt="Oxvane" 
-        className="w-full h-full object-cover select-none pointer-events-none" 
-      />
-    </div>
+    <img 
+      src={logoImg} 
+      alt="Oxvane" 
+      className={`shrink-0 object-contain select-none pointer-events-none drop-shadow-[0_4px_12px_rgba(0,113,227,0.25)] hover:scale-105 transition-transform duration-200 ${currentSizeClass} ${className}`} 
+    />
   );
 
   if (!withWordmark) {
